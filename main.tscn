@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://ccjsp8utreawi"]
+
+[ext_resource type="Script" uid="uid://bawlnukkfmpbd" path="res://character_body_2d.gd" id="1_ig7tw"]
+[ext_resource type="Texture2D" uid="uid://b3stugs7p45dt" path="res://icon.svg" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://byccnafj1niw4" path="res://resources/abilities/blink_ability.gd" id="3_h2yge"]
+[ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://scripts/ability_handler.gd" id="4_1bvp3"]
+
+[sub_resource type="Attribute" id="Attribute_1bvp3"]
+attribute_name = "MaxHealth"
+
+[sub_resource type="Attribute" id="Attribute_lquwl"]
+attribute_name = "Health"
+
+[sub_resource type="AttributeSet" id="AttributeSet_7mycd"]
+attributes = Array[AttributeBase]([SubResource("Attribute_1bvp3"), SubResource("Attribute_lquwl")])
+
+[sub_resource type="Ability" id="Ability_1bvp3"]
+script = ExtResource("3_h2yge")
+metadata/_custom_type_script = "uid://byccnafj1niw4"
+
+[sub_resource type="InputEventKey" id="InputEventKey_1bvp3"]
+device = -1
+keycode = 81
+unicode = 113
+
+[sub_resource type="Shortcut" id="Shortcut_lquwl"]
+events = [SubResource("InputEventKey_1bvp3")]
+
+[node name="Main" type="Node" unique_id=1104556185]
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="." unique_id=1762990586 node_paths=PackedStringArray("aim_sprite")]
+script = ExtResource("1_ig7tw")
+aim_sprite = NodePath("AimSprite")
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D" unique_id=1887963660]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_0xm2m")
+
+[node name="AimSprite" type="Sprite2D" parent="CharacterBody2D" unique_id=422864816]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_0xm2m")
+offset = Vector2(250, 0)
+
+[node name="AttributeContainer" type="AttributeContainer" parent="CharacterBody2D" unique_id=351445513]
+attribute_set = SubResource("AttributeSet_7mycd")
+
+[node name="AbilityContainer" type="AbilityContainer" parent="CharacterBody2D" unique_id=147053178]
+abilities = Array[Ability]([SubResource("Ability_1bvp3")])
+
+[node name="AbilityHandler" type="Node" parent="CharacterBody2D" unique_id=1618112438 node_paths=PackedStringArray("ability_container")]
+script = ExtResource("4_1bvp3")
+ability_container = NodePath("../AbilityContainer")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=103438039]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer" unique_id=877734291]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="BlinkButton" type="Button" parent="CanvasLayer/HBoxContainer" unique_id=1528499897]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+shortcut = SubResource("Shortcut_lquwl")
+text = "Blink"
+
+[connection signal="pressed" from="CanvasLayer/HBoxContainer/BlinkButton" to="CharacterBody2D/AbilityHandler" method="_on_blink_button_pressed"]
