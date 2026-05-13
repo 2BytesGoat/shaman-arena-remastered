@@ -2,7 +2,10 @@ class_name BlinkAbility extends Ability
 
 const ABILITY_NAME := "BlinkAbility"
 var MAX_DISTANCE = 300
-var COOLDOWN = 1.5
+var COOLDOWN = 10
+
+#signal cooldown_started
+#signal ability_ended
 
 
 func _init(_ability_name = ABILITY_NAME):

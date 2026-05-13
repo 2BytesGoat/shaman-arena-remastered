@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://b3stugs7p45dt" path="res://icon.svg" id="2_0xm2m"]
 [ext_resource type="Script" uid="uid://byccnafj1niw4" path="res://resources/abilities/blink_ability.gd" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://scripts/ability_handler.gd" id="4_1bvp3"]
+[ext_resource type="Script" uid="uid://btej2uycb0v5i" path="res://resources/ui/ability_button.gd" id="5_lquwl"]
 
 [sub_resource type="Attribute" id="Attribute_1bvp3"]
 attribute_name = "MaxHealth"
@@ -26,6 +27,13 @@ unicode = 113
 [sub_resource type="Shortcut" id="Shortcut_lquwl"]
 events = [SubResource("InputEventKey_1bvp3")]
 
+[sub_resource type="Gradient" id="Gradient_1bvp3"]
+offsets = PackedFloat32Array(1)
+colors = PackedColorArray(1, 1, 1, 0.19607843)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_lquwl"]
+gradient = SubResource("Gradient_1bvp3")
+
 [node name="Main" type="Node" unique_id=1104556185]
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="." unique_id=1762990586 node_paths=PackedStringArray("aim_sprite")]
@@ -47,9 +55,10 @@ attribute_set = SubResource("AttributeSet_7mycd")
 [node name="AbilityContainer" type="AbilityContainer" parent="CharacterBody2D" unique_id=147053178]
 abilities = Array[Ability]([SubResource("Ability_1bvp3")])
 
-[node name="AbilityHandler" type="Node" parent="CharacterBody2D" unique_id=1618112438 node_paths=PackedStringArray("ability_container")]
+[node name="AbilityHandler" type="Node" parent="CharacterBody2D" unique_id=1618112438 node_paths=PackedStringArray("ability_container", "button_container")]
 script = ExtResource("4_1bvp3")
 ability_container = NodePath("../AbilityContainer")
+button_container = NodePath("../../CanvasLayer/HBoxContainer")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=103438039]
 
@@ -61,11 +70,35 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="BlinkButton" type="Button" parent="CanvasLayer/HBoxContainer" unique_id=1528499897]
+[node name="AbilityButton" type="Button" parent="CanvasLayer/HBoxContainer" unique_id=1528499897 node_paths=PackedStringArray("timer", "progress_bar")]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
 shortcut = SubResource("Shortcut_lquwl")
 text = "Blink"
+script = ExtResource("5_lquwl")
+timer = NodePath("Timer")
+progress_bar = NodePath("ProgressBar")
 
-[connection signal="pressed" from="CanvasLayer/HBoxContainer/BlinkButton" to="CharacterBody2D/AbilityHandler" method="_on_blink_button_pressed"]
+[node name="ProgressBar" type="TextureProgressBar" parent="CanvasLayer/HBoxContainer/AbilityButton" unique_id=1962386283]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+max_value = 1.0
+step = 0.01
+fill_mode = 5
+nine_patch_stretch = true
+texture_progress = SubResource("GradientTexture1D_lquwl")
+
+[node name="Timer" type="Timer" parent="CanvasLayer/HBoxContainer/AbilityButton" unique_id=1761179771]
+wait_time = 0.05
+one_shot = true
+
+[connection signal="cooldown_end" from="CharacterBody2D/AbilityContainer" to="CharacterBody2D/AbilityHandler" method="_on_ability_container_cooldown_end"]
+[connection signal="cooldown_start" from="CharacterBody2D/AbilityContainer" to="CharacterBody2D/AbilityHandler" method="_on_ability_container_cooldown_start"]
+[connection signal="timeout" from="CanvasLayer/HBoxContainer/AbilityButton/Timer" to="CanvasLayer/HBoxContainer/AbilityButton" method="_on_timer_timeout"]
