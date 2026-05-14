@@ -17,12 +17,6 @@ func _physics_process(delta: float) -> void:
 	var y_direction := Input.get_axis("ui_up", "ui_down")
 	move_direction = Vector2(x_direction, y_direction).normalized()
 	
-	if move_direction:
-		velocity = move_direction * SPEED
-	else:
-		velocity = velocity.move_toward(Vector2.ZERO, FRICTION * delta)
-
-	move_and_slide()
 	update_cast_angle()
 	update_facing_direction(delta)
 

@@ -29,3 +29,11 @@ func _on_ability_container_ability_ended(ability: Ability) -> void:
 	var abutton = ability_button_mapping[ability.ability_name]
 	abutton.stop_cooldown()
 	abutton.button.disabled = false
+
+
+func _on_button_button_down() -> void:
+	print('here')
+
+
+func _on_button_button_up() -> void:
+	print('here')

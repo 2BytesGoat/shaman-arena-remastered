@@ -8,6 +8,7 @@ func _init():
 	MAX_DISTANCE = 300
 	DURATION = 0
 	COOLDOWN = 5
+	TYPE = ABILITY_TYPES.OFFENSIVE
 
 
 func cast_spell(ability_container):
