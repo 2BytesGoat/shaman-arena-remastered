@@ -1,7 +1,8 @@
-class_name AbilityButton extends Button
+class_name AbilityButton extends Panel
 
-@export var timer: Timer
+@export var button: Button
 @export var progress_bar: TextureProgressBar
+@export var timer: Timer
 
 var is_on_cooldown := false
 var time_emplased  := 0.0
@@ -10,14 +11,14 @@ var tracked_ability: Ability = null
 
 func start_cooldown(ability: Ability) -> void:
 	is_on_cooldown  = true
-	time_emplased   = 1.0
+	time_emplased   = 0.0
 	tracked_ability = ability
 	timer.start()
 
 
 func update_cooldown() -> void:
 	var progress = time_emplased / tracked_ability.COOLDOWN
-	progress_bar.value = 1 - progress
+	progress_bar.value = abs(1 - progress)
 
 
 func stop_cooldown() -> void:
