@@ -90,7 +90,6 @@ grow_vertical = 2
 mouse_filter = 2
 max_value = 1.0
 step = 0.01
-value = 1.0
 fill_mode = 5
 nine_patch_stretch = true
 texture_progress = SubResource("GradientTexture1D_lquwl")
