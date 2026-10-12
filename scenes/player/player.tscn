@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bawlnukkfmpbd" path="res://scenes/player/player.gd" id="1_je7p5"]
 [ext_resource type="Texture2D" uid="uid://b3stugs7p45dt" path="res://icon.svg" id="2_fm80t"]
-[ext_resource type="Script" path="res://scripts/states/state_machine.gd" id="3_gx1jg"]
+[ext_resource type="Script" uid="uid://td15gffk6sym" path="res://scripts/states/state_machine.gd" id="3_gx1jg"]
 [ext_resource type="Script" uid="uid://df82k7klapx0m" path="res://scenes/player/states/idle_state.gd" id="4_ugbui"]
 [ext_resource type="Script" uid="uid://0o8fgeehpie5" path="res://scenes/player/states/move_state.gd" id="5_fcs02"]
 [ext_resource type="Script" uid="uid://b2fqq2enwdwf4" path="res://scenes/player/states/chanel_state.gd" id="6_myrg7"]
@@ -83,19 +83,26 @@ abilities = Array[Ability]([SubResource("Ability_lquwl")])
 [node name="AbilityHandler" type="Node" parent="." unique_id=1068326256 node_paths=PackedStringArray("ability_container", "button_container")]
 script = ExtResource("11_3j4b4")
 ability_container = NodePath("../AbilityContainer")
-button_container = NodePath("../CanvasLayer/HBoxContainer")
+button_container = NodePath("../CanvasLayer/MarginContainer/HBoxContainer")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=322692061]
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer" unique_id=530715006]
-anchors_preset = 2
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer" unique_id=2083898018]
+anchors_preset = 12
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = -64.0
-offset_right = 64.0
+grow_horizontal = 2
 grow_vertical = 0
+theme_override_constants/margin_left = 45
 
-[node name="AbilityButton" type="Panel" parent="CanvasLayer/HBoxContainer" unique_id=432857239 node_paths=PackedStringArray("button", "progress_bar", "timer")]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MarginContainer" unique_id=530715006]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 8
+
+[node name="AbilityButton" type="Panel" parent="CanvasLayer/MarginContainer/HBoxContainer" unique_id=432857239 node_paths=PackedStringArray("button", "progress_bar", "timer")]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 script = ExtResource("12_fm80t")
@@ -103,7 +110,7 @@ button = NodePath("Button")
 progress_bar = NodePath("ProgressBar")
 timer = NodePath("Timer")
 
-[node name="ProgressBar" type="TextureProgressBar" parent="CanvasLayer/HBoxContainer/AbilityButton" unique_id=1024330355]
+[node name="ProgressBar" type="TextureProgressBar" parent="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" unique_id=1024330355]
 z_index = 1
 layout_mode = 1
 anchors_preset = 15
@@ -118,7 +125,7 @@ fill_mode = 5
 nine_patch_stretch = true
 texture_progress = SubResource("GradientTexture1D_gx1jg")
 
-[node name="Button" type="Button" parent="CanvasLayer/HBoxContainer/AbilityButton" unique_id=2026746192]
+[node name="Button" type="Button" parent="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" unique_id=2026746192]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -131,10 +138,10 @@ action_mode = 0
 shortcut = SubResource("Shortcut_ugbui")
 text = "Blink"
 
-[node name="Timer" type="Timer" parent="CanvasLayer/HBoxContainer/AbilityButton" unique_id=63870209]
+[node name="Timer" type="Timer" parent="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" unique_id=63870209]
 wait_time = 0.05
 one_shot = true
 
 [connection signal="ability_ended" from="AbilityContainer" to="AbilityHandler" method="_on_ability_container_ability_ended"]
 [connection signal="cooldown_start" from="AbilityContainer" to="AbilityHandler" method="_on_ability_container_cooldown_start"]
-[connection signal="timeout" from="CanvasLayer/HBoxContainer/AbilityButton/Timer" to="CanvasLayer/HBoxContainer/AbilityButton" method="_on_timer_timeout"]
+[connection signal="timeout" from="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton/Timer" to="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" method="_on_timer_timeout"]
