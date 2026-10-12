@@ -5,8 +5,8 @@ compatibility_minimum = "4.4"
 
 [libraries]
 
-macos.debug = "macos/macos.framework/godot-gameplay-abilities.macos.template_debug.framework"
-macos.release = "macos/macos.framework/godot-gameplay-abilities.macos.template_release.framework"
+macos.debug = "macos/macos.framework/libgodot-gameplay-abilities.macos.template_debug"
+macos.release = "macos/macos.framework/libgodot-gameplay-abilities.macos.template_release"
 ios.debug = "ios/ios.framework/godot-gameplay-abilities.ios.template_debug.framework"
 ios.release = "ios/ios.framework/godot-gameplay-abilities.ios.template_release.framework"
 windows.debug.x86_32 = "windows/godot-gameplay-abilities.windows.template_debug.x86_32.dll"
