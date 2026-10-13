@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://cw7bhxo1jvn8m"]
+
+[ext_resource type="Script" uid="uid://67dgm4ogfkax" path="res://src/abilities/fireball_scene.gd" id="1_jih7i"]
+[ext_resource type="Texture2D" uid="uid://b3stugs7p45dt" path="res://icon.svg" id="2_x8mt2"]
+
+[node name="Fireball" type="Area2D" unique_id=1264460854]
+script = ExtResource("1_jih7i")
+MAX_SPEED = 450.0
+DAMAGE = 100.0
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=699413029]
+self_modulate = Color(2.2706914, 1.1243937, 0, 1)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_x8mt2")

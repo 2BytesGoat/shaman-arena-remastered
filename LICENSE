@@ -1,16 +1,16 @@
-MIT License
+Copyright (c) 2026 2BytesGoat and NycoIsDreaming. All rights reserved.
 
-Copyright (c) 2021 Paolo Roth
+Shaman Arena Remastered — source code, scenes, assets and documentation — is
+the exclusive property of the copyright holders.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+No part of this project may be copied, reproduced, modified, distributed,
+published, sublicensed, or used in any other project, commercial or
+noncommercial, without prior written permission from the copyright holders.
+Third-party components remain under their own licenses (see THIRD_PARTY.md).
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+You are welcome to read this project and learn from it. Ideas and techniques
+are not restricted by copyright, but this is not permission to copy any code,
+art, audio or other assets into your own work.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

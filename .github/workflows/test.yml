@@ -18,13 +18,14 @@ jobs:
           download-gdextension-templates: false
 
       - name: Run gdUnit4 tests
+        working-directory: godot
         run: |
           godot --headless --import .
-          godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd -a tests -c --ignoreHeadlessMode
+          godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd -a tests -c --ignoreHeadlessMode -rd tests/reports
 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gdunit4-reports
-          path: reports
+          path: godot/tests/reports

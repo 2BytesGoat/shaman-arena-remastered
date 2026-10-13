@@ -1,0 +1,32 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "godot": {
+      "type": "local",
+      "command": ["/var/home/giani/.nvm/versions/node/v24.19.0/bin/node", "/var/home/giani/Documents/machine_learning/mcps/godot-mcp/build/index.js"],
+      "environment": {
+        "GODOT_PATH": "/var/home/giani/.local/share/Steam/steamapps/common/Godot Engine/godot.x11.opt.tools.64"
+      }
+    },
+    "godot-docs": {
+      "type": "local",
+      "command": ["/var/home/giani/.nvm/versions/node/v24.19.0/bin/node", "/var/home/giani/Documents/machine_learning/mcps/godot-docs-mcp/node_modules/@nuskey8/godot-docs-mcp/esm/index.js"]
+    },
+    "godotsteam-docs": {
+      "type": "local",
+      "command": ["/var/home/giani/.nvm/versions/node/v24.19.0/bin/node", "/var/home/giani/Documents/machine_learning/mcps/godotsteam-docs-mcp/src/index.js"]
+    },
+    "steamworks-docs": {
+      "type": "local",
+      "command": ["/var/home/giani/.nvm/versions/node/v24.19.0/bin/node", "/var/home/giani/Documents/machine_learning/mcps/steamworks-docs-mcp/src/index.js"]
+    },
+    "htmag-docs": {
+      "type": "local",
+      "command": ["/var/home/giani/.nvm/versions/node/v24.19.0/bin/node", "/var/home/giani/Documents/machine_learning/mcps/htmag-docs-mcp/src/index.js"]
+    },
+    "theory-of-fun": {
+      "type": "local",
+      "command": ["/var/home/giani/.nvm/versions/node/v24.19.0/bin/node", "/var/home/giani/Documents/machine_learning/mcps/theory-of-fun-docs-mcp/src/index.js"]
+    }
+  }
+}

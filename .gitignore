@@ -1,4 +1,7 @@
 # Godot 4+ specific ignores
-.godot/
-/android/
-reports/
+godot/.godot/
+godot/android/
+godot/reports/*
+!godot/reports/.gdignore
+godot/tests/reports/*
+!godot/tests/reports/.gdignore

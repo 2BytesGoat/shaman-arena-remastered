@@ -1,0 +1,147 @@
+[gd_scene format=3 uid="uid://blew3m0ysy1j4"]
+
+[ext_resource type="Script" uid="uid://bawlnukkfmpbd" path="res://src/player/player.gd" id="1_je7p5"]
+[ext_resource type="Texture2D" uid="uid://b3stugs7p45dt" path="res://icon.svg" id="2_fm80t"]
+[ext_resource type="Script" uid="uid://td15gffk6sym" path="res://src/player/states/state_machine.gd" id="3_gx1jg"]
+[ext_resource type="Script" uid="uid://df82k7klapx0m" path="res://src/player/states/idle_state.gd" id="4_ugbui"]
+[ext_resource type="Script" uid="uid://0o8fgeehpie5" path="res://src/player/states/move_state.gd" id="5_fcs02"]
+[ext_resource type="Script" uid="uid://b2fqq2enwdwf4" path="res://src/player/states/channel_state.gd" id="6_myrg7"]
+[ext_resource type="Script" uid="uid://cnj0fwdl1gxlr" path="res://src/player/states/cast_state.gd" id="7_kvlxm"]
+[ext_resource type="Script" uid="uid://b2wkroel3f8ry" path="res://src/player/states/damaged_state.gd" id="8_uf5tr"]
+[ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="9_lgqa7"]
+[ext_resource type="Script" uid="uid://byccnafj1niw4" path="res://src/abilities/blink_ability.gd" id="10_8ydkj"]
+[ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="11_3j4b4"]
+[ext_resource type="Script" uid="uid://btej2uycb0v5i" path="res://src/ui/ability_button.gd" id="12_fm80t"]
+
+[sub_resource type="Attribute" id="Attribute_1bvp3"]
+attribute_name = "MaxHealth"
+
+[sub_resource type="Attribute" id="Attribute_lquwl"]
+attribute_name = "Health"
+
+[sub_resource type="AttributeSet" id="AttributeSet_7mycd"]
+attributes = Array[AttributeBase]([SubResource("Attribute_1bvp3"), SubResource("Attribute_lquwl")])
+
+[sub_resource type="Ability" id="Ability_lquwl"]
+script = ExtResource("10_8ydkj")
+metadata/_custom_type_script = "uid://byccnafj1niw4"
+
+[sub_resource type="Gradient" id="Gradient_1bvp3"]
+offsets = PackedFloat32Array(1)
+colors = PackedColorArray(1, 1, 1, 0.19607843)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_gx1jg"]
+gradient = SubResource("Gradient_1bvp3")
+
+[sub_resource type="InputEventAction" id="InputEventAction_fm80t"]
+action = &"player_1_spell_1"
+
+[sub_resource type="Shortcut" id="Shortcut_ugbui"]
+events = [SubResource("InputEventAction_fm80t")]
+
+[node name="Player" type="CharacterBody2D" unique_id=1035538394 node_paths=PackedStringArray("aim_sprite")]
+script = ExtResource("1_je7p5")
+aim_sprite = NodePath("AimSprite")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1648242198]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_fm80t")
+
+[node name="AimSprite" type="Sprite2D" parent="." unique_id=1293440404]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_fm80t")
+offset = Vector2(250, 0)
+
+[node name="StateMachine" type="Node" parent="." unique_id=1570122360]
+script = ExtResource("3_gx1jg")
+initial_state = NodePath("Idle")
+
+[node name="Idle" type="Node" parent="StateMachine" unique_id=123854286]
+script = ExtResource("4_ugbui")
+
+[node name="Move" type="Node" parent="StateMachine" unique_id=1091510991]
+script = ExtResource("5_fcs02")
+
+[node name="Channel" type="Node" parent="StateMachine" unique_id=1045069090]
+script = ExtResource("6_myrg7")
+
+[node name="Cast" type="Node" parent="StateMachine" unique_id=636226227]
+script = ExtResource("7_kvlxm")
+
+[node name="Damaged" type="Node" parent="StateMachine" unique_id=592541627]
+script = ExtResource("8_uf5tr")
+
+[node name="Dead" type="Node" parent="StateMachine" unique_id=1445330843]
+script = ExtResource("9_lgqa7")
+
+[node name="AttributeContainer" type="AttributeContainer" parent="." unique_id=1839047403]
+attribute_set = SubResource("AttributeSet_7mycd")
+
+[node name="AbilityContainer" type="AbilityContainer" parent="." unique_id=2103947427]
+abilities = Array[Ability]([SubResource("Ability_lquwl")])
+
+[node name="AbilityHandler" type="Node" parent="." unique_id=1068326256 node_paths=PackedStringArray("ability_container", "button_container")]
+script = ExtResource("11_3j4b4")
+ability_container = NodePath("../AbilityContainer")
+button_container = NodePath("../CanvasLayer/MarginContainer/HBoxContainer")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=322692061]
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer" unique_id=2083898018]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 45
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MarginContainer" unique_id=530715006]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 8
+
+[node name="AbilityButton" type="Panel" parent="CanvasLayer/MarginContainer/HBoxContainer" unique_id=432857239 node_paths=PackedStringArray("button", "progress_bar", "timer")]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+script = ExtResource("12_fm80t")
+button = NodePath("Button")
+progress_bar = NodePath("ProgressBar")
+timer = NodePath("Timer")
+
+[node name="ProgressBar" type="TextureProgressBar" parent="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" unique_id=1024330355]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+max_value = 1.0
+step = 0.01
+fill_mode = 5
+nine_patch_stretch = true
+texture_progress = SubResource("GradientTexture1D_gx1jg")
+
+[node name="Button" type="Button" parent="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" unique_id=2026746192]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+action_mode = 0
+shortcut = SubResource("Shortcut_ugbui")
+text = "Blink"
+
+[node name="Timer" type="Timer" parent="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" unique_id=63870209]
+wait_time = 0.05
+one_shot = true
+
+[connection signal="ability_ended" from="AbilityContainer" to="AbilityHandler" method="_on_ability_container_ability_ended"]
+[connection signal="cooldown_start" from="AbilityContainer" to="AbilityHandler" method="_on_ability_container_cooldown_start"]
+[connection signal="timeout" from="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton/Timer" to="CanvasLayer/MarginContainer/HBoxContainer/AbilityButton" method="_on_timer_timeout"]
