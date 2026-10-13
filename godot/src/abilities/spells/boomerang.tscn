@@ -1,0 +1,56 @@
+[gd_scene format=3 uid="uid://dmjr2i4ngq6qd"]
+
+[ext_resource type="PackedScene" uid="uid://bn4627jhgsbhs" path="res://src/abilities/spells/spell_scene.tscn" id="1_7lddk"]
+[ext_resource type="Texture2D" uid="uid://bbqil6hg0jiyy" path="res://assets/UI/icons/83.png" id="3_kuxcr"]
+[ext_resource type="PackedScene" uid="uid://cahfkxro1w3hb" path="res://src/abilities/effects/boomerang_effect.tscn" id="4_8xitn"]
+[ext_resource type="Curve" uid="uid://cu2kufqy5e0if" path="res://src/resources/abilities/boomerang_speed_curve.tres" id="5_6m41q"]
+[ext_resource type="Texture2D" uid="uid://1ksjjsseujmj" path="res://assets/spells/boomerang.png" id="6_edy8q"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kuxcr"]
+atlas = ExtResource("6_edy8q")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8xitn"]
+atlas = ExtResource("6_edy8q")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_1et73"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kuxcr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8xitn")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_q1dmq"]
+radius = 14.0
+
+[node name="Boomerang" unique_id=1366827963 instance=ExtResource("1_7lddk")]
+collision_layer = 16
+collision_mask = 95
+MAX_SPEED = 350.0
+KNOCKBACK = 0.0
+DAMAGE = 7.0
+on_hit_effect = ExtResource("4_8xitn")
+velocity_curve = ExtResource("5_6m41q")
+
+[node name="Sprite2D" parent="." index="0" unique_id=64191743]
+scale = Vector2(1.25, 1.25)
+sprite_frames = SubResource("SpriteFrames_1et73")
+frame_progress = 0.98407555
+speed_scale = 2.0
+
+[node name="CollisionShape2D" parent="." index="1" unique_id=1914504540]
+shape = SubResource("CircleShape2D_q1dmq")
+
+[node name="Timer" parent="." index="2" unique_id=260913630]
+wait_time = 4.0
+
+[connection signal="area_entered" from="." to="." method="_on_area_entered"]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://bcxa0gvukj07t"]
+
+[ext_resource type="PackedScene" uid="uid://b4dkelw4yawg4" path="res://src/abilities/effects/effect.tscn" id="1_n4rvj"]
+[ext_resource type="Texture2D" uid="uid://b04ur8ds32sfq" path="res://assets/effects/Free Smoke Fx  Pixel 05.png" id="2_hd3tq"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ateim"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(0, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dsys5"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(64, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idt1o"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(128, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pbvai"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(192, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s351m"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(256, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vemfb"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(320, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2ilcu"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(384, 576, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ktxn0"]
+atlas = ExtResource("2_hd3tq")
+region = Rect2(448, 576, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jqrf3"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ateim")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dsys5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_idt1o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pbvai")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s351m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vemfb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2ilcu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ktxn0")
+}],
+"loop": false,
+"name": &"default",
+"speed": 10.0
+}]
+
+[node name="PushEffect" unique_id=1538342731 instance=ExtResource("1_n4rvj")]
+
+[node name="ExplosionEffect" parent="." index="1" unique_id=174993004]
+position = Vector2(0, -24)
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_jqrf3")
+frame = 7
+frame_progress = 1.0

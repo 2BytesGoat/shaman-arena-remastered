@@ -1,34 +1,35 @@
 class_name AbilityButton extends Panel
 
-@export var button: Button
+@export var icon_rect: TextureRect
 @export var progress_bar: TextureProgressBar
-@export var timer: Timer
 
-var is_on_cooldown := false
-var time_emplased  := 0.0
-var tracked_ability: Ability = null
+var _cooldown_total := 0.0
+var _cooldown_elapsed := 0.0
 
 
-func start_cooldown(ability: Ability) -> void:
-	is_on_cooldown  = true
-	time_emplased   = 0.0
-	tracked_ability = ability
-	timer.start()
+func _ready() -> void:
+	progress_bar.value = 0.0
+	set_process(false)
 
 
-func update_cooldown() -> void:
-	var progress = time_emplased / tracked_ability.COOLDOWN
-	progress_bar.value = abs(1 - progress)
+func setup(ability: Ability) -> void:
+	if ability is BaseAbility:
+		icon_rect.texture = (ability as BaseAbility).ICON
+
+
+func start_cooldown(runtime_ability: RuntimeAbility) -> void:
+	_cooldown_total = maxf(runtime_ability.get_cooldown(), 0.001)
+	_cooldown_elapsed = 0.0
+	progress_bar.value = 1.0
+	set_process(true)
 
 
 func stop_cooldown() -> void:
-	is_on_cooldown     = false
+	_cooldown_elapsed = 0.0
 	progress_bar.value = 0.0
-	timer.stop()
+	set_process(false)
 
 
-func _on_timer_timeout() -> void:
-	if is_on_cooldown:
-		time_emplased += timer.wait_time
-		update_cooldown()
-		timer.start()
+func _process(delta: float) -> void:
+	_cooldown_elapsed += delta
+	progress_bar.value = clampf(1.0 - _cooldown_elapsed / _cooldown_total, 0.0, 1.0)

@@ -1,0 +1,58 @@
+[gd_scene format=3 uid="uid://dv2x1pif3o6kr"]
+
+[ext_resource type="PackedScene" uid="uid://b4dkelw4yawg4" path="res://src/abilities/effects/effect.tscn" id="1_1emba"]
+[ext_resource type="Texture2D" uid="uid://dam7sku3walwx" path="res://assets/effects/fireballHit.webp" id="2_0rpqo"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_y2kby"]
+blend_mode = 2
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k6p1u"]
+atlas = ExtResource("2_0rpqo")
+region = Rect2(192, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f0pw8"]
+atlas = ExtResource("2_0rpqo")
+region = Rect2(288, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j0pkj"]
+atlas = ExtResource("2_0rpqo")
+region = Rect2(384, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_shsxu"]
+atlas = ExtResource("2_0rpqo")
+region = Rect2(480, 0, 96, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bbm8i"]
+atlas = ExtResource("2_0rpqo")
+region = Rect2(576, 0, 96, 96)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_52shv"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k6p1u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f0pw8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j0pkj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_shsxu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bbm8i")
+}],
+"loop": false,
+"name": &"default",
+"speed": 10.0
+}]
+
+[node name="ExplosionEffect" unique_id=1538342731 instance=ExtResource("1_1emba")]
+
+[node name="CollisionShape2D" parent="." index="0" unique_id=770100362]
+
+[node name="ExplosionEffect" parent="." index="1" unique_id=174993004]
+material = SubResource("CanvasItemMaterial_y2kby")
+sprite_frames = SubResource("SpriteFrames_52shv")

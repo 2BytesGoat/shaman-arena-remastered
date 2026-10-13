@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://bn4627jhgsbhs"]
+
+[ext_resource type="Script" path="res://src/abilities/spells/spell_scene.gd" id="1_3harv"]
+
+[node name="Spell" type="Area2D" unique_id=1366827963 groups=["Spell"]]
+collision_layer = 0
+collision_mask = 15
+script = ExtResource("1_3harv")
+
+[node name="Sprite2D" type="AnimatedSprite2D" parent="." unique_id=64191743]
+scale = Vector2(0.8, 0.8)
+autoplay = "default"
+speed_scale = 0.725
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1914504540]
+
+[node name="Timer" type="Timer" parent="." unique_id=260913630]
+autostart = true

@@ -1,30 +1,32 @@
 [gd_scene format=3 uid="uid://b0jk2wy8itldm"]
 
-[ext_resource type="Script" uid="uid://btej2uycb0v5i" path="res://src/ui/ability_button.gd" id="1_4jmtq"]
+[ext_resource type="Script" uid="uid://btej2uycb0v5i" path="res://src/ui/ability_button.gd" id="1_button"]
 
-[sub_resource type="Gradient" id="Gradient_1bvp3"]
+[sub_resource type="Gradient" id="Gradient_fill"]
 offsets = PackedFloat32Array(1)
 colors = PackedColorArray(1, 1, 1, 0.19607843)
 
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_gx1jg"]
-gradient = SubResource("Gradient_1bvp3")
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_fill"]
+gradient = SubResource("Gradient_fill")
 
-[sub_resource type="InputEventKey" id="InputEventKey_1bvp3"]
-device = -1
-keycode = 81
-unicode = 113
-
-[sub_resource type="Shortcut" id="Shortcut_ugbui"]
-events = [SubResource("InputEventKey_1bvp3")]
-
-[node name="AbilityButton" type="Panel" unique_id=499760687 node_paths=PackedStringArray("button", "progress_bar", "timer")]
+[node name="AbilityButton" type="Panel" node_paths=PackedStringArray("icon_rect", "progress_bar")]
 custom_minimum_size = Vector2(64, 64)
-script = ExtResource("1_4jmtq")
-button = NodePath("Button")
+script = ExtResource("1_button")
+icon_rect = NodePath("Icon")
 progress_bar = NodePath("ProgressBar")
-timer = NodePath("Timer")
 
-[node name="ProgressBar" type="TextureProgressBar" parent="." unique_id=1341124987]
+[node name="Icon" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ProgressBar" type="TextureProgressBar" parent="."]
 z_index = 1
 layout_mode = 1
 anchors_preset = 15
@@ -37,22 +39,4 @@ max_value = 1.0
 step = 0.01
 fill_mode = 5
 nine_patch_stretch = true
-texture_progress = SubResource("GradientTexture1D_gx1jg")
-
-[node name="Button" type="Button" parent="." unique_id=433242398]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 0
-size_flags_vertical = 0
-shortcut = SubResource("Shortcut_ugbui")
-text = "Blink"
-
-[node name="Timer" type="Timer" parent="." unique_id=893175293]
-wait_time = 0.05
-one_shot = true
-
-[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
+texture_progress = SubResource("GradientTexture1D_fill")

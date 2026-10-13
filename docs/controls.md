@@ -54,6 +54,9 @@ Deadzone handling: stick input below deadzone → keep **last nonzero direction*
 
 - These exist only for editor testing; the arcade layout (single stick + 8 buttons + start)
   gets defined and mapped when the cabinet spec is finalized.
+- M1 dev loadout: seven abilities are equipped (6 spells + Blink) before the loadout limit
+  exists, so a temporary 7th slot is bound to `7` (P0) / `M` (P1). The 6-spell + 2-consumable
+  limit is enforced by the selection flow in M3.
 
 ## Open items
 

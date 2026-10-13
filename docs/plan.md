@@ -68,29 +68,31 @@ rehearsed successfully on the official 4.7.2 binary, so the final-phase bump is 
 
 ## M1 — Spell logic core + 6 spells → `v0.1.0`
 
-- [ ] `BaseSpell extends Ability` (resources):
+- [x] `BaseAbility extends Ability` (resources live in `src/resources/abilities/`):
       - TYPE enum (OFFENSIVE/DEFENSIVE/UTILITY/SMOKE) → drives cast animation
       - ICON, `CastMode` (INSTANT / AIMED), cast delay → `_get_duration`,
         cooldown → `_get_cooldown` (GGAS native, replaces tween hack in `base_ability_resource.gd`)
-      - `_on_end` spawns the spell scene (or `_on_activate` for instant)
-- [ ] `SpellScene extends Area2D` (ported from POC `spell.gd`):
+      - `AbilityContainer.cooldown_start` spawns the spell scene: it fires at the end of the
+        GGAS duration and synchronously for instant casts (the vendored build calls `_on_end`
+        only after the cooldown, so the signal is the correct hook)
+- [x] `SpellScene extends Area2D` (ported from POC `spell.gd`):
       source Unit, velocity-curve speed, lifespan timer, `on_hit_effect`,
       group ("Spell"/"Explosion") + collision-layer hit detection, source-immunity rule
-- [ ] `AimState`: enter → velocity zeroed; physics tick reads stick → `cast_direction`,
+- [x] `AimState`: enter → velocity zeroed; physics tick reads stick → `cast_direction`,
       aim sprite follows; release → `try_activate`
       Tap flow: press+release < ~150ms → instant/facing cast for INSTANT spells
-- [ ] `Unit.take_hit(source, damage, knockback, impact_dir)` pipeline:
+- [x] `Unit.take_hit(source, damage, knockback, impact_dir)` pipeline:
       DamageBuff (Health↓) → attribute death signal → DeathState.
       Knockback stays FLAT here (Warlock scaling lands in M5.5)
-- [ ] Port spell implementations (POC parity):
-      - [ ] Fireball (curve speed, sprite grow, expiry → explosion effect)
-      - [ ] Boomerang (curve speed out/back)
-      - [ ] Meteor (projectile → MeteorIncoming effect → meteor strike → explosion)
-      - [ ] Smoke (self-cast defensive)
-      - [ ] Teleport (projectile travels, caster blinks to landing point)
-      - [ ] Anivia Wall (static blocker, despawn on expiry/hit)
-- [ ] Effect scenes: Effect base (KNOCKBACK/DAMAGE/source), explosion, push, teleport effect
-- [ ] HUD: per-slot cooldown UI driven by GGAS `cooldown_start`/`cooldown_end`
+- [x] Port spell implementations (POC parity):
+      - [x] Fireball (curve speed, sprite grow, expiry → explosion effect)
+      - [x] Boomerang (curve speed out/back)
+      - [x] Meteor (projectile → MeteorIncoming effect → meteor strike → explosion)
+      - [x] Smoke (self-cast defensive)
+      - [x] Teleport (projectile travels, caster blinks to landing point)
+      - [x] Anivia Wall (static blocker, despawn on expiry/hit)
+- [x] Effect scenes: Effect base (KNOCKBACK/DAMAGE/source), explosion, push, teleport effect
+- [x] HUD: per-slot cooldown UI driven by GGAS `cooldown_start`/`cooldown_end`
       (not clickable, arcade HUD; replaces Timer polling)
 
 **Tests (gdUnit4, logic-first):** attribute damage ops (DamageBuff subtracts Health,

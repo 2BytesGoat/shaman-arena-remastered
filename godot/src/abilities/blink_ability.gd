@@ -1,15 +1,7 @@
-class_name BlinkAbility extends BaseAbilityResource
+class_name BlinkAbility extends BaseAbility
+
+const MAX_DISTANCE := 300.0
 
 
-func _init():
-	ability_name = "BlinkAbility"
-	MAX_DISTANCE = 300
-	DURATION = 0
-	COOLDOWN = 5
-	TYPE = ABILITY_TYPES.UTILITY
-
-
-func cast_spell(ability_container):
-	var unit: Unit = ability_container.get_parent()
-	var dst_point = unit.global_position + unit.cast_direction * MAX_DISTANCE
-	unit.global_position = dst_point
+func cast(unit: Unit, direction: Vector2) -> void:
+	unit.global_position += direction * MAX_DISTANCE

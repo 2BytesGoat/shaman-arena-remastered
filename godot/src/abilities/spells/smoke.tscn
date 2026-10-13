@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://ckwnan2icfl6g"]
+
+[ext_resource type="PackedScene" uid="uid://bn4627jhgsbhs" path="res://src/abilities/spells/spell_scene.tscn" id="1_kh1ol"]
+[ext_resource type="Script" path="res://src/abilities/spells/smoke.gd" id="2_befiw"]
+[ext_resource type="Texture2D" uid="uid://c03kwaxd404mi" path="res://assets/UI/icons/92.png" id="3_q5d82"]
+[ext_resource type="Texture2D" uid="uid://b04ur8ds32sfq" path="res://assets/effects/Free Smoke Fx  Pixel 05.png" id="4_338n3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6oxob"]
+atlas = ExtResource("4_338n3")
+region = Rect2(0, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uugu7"]
+atlas = ExtResource("4_338n3")
+region = Rect2(64, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ja86d"]
+atlas = ExtResource("4_338n3")
+region = Rect2(128, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b14ag"]
+atlas = ExtResource("4_338n3")
+region = Rect2(192, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hv3c1"]
+atlas = ExtResource("4_338n3")
+region = Rect2(256, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wvi18"]
+atlas = ExtResource("4_338n3")
+region = Rect2(320, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kbesn"]
+atlas = ExtResource("4_338n3")
+region = Rect2(384, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8k6ey"]
+atlas = ExtResource("4_338n3")
+region = Rect2(448, 512, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p8l0q"]
+atlas = ExtResource("4_338n3")
+region = Rect2(512, 512, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_6oxob"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6oxob")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uugu7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ja86d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b14ag")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hv3c1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wvi18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kbesn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8k6ey")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p8l0q")
+}],
+"loop": false,
+"name": &"default",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_332s2"]
+radius = 96.0
+
+[node name="Smoke" unique_id=1366827963 instance=ExtResource("1_kh1ol")]
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("2_befiw")
+MAX_SPEED = 0.0
+KNOCKBACK = 200.0
+DAMAGE = 10.0
+
+[node name="Sprite2D" parent="." index="0" unique_id=64191743]
+modulate = Color(0.67058825, 0.8666667, 0.39215687, 1)
+position = Vector2(0, 1.9999999)
+scale = Vector2(3.5, 3.5)
+sprite_frames = SubResource("SpriteFrames_6oxob")
+frame = 3
+frame_progress = 0.71096843
+
+[node name="CollisionShape2D" parent="." index="1" unique_id=1914504540]
+shape = SubResource("CircleShape2D_332s2")
+
+[connection signal="animation_finished" from="Sprite2D" to="." method="_on_sprite_2d_animation_finished"]

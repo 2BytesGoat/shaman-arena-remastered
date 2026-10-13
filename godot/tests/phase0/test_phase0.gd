@@ -17,8 +17,8 @@ func test_ggas_and_gga_classes_are_registered() -> void:
 		assert_bool(ClassDB.class_exists(cls)).is_true()
 
 
-func test_project_version_is_current_phase0_version() -> void:
-	assert_str(str(ProjectSettings.get_setting("application/config/version"))).is_equal("0.0.1")
+func test_project_version_is_current_m1_version() -> void:
+	assert_str(str(ProjectSettings.get_setting("application/config/version"))).is_equal("0.1.0")
 
 
 func test_per_player_actions_exist() -> void:
