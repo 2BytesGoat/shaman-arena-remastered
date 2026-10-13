@@ -132,6 +132,7 @@ cast/hit animations sync; aim sprite rotation smoothing.
 - [ ] Arcade loadout UI: stick-driven focus navigation, pick up to 6 spells into slots,
       2 reserved consumable slots (empty for now)
 - [ ] Selection applies to Unit: `add_ability` + `try_grant` (revoke/replace supported)
+- [ ] Selection flags empower spells that require the Attack pick (grey-out + hint — D-003)
 - [ ] `spells_are_ready` flow → all players ready → match starts (port of POC ready-gate)
 - [ ] HUD spell slots rebuild after selection (icons + cooldowns)
 

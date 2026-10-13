@@ -5,3 +5,7 @@ godot/reports/*
 !godot/reports/.gdignore
 godot/tests/reports/*
 !godot/tests/reports/.gdignore
+
+# Python research scripts
+python/.venv/
+python/cache/

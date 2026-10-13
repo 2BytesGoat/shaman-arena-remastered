@@ -5,7 +5,7 @@ related:
   - "[[plan]]"
   - "[[decisions]]"
   - "[[controls]]"
-search_terms: [spells, abilities, naming, convention, buff, debuff, aura, channel, toggle, projectile, field, wall, effect, health damage, warcraft, league]
+search_terms: [spells, abilities, naming, convention, buff, debuff, aura, channel, toggle, projectile, field, wall, effect, health damage, attack, basic attack, restore, heal, warcraft, league]
 ---
 
 # Spells — Naming & Structure
@@ -19,14 +19,19 @@ Decisions behind this are recorded in [[decisions]] (D-002).
 
 - **Ability** — the castable definition: icon, cast mode, cast delay, cooldown, and the
   spell scene it spawns. A GGAS resource (`BaseAbility` + `*_ability.tres`).
+- **Attack** — a shaman's basic strike. Per-character (melee or ranged, `Instant` or
+  `Aimed` by design), picked in the loadout like any other spell, and the host for
+  on-hit empowerments (D-003).
 - **Spell** — the world object an ability spawns (projectile, field, wall…). Lives in
   `src/abilities/spells/`, base class `SpellScene`.
 - **Effect** — an impact or telegraph scene: visuals first, doubles as a hitbox per
   D-001. Lives in `src/abilities/effects/`, base class `Effect`.
 - **Damage** — an instant health loss. **Not** a buff or debuff; applied via
   `HealthDamage`.
+- **Restore** — an instant health gain, the counterpart of Damage. **Not** a buff or
+  debuff; applied via `HealthRestore`.
 - **Buff / Debuff** — a *lasting* status attached to a unit (WC3/LoL meaning): it helps
-  or hinders. Duration is configuration, never part of the name.
+  or hinders. Duration and stacks are configuration, never part of the name.
 - **Crowd control (CC)** — a debuff that removes control (stun, root, silence…). Still
   named `...Debuff`.
 
@@ -39,7 +44,7 @@ Every spell is a combination of four independent axes:
 | **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` (Instant/Aimed implemented) |
 | **Delivery** | Self, Projectile, Field, Wall, Aura, Beam, Summon | `SpellScene` subclasses |
 | **Impact** | Hit (damage), Explosion, Push, Pull, Chain, None | `Effect` scenes via `HitArea.apply` (D-001) |
-| **Status** | none, Buff, Debuff (any duration: instant is *not* a status) | `AttributeBuff` subclasses in `src/attributes/` |
+| **Status** | none, Buff, Debuff (duration and stacks are configuration; instant is *not* a status) | `AttributeBuff` subclasses in `src/attributes/` |
 
 ## Naming rules
 
@@ -56,9 +61,13 @@ Every spell is a combination of four independent axes:
    its POC name until a second one exists.
 5. **Statuses** — `<What>Buff` / `<What>Debuff` (`FrostArmorBuff`, `SlowDebuff`,
    `BurnDebuff`). Auras share their status (`DevotionAura` → `DevotionAuraBuff`).
-6. **Instant damage** — `HealthDamage`: subtracts Health, nothing else. Never called a
-   buff or debuff.
+6. **Instant effects** — `HealthDamage` subtracts Health, `HealthRestore` adds it;
+   nothing else. Neither is ever called a buff or debuff.
 7. **Initializers aren't statuses** — `InitializeAttributes`.
+8. **Attacks** — a character's basic attack is an ability like any other
+   (`<shaman>_attack_ability.tres`; the scene is named after the strike, e.g.
+   `ArcaneBolt`, `StaffSwing`). Empowering spells are `<What>Buff`s whose stacks are the
+   remaining empowered attacks (D-003).
 
 Current file/class map:
 
@@ -133,6 +142,7 @@ Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 
 ## See also
 
-- [[decisions]] — D-001 attacker-applies hit pipeline, D-002 this vocabulary
+- [[decisions]] — D-001 attacker-applies hit pipeline, D-002 this vocabulary,
+  D-003 basic attack model
 - [[plan]] — M1 spell core, M4 rest of the spells
 - [[controls]] — input model (aim/tap casting)
