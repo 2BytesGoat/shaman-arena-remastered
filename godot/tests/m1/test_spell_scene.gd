@@ -9,7 +9,7 @@ func _make_curve() -> Curve:
 
 
 func test_speed_at_samples_velocity_curve() -> void:
-	var spell: SpellScene = auto_free(SpellScene.new())
+	var spell: ProjectileSpell = auto_free(ProjectileSpell.new())
 	spell.MAX_SPEED = 200.0
 	spell.velocity_curve = _make_curve()
 	assert_float(spell.speed_at(0.0)).is_equal_approx(0.0, 1.0)
@@ -18,7 +18,7 @@ func test_speed_at_samples_velocity_curve() -> void:
 
 
 func test_speed_at_without_curve_returns_max_speed() -> void:
-	var spell: SpellScene = auto_free(SpellScene.new())
+	var spell: ProjectileSpell = auto_free(ProjectileSpell.new())
 	spell.MAX_SPEED = 300.0
 	assert_float(spell.speed_at(0.5)).is_equal(300.0)
 

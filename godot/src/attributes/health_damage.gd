@@ -1,4 +1,4 @@
-class_name DamageBuff extends AttributeBuff
+class_name HealthDamage extends AttributeBuff
 
 @export var damage: float = 1.0
 

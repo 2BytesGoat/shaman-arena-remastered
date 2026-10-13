@@ -31,10 +31,9 @@ var _last_move_direction := Vector2.RIGHT
 
 func _ready() -> void:
 	ability_slots = ability_container.get_initial_abilities()
-	attribute_container.apply_buff(InitializeAttributesBuff.new(max_health))
+	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
 	ability_container.cooldown_start.connect(_on_spell_cooldown_start)
-	$Hurtbox.area_entered.connect(_on_hurtbox_area_entered)
 
 
 func _physics_process(delta: float) -> void:
@@ -89,7 +88,7 @@ func take_hit(source: Unit, damage: float, knockback: float, impact_direction: V
 	if damage <= 0.0 and knockback <= 0.0:
 		return
 	if damage > 0.0:
-		attribute_container.apply_buff(DamageBuff.new(damage))
+		attribute_container.apply_buff(HealthDamage.new(damage))
 		if player_dead:
 			return
 	velocity += impact_direction * knockback
@@ -149,17 +148,6 @@ func _is_spell_windup_active() -> bool:
 func _on_spell_cooldown_start(ability: Ability) -> void:
 	if ability is BaseAbility:
 		(ability as BaseAbility).cast(self, cast_direction)
-
-
-func _on_hurtbox_area_entered(area: Area2D) -> void:
-	if SourceFilter.ignores(self, area):
-		return
-	take_hit(
-		area.get(&"source") as Unit,
-		area.get(&"DAMAGE"),
-		area.get(&"KNOCKBACK"),
-		area.global_position.direction_to(global_position)
-	)
 
 
 func _on_attribute_changed(attribute: Variant, _previous_value: float, new_value: float) -> void:

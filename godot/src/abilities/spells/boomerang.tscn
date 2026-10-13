@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dmjr2i4ngq6qd"]
 
 [ext_resource type="PackedScene" uid="uid://bn4627jhgsbhs" path="res://src/abilities/spells/spell_scene.tscn" id="1_7lddk"]
+[ext_resource type="Script" path="res://src/abilities/spells/projectile_spell.gd" id="2_proj"]
 [ext_resource type="Texture2D" uid="uid://bbqil6hg0jiyy" path="res://assets/UI/icons/83.png" id="3_kuxcr"]
 [ext_resource type="PackedScene" uid="uid://cahfkxro1w3hb" path="res://src/abilities/effects/boomerang_effect.tscn" id="4_8xitn"]
 [ext_resource type="Curve" uid="uid://cu2kufqy5e0if" path="res://src/resources/abilities/boomerang_speed_curve.tres" id="5_6m41q"]
@@ -34,6 +35,7 @@ radius = 14.0
 [node name="Boomerang" unique_id=1366827963 instance=ExtResource("1_7lddk")]
 collision_layer = 16
 collision_mask = 95
+script = ExtResource("2_proj")
 MAX_SPEED = 350.0
 KNOCKBACK = 0.0
 DAMAGE = 7.0

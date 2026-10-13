@@ -8,6 +8,10 @@ Control scheme: see [`docs/controls.md`](controls.md). TL;DR — single stick pe
 press+hold a spell button to aim (shaman locks position), release to cast, quick tap for
 instant spells; max 6 spells + 2 consumables equipped.
 
+Spell naming & structure: see [`docs/spells.md`](spells.md). The vocabulary there
+(Cast/Delivery/Impact/Status, buffs vs debuffs, second-member rule — D-002 in
+[`docs/decisions.md`](decisions.md)) is reserved: reuse it, don't invent synonyms.
+
 ---
 
 ## Process
@@ -69,20 +73,22 @@ rehearsed successfully on the official 4.7.2 binary, so the final-phase bump is 
 ## M1 — Spell logic core + 6 spells → `v0.1.0`
 
 - [x] `BaseAbility extends Ability` (resources live in `src/resources/abilities/`):
-      - TYPE enum (OFFENSIVE/DEFENSIVE/UTILITY/SMOKE) → drives cast animation
+      - TYPE enum (OFFENSIVE/DEFENSIVE/UTILITY) → drives cast animation
       - ICON, `CastMode` (INSTANT / AIMED), cast delay → `_get_duration`,
         cooldown → `_get_cooldown` (GGAS native, replaces tween hack in `base_ability_resource.gd`)
       - `AbilityContainer.cooldown_start` spawns the spell scene: it fires at the end of the
         GGAS duration and synchronously for instant casts (the vendored build calls `_on_end`
         only after the cooldown, so the signal is the correct hook)
-- [x] `SpellScene extends Area2D` (ported from POC `spell.gd`):
-      source Unit, velocity-curve speed, lifespan timer, `on_hit_effect`,
-      group ("Spell"/"Explosion") + collision-layer hit detection, source-immunity rule
+- [x] `SpellScene extends Area2D` (shared: source Unit, lifespan timer, `on_hit_effect`,
+      group ("Spell"/"Explosion"), source-immunity rule; hit application is attacker-side —
+      D-001) with `ProjectileSpell` adding the velocity-curve movement (Fireball,
+      Boomerang, Meteor, Teleport); naming/structure per `docs/spells.md` (D-002)
 - [x] `AimState`: enter → velocity zeroed; physics tick reads stick → `cast_direction`,
       aim sprite follows; release → `try_activate`
       Tap flow: press+release < ~150ms → instant/facing cast for INSTANT spells
 - [x] `Unit.take_hit(source, damage, knockback, impact_dir)` pipeline:
-      DamageBuff (Health↓) → attribute death signal → DeathState.
+      HealthDamage (Health↓) → attribute death signal → DeathState.
+      Called by the attacking area (D-001); victim owns health/knockback only.
       Knockback stays FLAT here (Warlock scaling lands in M5.5)
 - [x] Port spell implementations (POC parity):
       - [x] Fireball (curve speed, sprite grow, expiry → explosion effect)
@@ -91,13 +97,15 @@ rehearsed successfully on the official 4.7.2 binary, so the final-phase bump is 
       - [x] Smoke (self-cast defensive)
       - [x] Teleport (projectile travels, caster blinks to landing point)
       - [x] Anivia Wall (static blocker, despawn on expiry/hit)
-- [x] Effect scenes: Effect base (KNOCKBACK/DAMAGE/source), explosion, push, teleport effect
+- [x] Effect scenes: Effect base (KNOCKBACK/DAMAGE/source, applies hits itself — D-001),
+      explosion, push, teleport effect
 - [x] HUD: per-slot cooldown UI driven by GGAS `cooldown_start`/`cooldown_end`
       (not clickable, arcade HUD; replaces Timer polling)
 
-**Tests (gdUnit4, logic-first):** attribute damage ops (DamageBuff subtracts Health,
-death signal on zero), GGAS cooldown/duration lifecycle on a test ability, SpellScene
-curve-speed math at t=0.5/1.0, source-immunity predicate, tap-hold threshold decision.
+**Tests (gdUnit4, logic-first):** attribute damage ops (HealthDamage subtracts Health,
+death signal on zero), GGAS cooldown/duration lifecycle on a test ability, ProjectileSpell
+curve-speed math at t=0.5/1.0, source-immunity predicate, hit application (damage +
+knockback + self-ignore), tap-hold threshold decision.
 **Verify (manual):** tap-cast Blink uses facing; hold-aim locks movement; cooldown HUD
 ticks down; each of the 6 spells behaves like POC.
 
@@ -146,8 +154,8 @@ versa. **Verify (manual):** each spell slot populated by a selection run (8 slot
 
 - [ ] Port `tilemap_arena.gd`: circular map mask, shrink timer, redraw only removed ring,
       edge tiles → animated lava (MagmaTileAnimation assets)
-- [ ] Lava group → `Unit` DoT: transient DamageBuff ticks while standing on lava
-      (replaces POC `dot` float)
+- [ ] Lava group → `Unit` DoT: a timed debuff ticking `HealthDamage` while standing on
+      lava (see `docs/spells.md`; replaces POC `dot` float)
 - [ ] Match flow closure: lava death / eliminations → win screen ("Player X took a big L"),
       restart button, menu/title scene port
 - [ ] Dynamic match camera: midpoint follow + zoom-to-fit with safe margins
@@ -208,4 +216,5 @@ Runs after all gameplay milestones (M1–M5.5); dev floor until then is 4.6.3.
 - gdUnit4 pinned to v6.2.x (covers 4.6–4.7.1); SceneRunner-style tests can be flaky —
   logic-first tests only, visuals stay on the manual checklists
 - POC parity vs new pipelines: flat knockback until M5.5 by design — don't "fix" early
+  (hit application ownership is the one exception made in M1 — see D-001)
 - CI minutes: public repo = unlimited standard minutes; keep headless runs lean (~2–3 min)

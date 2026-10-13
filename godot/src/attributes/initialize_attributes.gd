@@ -1,4 +1,4 @@
-class_name InitializeAttributesBuff extends AttributeBuff
+class_name InitializeAttributes extends AttributeBuff
 
 @export var max_health: float = 10.0
 

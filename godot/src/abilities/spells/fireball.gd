@@ -1,4 +1,4 @@
-class_name Fireball extends SpellScene
+class_name Fireball extends ProjectileSpell
 
 
 func _on_move(time: float) -> void:

@@ -3,8 +3,7 @@ class_name BaseAbility extends Ability
 enum SpellType {
 	OFFENSIVE,
 	DEFENSIVE,
-	UTILITY,
-	SMOKE
+	UTILITY
 }
 
 enum CastMode {

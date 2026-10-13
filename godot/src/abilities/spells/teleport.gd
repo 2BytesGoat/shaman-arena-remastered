@@ -1,4 +1,4 @@
-class_name Teleport extends SpellScene
+class_name Teleport extends ProjectileSpell
 
 
 func _exit_tree() -> void:

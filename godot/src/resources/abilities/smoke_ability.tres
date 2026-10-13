@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 ability_name = &"Smoke"
 ICON = ExtResource("3_icon")
-TYPE = 3
+TYPE = 1
 CAST_MODE = 1
 CAST_DELAY = 1.2
 COOLDOWN = 5.0
