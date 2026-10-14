@@ -1,5 +1,7 @@
 class_name LocalPlayerController extends PlayerController
 
+const STICK_DEADZONE := 0.2
+
 var player_index: int
 
 
@@ -21,6 +23,8 @@ func update(_delta: float) -> void:
 		Input.get_axis(action_name("left"), action_name("right")),
 		Input.get_axis(action_name("up"), action_name("down"))
 	)
+	if stick.length() <= STICK_DEADZONE:
+		stick = Vector2.ZERO
 	unit.set_move_input(stick)
 	unit.set_aim_input(stick)
 	for slot in mini(unit.ability_slots.size(), Unit.MAX_SPELL_SLOTS):

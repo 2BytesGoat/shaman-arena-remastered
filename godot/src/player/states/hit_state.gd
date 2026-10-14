@@ -3,7 +3,7 @@ class_name HitState extends State
 
 func enter(_msg := {}) -> void:
 	owner.hit_locked = true
-	owner.animation_player.play(&"Hit")
+	owner.visuals.play(self.name)
 
 
 func exit() -> void:

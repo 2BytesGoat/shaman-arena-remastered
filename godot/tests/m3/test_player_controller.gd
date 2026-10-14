@@ -87,13 +87,29 @@ func test_move_input_is_ignored_while_aiming() -> void:
 	assert_vector(unit.move_direction).is_equal(Vector2.ZERO)
 
 
-func test_set_aim_input_respects_deadzone_and_updates_angle() -> void:
+func test_set_aim_input_ignores_zero_and_updates_angle() -> void:
 	var unit := await _make_unit()
-	unit.set_aim_input(Vector2(0.1, 0.0))
-	assert_vector(unit.cast_direction).is_equal(Vector2.RIGHT)
 	unit.set_aim_input(Vector2(0.0, 1.0))
 	assert_vector(unit.cast_direction).is_equal(Vector2.DOWN)
 	assert_float(unit.cast_angle).is_equal_approx(PI / 2.0, 0.001)
+	unit.set_aim_input(Vector2.ZERO)
+	assert_vector(unit.cast_direction).is_equal(Vector2.DOWN)
+	unit.set_aim_input(Vector2(0.1, 0.0))
+	assert_vector(unit.cast_direction).is_equal(Vector2.RIGHT)
+	assert_float(unit.cast_angle).is_equal_approx(0.0, 0.001)
+
+
+func test_local_controller_applies_stick_deadzone() -> void:
+	var unit := await _make_unit()
+	unit.set_controller(LocalPlayerController.new(unit, 0))
+	Input.action_press("player_0_left", 0.1)
+	unit.controller.update(1.0 / 60.0)
+	Input.action_release("player_0_left")
+	assert_vector(unit.move_direction).is_equal(Vector2.ZERO)
+	Input.action_press("player_0_left")
+	unit.controller.update(1.0 / 60.0)
+	Input.action_release("player_0_left")
+	assert_vector(unit.move_direction).is_equal(Vector2.LEFT)
 
 
 func test_request_cast_enters_aim_with_slot() -> void:

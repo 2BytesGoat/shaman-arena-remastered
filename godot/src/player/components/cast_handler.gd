@@ -22,7 +22,7 @@ func try_abort_cast(ability: Ability, ignore_uninterruptible := false) -> bool:
 	if not ignore_uninterruptible and not is_cast_interruptible(ability):
 		return false
 	unit.ability_container.try_end(ability)
-	stop_cast_animation()
+	unit.visuals.reassert_animation()
 	return true
 
 
@@ -43,7 +43,7 @@ func on_spell_cooldown_start(ability: Ability) -> void:
 		return
 	if ability is BaseAbility:
 		(ability as BaseAbility).cast(unit, unit.cast_direction)
-	stop_cast_animation()
+	unit.visuals.reassert_animation()
 
 
 func _play_cast_animation(ability: Ability, direction: Vector2) -> void:
@@ -55,15 +55,6 @@ func _play_cast_animation(ability: Ability, direction: Vector2) -> void:
 	var clip := BaseAbility.resolve_cast_animation(base_ability, unit.animation_player)
 	if clip == &"":
 		return
-	unit.animation_player.speed_scale = BaseAbility.cast_animation_speed(
-		unit.animation_player.get_animation(clip).length,
-		base_ability.CAST_DELAY
-	)
-	unit.animation_player.play(clip)
+	unit.visuals.play_cast(clip, base_ability.CAST_DELAY)
 	unit.facing_scale = Unit.facing_sign(direction, unit.facing_scale)
 	unit.visuals.set_facing(unit.facing_scale)
-
-
-func stop_cast_animation() -> void:
-	unit.animation_player.speed_scale = 1.0
-	unit.animation_player.play(&"Idle")

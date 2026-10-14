@@ -1,9 +1,32 @@
 class_name PlayerVisuals extends Node2D
 
+const AIM_TURN_SPEED := 15.0
+const CAST_DEFERRED_CLIPS := [&"Idle", &"Move", &"Aim"]
+
 @export var unit: Unit
 
 @onready var flippable: Node2D = $Flippable
 @onready var aim_sprite: Sprite2D = $AimSprite
+
+
+func play(clip: StringName) -> void:
+	if clip in CAST_DEFERRED_CLIPS and unit.cast_handler.is_windup_active():
+		return
+	unit.animation_player.speed_scale = 1.0
+	unit.animation_player.play(clip)
+
+
+func play_cast(clip: StringName, cast_delay: float) -> void:
+	unit.animation_player.speed_scale = BaseAbility.cast_animation_speed(
+		unit.animation_player.get_animation(clip).length, cast_delay
+	)
+	unit.animation_player.play(clip)
+
+
+func reassert_animation() -> void:
+	var state_name := unit.state_machine.state.name
+	if state_name in CAST_DEFERRED_CLIPS:
+		play(state_name)
 
 
 func set_facing(scale: float) -> void:
@@ -32,5 +55,5 @@ func update_aim_sprite(delta: float) -> void:
 		return
 	var difference := wrapf(unit.cast_angle - aim_sprite.rotation, -PI, PI)
 	aim_sprite.rotation += clampf(
-		difference, -Unit.TURN_ACCELERATION * delta, Unit.TURN_ACCELERATION * delta
+		difference, -AIM_TURN_SPEED * delta, AIM_TURN_SPEED * delta
 	)

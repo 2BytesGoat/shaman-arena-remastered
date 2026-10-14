@@ -2,7 +2,7 @@ class_name MoveState extends State
 
 
 func enter(_msg := {}) -> void:
-	owner.play_locomotion_animation(&"Move")
+	owner.visuals.play(self.name)
 
 
 func physics_update(_delta: float) -> void:

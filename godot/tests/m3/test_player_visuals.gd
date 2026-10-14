@@ -65,10 +65,46 @@ func test_palette_applies_player_colors() -> void:
 	assert_int(Array(material.get_shader_parameter("to_colors")).size()).is_greater(0)
 
 
+func test_play_defers_locomotion_but_not_oneshots_while_casting() -> void:
+	var unit := _make_unit()
+	await get_tree().process_frame
+	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
+	var picks: Array[Ability] = [smoke]
+	unit.apply_loadout(picks)
+	unit.ability_container.try_activate(smoke)
+	assert_bool(unit.cast_handler.is_windup_active()).is_true()
+
+	unit.visuals.play(&"Hit")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Hit")
+
+	unit.visuals.play(&"Idle")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Hit")
+
+	unit.try_abort_cast(smoke, true)
+	unit.visuals.play(&"Idle")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Idle")
+
+
+func test_aim_pose_defers_to_an_active_cast_and_returns_on_abort() -> void:
+	var unit := _make_unit()
+	await get_tree().process_frame
+	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
+	var picks: Array[Ability] = [smoke]
+	unit.apply_loadout(picks)
+	unit.try_cast(smoke, Vector2.RIGHT)
+	assert_str(String(unit.animation_player.current_animation)).is_equal("CastSmoke")
+
+	unit.state_machine.transition_to("Aim", {"slot": 0, "ability": smoke})
+	assert_str(String(unit.animation_player.current_animation)).is_equal("CastSmoke")
+
+	assert_bool(unit.try_abort_cast(smoke, true)).is_true()
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Aim")
+
+
 func test_aim_sprite_smoothing_is_rate_limited() -> void:
 	var unit := _make_unit()
 	await get_tree().process_frame
 	unit.cast_angle = PI / 2.0
 	unit.visuals.aim_sprite.rotation = 0.0
 	unit.visuals.update_aim_sprite(0.001)
-	assert_float(unit.visuals.aim_sprite.rotation).is_between(0.0001, Unit.TURN_ACCELERATION * 0.001 + 0.0001)
+	assert_float(unit.visuals.aim_sprite.rotation).is_between(0.0001, PlayerVisuals.AIM_TURN_SPEED * 0.001 + 0.0001)

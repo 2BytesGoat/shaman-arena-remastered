@@ -16,6 +16,7 @@ func enter(msg := {}) -> void:
 	owner.aiming = true
 	owner.aiming_slot = msg["slot"]
 	owner.velocity = Vector2.ZERO
+	owner.visuals.play(self.name)
 
 
 func exit() -> void:

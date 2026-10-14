@@ -182,6 +182,7 @@ names are the contract:
 | Slot | Playback | Selected by |
 |---|---|---|
 | `Idle` / `Move` | loop | state machine |
+| `Aim` | static hold | aiming (`AimState`) |
 | `Hit` | one-shot | hit reaction (`HitState`) |
 | `Death` | one-shot | match flow (M5) |
 | `CastOffensive` / `CastDefensive` / `CastUtility` | one-shot, speed-scaled to the cast delay | `SpellType` |
@@ -206,8 +207,20 @@ names are the contract:
   Death wiring lands with M5's match flow, Taunt with M6.
 - The slot names are also the vocabulary future character sheets are authored against.
 
-**Not doing.** Per-spell animation enums; auto-generated animation tables; an aim pose (the
-aim marker carries aiming, POC parity); instant-cast poses (revisit with Blink in M4).
+**Amendment (2026-10-14, trigger pass).** Playback is one generic entry point,
+`PlayerVisuals.play(clip)` (DJR parity: states pass their own name — `play(self.name)`;
+`DeadState` names `&"Death"`). The windup priority lives in `play`: clips in
+`CAST_DEFERRED_CLIPS` (`Idle`, `Move`, `Aim`) are deferred while `is_windup_active()`, one-shot
+slots override the cast clip. The cast slot speed is always derived, never passed:
+`PlayerVisuals.play_cast(clip, cast_delay)` applies
+`BaseAbility.cast_animation_speed(clip.length, CAST_DELAY)`. When a cast releases playback,
+`CastHandler` calls `PlayerVisuals.reassert_animation()`, which replays the current state's
+clip if its name is in `CAST_DEFERRED_CLIPS` — one-shot states (Hit/Dead) are excluded, so a
+force-aborted cast can no longer stomp a hit reaction. New slots need no `PlayerVisuals`
+changes — a state calling `play(&"Attack")` is the whole wiring.
+
+**Not doing.** Per-spell animation enums; auto-generated animation tables; instant-cast poses
+(revisit with Blink in M4).
 
 **References.** `docs/spells.md` (Character animation slots),
 `godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
@@ -337,6 +350,12 @@ animation track paths later.
   when the input layer landed — see D-009.
 - `facing_scale` stays a `Unit` variable (read by cast and locomotion); the flip is applied
   through `PlayerVisuals.set_facing()`.
+- **Amendment (2026-10-14, presentation pass):** animation playback moved behind
+  `PlayerVisuals` — states and `CastHandler` no longer touch the `AnimationPlayer` directly.
+  The node stays a child of `Unit` so the track paths are untouched; the "deferred clips yield
+  to an active cast windup" priority lives in `PlayerVisuals.play`. `Unit.TURN_ACCELERATION` →
+  `PlayerVisuals.AIM_TURN_SPEED` (only the aim sprite read it). See D-005's trigger amendment
+  for the generic `play`/`play_cast`/`reassert_animation` model.
 
 **Consequences.** Restructuring the sprite subtree means rewriting those track paths by hand
 in the `.tscn`; the resolution test `godot/tests/m3/test_player_visuals.gd` catches mistakes
@@ -387,6 +406,13 @@ now owns its **input index** (`player_index`): it builds the `player_N_*` action
 and the factory passes `PLAYER_CONTROLLER`, so the unit's seat stays identity (palette, HUD,
 winner) while an explicit index can differ for tests / a future join flow. The action-name
 helpers moved off `Unit` with it — they had no other user.
+
+**Addendum 2 (2026-10-14, input-shaping pass).** The stick deadzone moved into
+`LocalPlayerController` (applied once to the raw stick before both move and aim intents): it is
+input-hardware shaping, not intent legality — and the unit-side check only covered aim, so
+sub-deadzone drift normalised to a full-speed walk. `Unit.set_aim_input` keeps a zero-guard
+only. `StateMachine._unhandled_input` → `State.handle_input` stays as the state-machine
+pattern's input hook even though no state consumes it.
 
 **Consequences.**
 

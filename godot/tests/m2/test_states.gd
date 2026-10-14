@@ -58,8 +58,10 @@ func test_aim_state_locks_position() -> void:
 	unit.state_machine.transition_to("Aim", {"slot": 1, "ability": fireball})
 	assert_bool(unit.aiming).is_true()
 	assert_vector(unit.velocity).is_equal(Vector2.ZERO)
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Aim")
 	unit.state_machine.transition_to("Idle")
 	assert_bool(unit.aiming).is_false()
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Idle")
 
 
 func test_cast_plays_type_slot_scaled_to_delay_and_abort_resets() -> void:

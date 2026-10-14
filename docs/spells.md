@@ -93,6 +93,7 @@ generic slot instead of breaking.
 | Slot | Playback | Selected by | Money wizard |
 |---|---|---|---|
 | `Idle` / `Move` | loop | state machine | yes |
+| `Aim` | static hold | aiming (`AimState`) | yes |
 | `Hit` | one-shot | hit reaction (`HitState`) | yes |
 | `Death` | one-shot | match flow (M5) | yes |
 | `CastOffensive` | one-shot, speed-scaled | `TYPE == OFFENSIVE` | yes |

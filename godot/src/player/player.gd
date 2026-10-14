@@ -8,8 +8,6 @@ const PLAYERS_GROUP := &"players"
 const MOVE_MAX_SPEED := 140.0
 const MOVE_ACCELERATION := 345.0
 const MOVE_FRICTION := 690.0
-const TURN_ACCELERATION := 15.0
-const STICK_DEADZONE := 0.2
 const SPELL_SPAWN_OFFSET := 360.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
 const CONSUMABLE_SLOTS := Loadout.CONSUMABLE_SLOTS
@@ -92,7 +90,7 @@ func set_move_input(direction: Vector2) -> void:
 
 
 func set_aim_input(direction: Vector2) -> void:
-	if direction.length() <= STICK_DEADZONE:
+	if direction.is_zero_approx():
 		return
 	cast_direction = direction.normalized()
 	cast_angle = cast_direction.angle()
@@ -158,13 +156,6 @@ static func step_velocity(current: Vector2, direction: Vector2, delta: float) ->
 	if direction != Vector2.ZERO:
 		return current.move_toward(direction * MOVE_MAX_SPEED, MOVE_ACCELERATION * delta)
 	return current.move_toward(Vector2.ZERO, MOVE_FRICTION * delta)
-
-
-func play_locomotion_animation(animation_name: StringName) -> void:
-	if cast_handler.is_windup_active():
-		return
-	animation_player.speed_scale = 1.0
-	animation_player.play(animation_name)
 
 
 func try_cast(ability: Ability, direction: Vector2) -> int:

@@ -94,6 +94,20 @@ func test_hit_does_not_abort_uninterruptible_smoke() -> void:
 	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(9.0)
 
 
+func test_forced_abort_during_hit_keeps_hit_animation() -> void:
+	var unit := _make_unit()
+	await get_tree().process_frame
+	var smoke := _ability(unit, &"Smoke")
+	_activate(unit, smoke)
+
+	unit.take_hit(null, 1.0, 0.0, Vector2.ZERO)
+	assert_str(unit.state_machine.state.name).is_equal("Hit")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Hit")
+
+	assert_bool(unit.try_abort_cast(smoke, true)).is_true()
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Hit")
+
+
 func test_try_abort_refuses_uninterruptible_unless_forced() -> void:
 	var unit := _make_unit()
 	await get_tree().process_frame
