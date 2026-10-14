@@ -98,7 +98,7 @@ generic slot instead of breaking.
 | `CastOffensive` | one-shot, speed-scaled | `TYPE == OFFENSIVE` | yes |
 | `CastDefensive` | one-shot, speed-scaled | `TYPE == DEFENSIVE` | yes |
 | `CastUtility` | one-shot, speed-scaled | `TYPE == UTILITY` | yes |
-| `Attack` | one-shot, speed-scaled | basic attack ability (D-003) | reserved (M3) |
+| `Attack` | one-shot, speed-scaled | basic attack ability (D-003) | reserved (M4) |
 | `Channel` | loop | channeled casts (M4) | reserved |
 | `Taunt` | one-shot | taunt button (M6, optional) | yes |
 
@@ -177,6 +177,7 @@ Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 ## See also
 
 - [[decisions]] — D-001 attacker-applies hit pipeline, D-002 this vocabulary,
-  D-003 basic attack model, D-004 cast-abort rules, D-005 animation slots
+  D-003 basic attack model, D-004 cast-abort rules, D-005 animation slots,
+  D-006 match flow & loadout selection
 - [[plan]] — M1 spell core, M2 movement polish, M4 rest of the spells
 - [[controls]] — input model (aim/tap casting)

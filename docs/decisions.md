@@ -206,3 +206,42 @@ aim marker carries aiming, POC parity); instant-cast poses (revisit with Blink i
 
 **References.** `docs/spells.md` (Character animation slots),
 `godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+
+## D-006 — Match flow & loadout selection
+
+- **Status:** accepted (M3)
+- **Date:** 2026-10-14
+
+**Context.** The POC embedded its selection UI inside each player and auto-finished at 4
+picks; `main.gd` counted `spells_are_ready` and set `is_ready` on everyone once all were
+in. M3 needs the same for 6 spells + 2 reserved consumables plus a phase machine that
+future rounds/gold can extend without rework.
+
+**Decision.**
+
+- `MatchManager` is a **main-scene node** (not an autoload), owning
+  `SELECTING → RUNNING → GAME_OVER`: it locks units until RUNNING, freezes them on
+  GAME_OVER, and shows a placeholder match-over banner ("PLAYER N WINS", accept/button
+  restarts) — the full win screen replaces it in M5.
+- Death plays the `Death` clip: the Dead state resets `speed_scale` and plays it (POC
+  parity), so a lethal hit never leaves the corpse in the previous pose — including a
+  death that lands mid-`Hit`.
+- Selection is **auto-ready at 6 picks** (POC parity — no ready button). A picked spell
+  can be un-picked before the 6th (accept again); cancel removes the last pick.
+- Applying a loadout = `try_revoke` + `remove_ability` for the old set, then
+  `add_ability` + `try_grant` for the picks, then a HUD rebuild — the same path a
+  shop/loadout swap uses later (`tldr.md` mapping).
+- `MatchManager.skip_selection` + `default_loadout` is a dev-only fast path straight to
+  RUNNING for editor iteration.
+
+**Consequences.**
+
+- `Unit.is_match_ready` gates movement and casting; `spells_are_ready` is the ready gate.
+- The 6 + 2 limit is enforced by selection only; the temporary `player_N_spell_6` dev
+  action is retired.
+- Units start with an empty `AbilityContainer` — every runtime ability comes from the
+  loadout, not the scene.
+
+**References.** `godot/src/match/match_manager.gd`, `godot/src/match/loadout.gd`,
+`godot/src/ui/spell_select.gd`, `godot/src/ui/match_over.gd`, `godot/src/player/player.gd`,
+`godot/src/player/states/dead_state.gd`.

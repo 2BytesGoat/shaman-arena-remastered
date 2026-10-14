@@ -1,6 +1,15 @@
-[gd_scene format=3 uid="uid://ccjsp8utreawi"]
+[gd_scene load_steps=11 format=3 uid="uid://ccjsp8utreawi"]
 
 [ext_resource type="PackedScene" uid="uid://blew3m0ysy1j4" path="res://src/player/player.tscn" id="1_player"]
+[ext_resource type="Script" uid="uid://d2vugbf7qk8lu" path="res://src/match/match_manager.gd" id="2_manager"]
+[ext_resource type="PackedScene" path="res://src/ui/spell_select.tscn" id="3_select"]
+[ext_resource type="Ability" path="res://src/resources/abilities/blink_ability.tres" id="4_blink"]
+[ext_resource type="Ability" path="res://src/resources/abilities/fireball_ability.tres" id="5_fireball"]
+[ext_resource type="Ability" path="res://src/resources/abilities/boomerang_ability.tres" id="6_boomerang"]
+[ext_resource type="Ability" path="res://src/resources/abilities/meteor_ability.tres" id="7_meteor"]
+[ext_resource type="Ability" path="res://src/resources/abilities/smoke_ability.tres" id="8_smoke"]
+[ext_resource type="Ability" path="res://src/resources/abilities/teleport_ability.tres" id="9_teleport"]
+[ext_resource type="Script" uid="uid://bmse5wk2g4778" path="res://src/ui/match_over.gd" id="10_match_over"]
 
 [node name="Main" type="Node" unique_id=1676124959]
 
@@ -10,3 +19,57 @@ position = Vector2(500, 292)
 [node name="Player2" parent="." unique_id=208701586 instance=ExtResource("1_player")]
 position = Vector2(652, 292)
 PLAYER_CONTROLLER = 1
+
+[node name="SelectionLayer" type="CanvasLayer" parent="."]
+
+[node name="Selection" type="VBoxContainer" parent="SelectionLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PlayerSelect" parent="SelectionLayer/Selection" instance=ExtResource("3_select")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayerSelect2" parent="SelectionLayer/Selection" instance=ExtResource("3_select")]
+layout_mode = 2
+size_flags_vertical = 3
+player_controller = 1
+
+[node name="MatchOverLayer" type="CanvasLayer" parent="." visible=false node_paths=PackedStringArray("message_label", "restart_button")]
+script = ExtResource("10_match_over")
+message_label = NodePath("Layout/Message")
+restart_button = NodePath("Layout/RestartButton")
+
+[node name="Layout" type="VBoxContainer" parent="MatchOverLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Message" type="Label" parent="MatchOverLayer/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="MatchOverLayer/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "PRESS ACCEPT TO RESTART"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="MatchOverLayer/Layout"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "RESTART"
+
+[node name="MatchManager" type="Node" parent="." node_paths=PackedStringArray("selection_layer", "match_over")]
+script = ExtResource("2_manager")
+selection_layer = NodePath("../SelectionLayer")
+match_over = NodePath("../MatchOverLayer")
+default_loadout = Array[Ability]([ExtResource("4_blink"), ExtResource("5_fireball"), ExtResource("6_boomerang"), ExtResource("7_meteor"), ExtResource("8_smoke"), ExtResource("9_teleport")])

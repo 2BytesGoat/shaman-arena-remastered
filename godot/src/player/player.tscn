@@ -14,13 +14,6 @@
 [ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="12_dead"]
 [ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="13_handler"]
 [ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
-[ext_resource type="Ability" path="res://src/resources/abilities/blink_ability.tres" id="15_blink"]
-[ext_resource type="Ability" path="res://src/resources/abilities/fireball_ability.tres" id="16_fireball"]
-[ext_resource type="Ability" path="res://src/resources/abilities/boomerang_ability.tres" id="17_boomerang"]
-[ext_resource type="Ability" path="res://src/resources/abilities/meteor_ability.tres" id="18_meteor"]
-[ext_resource type="Ability" path="res://src/resources/abilities/smoke_ability.tres" id="19_smoke"]
-[ext_resource type="Ability" path="res://src/resources/abilities/teleport_ability.tres" id="20_teleport"]
-[ext_resource type="Ability" path="res://src/resources/abilities/anivia_wall_ability.tres" id="21_wall"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_palette"]
 resource_local_to_scene = true
@@ -32,32 +25,6 @@ shader_parameter/tolerance = 0.01
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
-
-[sub_resource type="Attribute" id="Attribute_max_health"]
-attribute_name = "MaxHealth"
-
-[sub_resource type="Attribute" id="Attribute_health"]
-attribute_name = "Health"
-
-[sub_resource type="AttributeSet" id="AttributeSet_player"]
-attributes = Array[AttributeBase]([SubResource("Attribute_max_health"), SubResource("Attribute_health")])
-
-[sub_resource type="Animation" id="Animation_cast_offensive"]
-resource_name = "CastOffensive"
-length = 0.6
-step = 0.2
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.2),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [20, 21]
-}
 
 [sub_resource type="Animation" id="Animation_cast_defensive"]
 resource_name = "CastDefensive"
@@ -74,6 +41,23 @@ tracks/0/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 1,
 "values": [24, 26]
+}
+
+[sub_resource type="Animation" id="Animation_cast_offensive"]
+resource_name = "CastOffensive"
+length = 0.6
+step = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [20, 21]
 }
 
 [sub_resource type="Animation" id="Animation_cast_smoke"]
@@ -177,6 +161,21 @@ tracks/0/keys = {
 "values": [4, 5]
 }
 
+[sub_resource type="Animation" id="Animation_reset"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
 [sub_resource type="Animation" id="Animation_taunt"]
 resource_name = "Taunt"
 step = 0.1
@@ -193,21 +192,6 @@ tracks/0/keys = {
 "values": [12, 16, 12]
 }
 
-[sub_resource type="Animation" id="Animation_reset"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [0]
-}
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_player"]
 _data = {
 &"CastDefensive": SubResource("Animation_cast_defensive"),
@@ -222,6 +206,15 @@ _data = {
 &"Taunt": SubResource("Animation_taunt")
 }
 
+[sub_resource type="Attribute" id="Attribute_max_health"]
+attribute_name = "MaxHealth"
+
+[sub_resource type="Attribute" id="Attribute_health"]
+attribute_name = "Health"
+
+[sub_resource type="AttributeSet" id="AttributeSet_player"]
+attributes = Array[AttributeBase]([SubResource("Attribute_max_health"), SubResource("Attribute_health")])
+
 [node name="Player" type="CharacterBody2D" unique_id=1428290400 node_paths=PackedStringArray("aim_sprite", "attribute_container", "ability_container")]
 material = SubResource("ShaderMaterial_palette")
 collision_mask = 65
@@ -230,21 +223,21 @@ aim_sprite = NodePath("AimSprite")
 attribute_container = NodePath("AttributeContainer")
 ability_container = NodePath("AbilityContainer")
 
-[node name="Flippable" type="Node2D" parent="."]
+[node name="Flippable" type="Node2D" parent="." unique_id=2146141360]
 use_parent_material = true
 
-[node name="PlayerSprite" type="Sprite2D" parent="Flippable"]
+[node name="PlayerSprite" type="Sprite2D" parent="Flippable" unique_id=493073465]
 z_index = 1
 use_parent_material = true
 texture = ExtResource("4_wizard")
 hframes = 4
 vframes = 10
 
-[node name="LargeShadow" type="Sprite2D" parent="Flippable"]
+[node name="LargeShadow" type="Sprite2D" parent="Flippable" unique_id=1927706073]
 show_behind_parent = true
+use_parent_material = true
 position = Vector2(0, 15)
 scale = Vector2(0.84375, 0.65)
-use_parent_material = true
 texture = ExtResource("5_shadow")
 
 [node name="AimSprite" type="Sprite2D" parent="." unique_id=1165862109]
@@ -285,14 +278,13 @@ script = ExtResource("11_hit")
 [node name="Dead" type="Node" parent="StateMachine" unique_id=1164105433]
 script = ExtResource("12_dead")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1580467629]
 libraries/ = SubResource("AnimationLibrary_player")
 
 [node name="AttributeContainer" type="AttributeContainer" parent="." unique_id=295091902]
 attribute_set = SubResource("AttributeSet_player")
 
 [node name="AbilityContainer" type="AbilityContainer" parent="." unique_id=2083348264]
-abilities = Array[Ability]([ExtResource("15_blink"), ExtResource("16_fireball"), ExtResource("17_boomerang"), ExtResource("18_meteor"), ExtResource("19_smoke"), ExtResource("20_teleport"), ExtResource("21_wall")])
 
 [node name="AbilityHandler" type="Node" parent="." unique_id=716700696 node_paths=PackedStringArray("ability_container", "button_container")]
 script = ExtResource("13_handler")

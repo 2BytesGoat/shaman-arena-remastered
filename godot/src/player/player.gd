@@ -1,6 +1,9 @@
 class_name Unit extends CharacterBody2D
 
 signal player_died(player_number: int)
+signal spells_are_ready
+
+const PLAYERS_GROUP := &"players"
 
 const MOVE_MAX_SPEED := 140.0
 const MOVE_ACCELERATION := 345.0
@@ -8,7 +11,8 @@ const MOVE_FRICTION := 690.0
 const TURN_ACCELERATION := 15.0
 const STICK_DEADZONE := 0.2
 const SPELL_SPAWN_OFFSET := 360.0
-const MAX_SPELL_SLOTS := 7
+const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
+const CONSUMABLE_SLOTS := Loadout.CONSUMABLE_SLOTS
 
 @export var aim_sprite: Sprite2D
 @export var attribute_container: AttributeContainer
@@ -19,6 +23,8 @@ const MAX_SPELL_SLOTS := 7
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var flippable: Node2D = $Flippable
+@onready var ability_handler: AbilityHandler = $AbilityHandler
+@onready var hud_margin: MarginContainer = $CanvasLayer/MarginContainer
 
 var move_direction := Vector2.ZERO
 var cast_direction := Vector2.RIGHT
@@ -26,10 +32,15 @@ var cast_angle := 0.0
 var aiming := false
 var hit_locked := false
 var player_dead := false
+var is_match_ready := false
 var facing_scale := 1.0
 
 var ability_slots: Array[Ability] = []
 var _last_move_direction := Vector2.RIGHT
+
+
+func _enter_tree() -> void:
+	add_to_group(PLAYERS_GROUP)
 
 
 func _ready() -> void:
@@ -38,10 +49,11 @@ func _ready() -> void:
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
 	ability_container.cooldown_start.connect(_on_spell_cooldown_start)
 	_apply_player_palette()
+	_apply_hud_layout()
 
 
 func _physics_process(delta: float) -> void:
-	if player_dead:
+	if player_dead or not is_match_ready:
 		return
 	_update_move_direction()
 	_apply_movement(delta)
@@ -100,6 +112,22 @@ func try_cast(ability: Ability, direction: Vector2) -> int:
 	return result
 
 
+func apply_loadout(picks: Array[Ability]) -> void:
+	_abort_active_casts(true)
+	for ability in ability_slots:
+		ability_container.try_revoke(ability)
+		ability_container.remove_ability(ability)
+	ability_slots.clear()
+	for ability in picks:
+		if ability == null or ability_slots.has(ability):
+			continue
+		ability_container.add_ability(ability)
+		ability_container.try_grant(ability)
+		ability_slots.append(ability)
+	ability_handler.rebuild(ability_slots)
+	spells_are_ready.emit()
+
+
 func update_cast_direction() -> void:
 	var stick := Vector2(
 		Input.get_axis(action_name("left"), action_name("right")),
@@ -110,10 +138,11 @@ func update_cast_direction() -> void:
 		cast_angle = cast_direction.angle()
 
 
-func take_hit(source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:
+func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:
 	if player_dead:
 		return
 	if damage <= 0.0 and knockback <= 0.0:
+		
 		return
 	_abort_active_casts()
 	if damage > 0.0:
@@ -182,6 +211,16 @@ func _apply_player_palette() -> void:
 	if palette.is_empty() or not (material is ShaderMaterial):
 		return
 	(material as ShaderMaterial).set_shader_parameter("to_colors", PackedColorArray(palette))
+
+
+func _apply_hud_layout() -> void:
+	if PLAYER_CONTROLLER % 2 == 0:
+		return
+	hud_margin.anchor_left = 1.0
+	hud_margin.anchor_right = 1.0
+	hud_margin.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	hud_margin.add_theme_constant_override("margin_left", 0)
+	hud_margin.add_theme_constant_override("margin_right", 45)
 
 
 func _update_aim_sprite(delta: float) -> void:
