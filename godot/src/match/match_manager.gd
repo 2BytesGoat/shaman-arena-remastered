@@ -22,7 +22,6 @@ var _ready_players: Array[Unit] = []
 func _ready() -> void:
 	_players = _collect_players()
 	for player in _players:
-		player.spells_are_ready.connect(_on_player_spells_are_ready.bind(player))
 		player.player_died.connect(_on_player_died)
 	for panel in selection_panels():
 		panel.loadout_complete.connect(_on_loadout_complete)
@@ -72,9 +71,10 @@ func _on_loadout_complete(controller: int, picks: Array[Ability]) -> void:
 	if player == null:
 		return
 	player.apply_loadout(picks)
+	_mark_ready(player)
 
 
-func _on_player_spells_are_ready(player: Unit) -> void:
+func _mark_ready(player: Unit) -> void:
 	if phase != MatchPhase.SELECTING or _ready_players.has(player):
 		return
 	_ready_players.append(player)

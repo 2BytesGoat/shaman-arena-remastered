@@ -40,8 +40,8 @@ func test_unit_starts_without_abilities_before_selection() -> void:
 func test_apply_loadout_grants_picks_and_rebuilds_hud() -> void:
 	var unit := _make_unit()
 	await get_tree().process_frame
-	var ready_calls := [0]
-	unit.spells_are_ready.connect(func() -> void: ready_calls[0] += 1)
+	var applied_calls := [0]
+	unit.loadout_applied.connect(func() -> void: applied_calls[0] += 1)
 	unit.apply_loadout(_picks(["fireball", "smoke"]))
 	assert_array(_runtime_names(unit)).contains_exactly(["Fireball", "Smoke"])
 	assert_int(unit.ability_slots.size()).is_equal(2)
@@ -49,7 +49,7 @@ func test_apply_loadout_grants_picks_and_rebuilds_hud() -> void:
 	assert_bool(unit.ability_container.is_ability_granted(unit.ability_slots[1])).is_true()
 	assert_int(unit.ability_handler.ability_buttons.size()).is_equal(2)
 	assert_int(_hud(unit).get_child_count()).is_equal(2 + Unit.CONSUMABLE_SLOTS)
-	assert_int(ready_calls[0]).is_equal(1)
+	assert_int(applied_calls[0]).is_equal(1)
 
 
 func test_reapplying_replaces_previous_loadout() -> void:

@@ -46,7 +46,7 @@ Every spell is a combination of four independent axes:
 
 | Axis | Values | Code home |
 |---|---|---|
-| **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` (Instant/Aimed implemented) |
+| **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` (Instant/Aimed declared; reserved — not branched on until M4 wires the INSTANT tap path) |
 | **Delivery** | Self, Projectile, Field, Wall, Aura, Beam, Summon | `SpellScene` subclasses |
 | **Impact** | Hit (damage), Explosion, Push, Pull, Chain, None | `Effect` scenes via `HitArea.apply` (D-001) |
 | **Status** | none, Buff, Debuff (duration and stacks are configuration; instant is *not* a status) | `AttributeBuff` subclasses in `src/attributes/` |
@@ -72,7 +72,7 @@ Every spell is a combination of four independent axes:
 8. **Attacks** — a character's basic attack is an ability like any other
    (`<shaman>_attack_ability.tres`; the scene is named after the strike, e.g.
    `ArcaneBolt`, `StaffSwing`). Empowering spells are `<What>Buff`s whose stacks are the
-   remaining empowered attacks (D-003).
+   remaining empowered attacks (D-003). The money wizard's Attack is **Smoke**.
 
 Current file/class map:
 
@@ -88,13 +88,16 @@ Current file/class map:
 
 Every character sheet ships a fixed set of `AnimationPlayer` clips — the **slots** (D-005).
 Abilities select slots, never raw clips, so a shaman without a given pose degrades to the
-generic slot instead of breaking.
+generic slot instead of breaking. The slot names live in code as constants in
+`AnimationSlots` (`godot/src/common/animation_slots.gd`), pinned by
+`godot/tests/m2/test_animation_slots.gd`.
 
 | Slot | Playback | Selected by | Money wizard |
 |---|---|---|---|
 | `Idle` / `Move` | loop | state machine | yes |
+| `Aim` | static hold | aiming (`AimState`) | yes |
 | `Hit` | one-shot | hit reaction (`HitState`) | yes |
-| `Death` | one-shot | match flow (M5) | yes |
+| `Dead` | one-shot | match flow (M5) | yes |
 | `CastOffensive` | one-shot, speed-scaled | `TYPE == OFFENSIVE` | yes |
 | `CastDefensive` | one-shot, speed-scaled | `TYPE == DEFENSIVE` | yes |
 | `CastUtility` | one-shot, speed-scaled | `TYPE == UTILITY` | yes |
@@ -107,7 +110,7 @@ generic slot instead of breaking.
 - **Flavor clips** — `BaseAbility.CAST_ANIMATION` may name a character-specific clip
   (Smoke → `CastSmoke`, the 1.2 s pose). Resolution at cast time: flavor clip *if this
   character's sheet has it* → else the slot for `TYPE` → else `push_warning` + `Idle`.
-- Frames live on `Flippable/PlayerSprite`; facing flips via `Flippable.scale.x`, never baked
+- Frames live on `PlayerVisuals/Flippable/PlayerSprite`; facing flips via the `Flippable` node's scale, never baked
   into the sheet.
 
 ## Second-member rule
@@ -143,11 +146,17 @@ Current spells:
 | Fireball | Aimed | Projectile | Hit + ExplosionEffect | — |
 | Boomerang | Aimed | Projectile (returns) | Hit + BoomerangEffect | — |
 | Meteor | Aimed | Projectile | MeteorIncoming → MeteorExplosion | — |
-| Smoke | Instant (self) | Field | Hit on entry | — |
+| Smoke | Aimed (self) | Field | Hit on entry | — |
 | Teleport | Aimed | Projectile | Self reposition | — |
 | Anivia Wall | Aimed | Wall | Blocker (despawns on contact) | — |
 
-*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004).*
+*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004). It is
+also the money wizard's Attack ability (D-003).*
+
+*`CAST_MODE` is declared on every ability but not yet branched on: all spells use the same
+press/hold/release flow, and the tap threshold only picks facing vs stick direction. Wiring
+the INSTANT tap-cast (Blink) is scheduled for M4 — until then the Cast column above records
+each ability's declared mode, not a different input path.*
 
 Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 

@@ -78,6 +78,10 @@ the stick.
 - These exist only for editor testing; the arcade layout (single stick + 8 buttons + start)
   gets defined and mapped when the cabinet spec is finalized.
 - `player_0` is the owner's dev seat: arrows to move + `1`–`6` to cast (owner decision, 2026-10-14).
+- **Keyboard ghosting**: `player_0`'s arrows + `1`–`6` is a 3-key combo; some membrane
+  keyboards drop the up/down key while Right + a spell are held, so right diagonals can't
+  aim while left-side combos work (confirmed on the owner's keyboard, 2026-10-14). Use a
+  pad for faithful spell testing — the arcade panel is unaffected.
 - `player_1` keyboard bindings are **throwaway** — the owner rarely controls player 2, so no
   parity or maintenance promise for them (owner decision, 2026-10-14).
 - The M1 7th dev slot (`7` / `M`) is retired: the loadout is exactly 6 spells +

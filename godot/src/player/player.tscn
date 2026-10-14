@@ -9,11 +9,12 @@
 [ext_resource type="Script" uid="uid://df82k7klapx0m" path="res://src/player/states/idle_state.gd" id="7_idle"]
 [ext_resource type="Script" uid="uid://0o8fgeehpie5" path="res://src/player/states/move_state.gd" id="8_move"]
 [ext_resource type="Script" uid="uid://b820hk1d8w8w1" path="res://src/player/states/aim_state.gd" id="9_aim"]
-[ext_resource type="Script" uid="uid://cnj0fwdl1gxlr" path="res://src/player/states/cast_state.gd" id="10_cast"]
 [ext_resource type="Script" uid="uid://cagrb1lgpn58f" path="res://src/player/states/hit_state.gd" id="11_hit"]
 [ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="12_dead"]
 [ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="13_handler"]
 [ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
+[ext_resource type="Script" uid="uid://6r2x7rh1ymnm" path="res://src/player/components/cast_handler.gd" id="15_castctrl"]
+[ext_resource type="Script" uid="uid://dbwvnierlgiau" path="res://src/player/components/player_visuals.gd" id="16_visuals"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_palette"]
 resource_local_to_scene = true
@@ -26,6 +27,21 @@ shader_parameter/tolerance = 0.01
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 
+[sub_resource type="Animation" id="Animation_aim"]
+resource_name = "Aim"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [8]
+}
+
 [sub_resource type="Animation" id="Animation_cast_defensive"]
 resource_name = "CastDefensive"
 length = 0.6
@@ -33,7 +49,7 @@ step = 0.2
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -50,7 +66,7 @@ step = 0.2
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -67,7 +83,7 @@ step = 0.2
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -84,7 +100,7 @@ step = 0.2
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -95,14 +111,13 @@ tracks/0/keys = {
 }
 
 [sub_resource type="Animation" id="Animation_death"]
-resource_name = "Death"
+resource_name = "Dead"
 length = 0.5
-loop_mode = 1
 step = 0.05
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -118,7 +133,7 @@ step = 0.1
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -133,7 +148,7 @@ resource_name = "Idle"
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -151,7 +166,7 @@ step = 0.2
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -166,7 +181,7 @@ length = 0.001
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -182,7 +197,7 @@ step = 0.1
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/path = NodePath("PlayerVisuals/Flippable/PlayerSprite:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
@@ -194,11 +209,12 @@ tracks/0/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_player"]
 _data = {
+&"Aim": SubResource("Animation_aim"),
 &"CastDefensive": SubResource("Animation_cast_defensive"),
 &"CastOffensive": SubResource("Animation_cast_offensive"),
 &"CastSmoke": SubResource("Animation_cast_smoke"),
 &"CastUtility": SubResource("Animation_cast_utility"),
-&"Death": SubResource("Animation_death"),
+&"Dead": SubResource("Animation_death"),
 &"Hit": SubResource("Animation_hit"),
 &"Idle": SubResource("Animation_idle"),
 &"Move": SubResource("Animation_move"),
@@ -215,32 +231,36 @@ attribute_name = "Health"
 [sub_resource type="AttributeSet" id="AttributeSet_player"]
 attributes = Array[AttributeBase]([SubResource("Attribute_max_health"), SubResource("Attribute_health")])
 
-[node name="Player" type="CharacterBody2D" unique_id=1428290400 node_paths=PackedStringArray("aim_sprite", "attribute_container", "ability_container")]
+[node name="Player" type="CharacterBody2D" unique_id=1428290400 node_paths=PackedStringArray("attribute_container", "ability_container")]
 material = SubResource("ShaderMaterial_palette")
 collision_mask = 65
 script = ExtResource("1_player")
-aim_sprite = NodePath("AimSprite")
 attribute_container = NodePath("AttributeContainer")
 ability_container = NodePath("AbilityContainer")
 
-[node name="Flippable" type="Node2D" parent="." unique_id=2146141360]
+[node name="PlayerVisuals" type="Node2D" parent="." unique_id=2146141360 node_paths=PackedStringArray("unit")]
+use_parent_material = true
+script = ExtResource("16_visuals")
+unit = NodePath("..")
+
+[node name="Flippable" type="Node2D" parent="PlayerVisuals" unique_id=1201234002]
 use_parent_material = true
 
-[node name="PlayerSprite" type="Sprite2D" parent="Flippable" unique_id=493073465]
+[node name="PlayerSprite" type="Sprite2D" parent="PlayerVisuals/Flippable" unique_id=493073465]
 z_index = 1
 use_parent_material = true
 texture = ExtResource("4_wizard")
 hframes = 4
 vframes = 10
 
-[node name="LargeShadow" type="Sprite2D" parent="Flippable" unique_id=1927706073]
+[node name="LargeShadow" type="Sprite2D" parent="PlayerVisuals/Flippable" unique_id=1927706073]
 show_behind_parent = true
 use_parent_material = true
 position = Vector2(0, 15)
 scale = Vector2(0.84375, 0.65)
 texture = ExtResource("5_shadow")
 
-[node name="AimSprite" type="Sprite2D" parent="." unique_id=1165862109]
+[node name="AimSprite" type="Sprite2D" parent="PlayerVisuals" unique_id=1165862109]
 self_modulate = Color(0, 18.892157, 0, 1)
 scale = Vector2(0.1, 0.1)
 texture = ExtResource("2_icon")
@@ -269,9 +289,6 @@ script = ExtResource("8_move")
 [node name="Aim" type="Node" parent="StateMachine" unique_id=1856118867]
 script = ExtResource("9_aim")
 
-[node name="Cast" type="Node" parent="StateMachine" unique_id=574827851]
-script = ExtResource("10_cast")
-
 [node name="Hit" type="Node" parent="StateMachine" unique_id=131030727]
 script = ExtResource("11_hit")
 
@@ -291,6 +308,10 @@ script = ExtResource("13_handler")
 ability_container = NodePath("../AbilityContainer")
 button_container = NodePath("../CanvasLayer/MarginContainer/HBoxContainer")
 ability_button_scene = ExtResource("14_button")
+
+[node name="CastHandler" type="Node" parent="." unique_id=1201234001 node_paths=PackedStringArray("unit")]
+script = ExtResource("15_castctrl")
+unit = NodePath("..")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=997381523]
 

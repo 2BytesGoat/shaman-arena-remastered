@@ -64,9 +64,9 @@ func test_try_abort_inactive_ability_returns_false() -> void:
 func test_interruptibility_flags() -> void:
 	var fireball: BaseAbility = load("res://src/resources/abilities/fireball_ability.tres")
 	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
-	assert_bool(Unit.is_cast_interruptible(fireball)).is_true()
-	assert_bool(Unit.is_cast_interruptible(smoke)).is_false()
-	assert_bool(Unit.is_cast_interruptible(BaseAbility.new())).is_true()
+	assert_bool(CastHandler.is_cast_interruptible(fireball)).is_true()
+	assert_bool(CastHandler.is_cast_interruptible(smoke)).is_false()
+	assert_bool(CastHandler.is_cast_interruptible(BaseAbility.new())).is_true()
 
 
 func test_hit_aborts_interruptible_windup() -> void:
@@ -92,6 +92,20 @@ func test_hit_does_not_abort_uninterruptible_smoke() -> void:
 	assert_bool(unit.ability_container.is_ability_active(smoke)).is_true()
 	assert_bool(unit.ability_container.is_ability_cooldown_active(smoke)).is_false()
 	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(9.0)
+
+
+func test_forced_abort_during_hit_keeps_hit_animation() -> void:
+	var unit := _make_unit()
+	await get_tree().process_frame
+	var smoke := _ability(unit, &"Smoke")
+	_activate(unit, smoke)
+
+	unit.take_hit(null, 1.0, 0.0, Vector2.ZERO)
+	assert_str(unit.state_machine.state.name).is_equal("Hit")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Hit")
+
+	assert_bool(unit.try_abort_cast(smoke, true)).is_true()
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Hit")
 
 
 func test_try_abort_refuses_uninterruptible_unless_forced() -> void:
@@ -126,9 +140,9 @@ func test_cooldown_start_guard_skips_spawn_when_dead() -> void:
 	var fake := FakeAbility.new()
 
 	unit.player_dead = true
-	unit._on_spell_cooldown_start(fake)
+	unit.cast_handler.on_spell_cooldown_start(fake)
 	assert_bool(fake.cast_called).is_false()
 
 	unit.player_dead = false
-	unit._on_spell_cooldown_start(fake)
+	unit.cast_handler.on_spell_cooldown_start(fake)
 	assert_bool(fake.cast_called).is_true()

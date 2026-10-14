@@ -140,7 +140,7 @@ func _update_visuals() -> void:
 
 
 func _player_color() -> Color:
-	var palette: Array = Constants.player_colors.get("player_%d" % player_controller, [])
+	var palette: Array = Constants.palette_for(player_controller)
 	if palette.is_empty():
 		return Color.WHITE
 	return palette[0]

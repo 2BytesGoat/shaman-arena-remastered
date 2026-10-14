@@ -62,3 +62,50 @@ func test_speed_scale_guards_instant_casts_and_empty_clips() -> void:
 func test_smoke_ability_requests_cast_smoke_clip() -> void:
 	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
 	assert_str(String(smoke.CAST_ANIMATION)).is_equal("CastSmoke")
+
+
+func _make_unit() -> Unit:
+	var scene: PackedScene = load("res://src/player/player.tscn")
+	var unit := scene.instantiate() as Unit
+	unit.set_physics_process(false)
+	add_child(unit)
+	unit.get_node("StateMachine").set_physics_process(false)
+	auto_free(unit)
+	await get_tree().process_frame
+	return unit
+
+
+func test_sheet_implements_every_required_slot() -> void:
+	var unit: Unit = await _make_unit()
+	var missing: Array[String] = []
+	for slot: StringName in AnimationSlots.REQUIRED:
+		if not unit.animation_player.has_animation(slot):
+			missing.append(String(slot))
+	assert_array(missing).is_empty()
+
+
+func test_cast_deferred_slots_are_implemented() -> void:
+	var unit: Unit = await _make_unit()
+	for slot: StringName in AnimationSlots.CAST_DEFERRED:
+		assert_bool(unit.animation_player.has_animation(slot)).is_true()
+
+
+func test_locomotion_state_nodes_are_named_after_their_slots() -> void:
+	var unit: Unit = await _make_unit()
+	var state_slots: Array[StringName] = [
+		AnimationSlots.IDLE, AnimationSlots.MOVE, AnimationSlots.AIM,
+		AnimationSlots.HIT, AnimationSlots.DEAD,
+	]
+	for slot: StringName in state_slots:
+		assert_object(unit.state_machine.get_node_or_null(String(slot))).is_not_null()
+		assert_bool(unit.animation_player.has_animation(slot)).is_true()
+
+
+func test_one_shot_slots_do_not_loop() -> void:
+	var unit: Unit = await _make_unit()
+	var one_shot: Array[StringName] = [
+		AnimationSlots.HIT, AnimationSlots.DEAD,
+		AnimationSlots.CAST_OFFENSIVE, AnimationSlots.CAST_DEFENSIVE, AnimationSlots.CAST_UTILITY,
+	]
+	for slot: StringName in one_shot:
+		assert_int(unit.animation_player.get_animation(slot).loop_mode).is_equal(Animation.LOOP_NONE)

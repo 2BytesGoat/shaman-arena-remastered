@@ -24,11 +24,11 @@ enum CastMode {
 static func default_cast_animation(type: SpellType) -> StringName:
 	match type:
 		SpellType.OFFENSIVE:
-			return &"CastOffensive"
+			return AnimationSlots.CAST_OFFENSIVE
 		SpellType.DEFENSIVE:
-			return &"CastDefensive"
+			return AnimationSlots.CAST_DEFENSIVE
 		SpellType.UTILITY:
-			return &"CastUtility"
+			return AnimationSlots.CAST_UTILITY
 	return &""
 
 

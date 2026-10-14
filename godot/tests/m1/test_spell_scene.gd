@@ -51,3 +51,21 @@ func test_source_filter_allows_plain_area() -> void:
 	var unit: Unit = auto_free(Unit.new())
 	var area: Area2D = auto_free(Area2D.new())
 	assert_bool(SourceFilter.ignores(unit, area)).is_false()
+
+
+func test_spell_touching_own_hurtbox_does_not_despawn() -> void:
+	var unit_scene: PackedScene = load("res://src/player/player.tscn")
+	var unit := unit_scene.instantiate() as Unit
+	unit.set_physics_process(false)
+	add_child(unit)
+	auto_free(unit)
+	await get_tree().process_frame
+	var spell_scene: PackedScene = load("res://src/abilities/spells/fireball.tscn")
+	var fireball := spell_scene.instantiate() as SpellScene
+	fireball.set_physics_process(false)
+	add_child(fireball)
+	auto_free(fireball)
+	fireball.source = unit
+	fireball._on_area_entered(unit.get_node("Hurtbox") as Area2D)
+	assert_bool(fireball.is_queued_for_deletion()).is_false()
+	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(10.0)

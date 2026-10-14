@@ -28,9 +28,13 @@ attacker-side.
 - Attacking areas must mask the hurtbox layer (1); the hurtbox no longer monitors
   anything and is no longer wired to a signal.
 - POC parity kept deliberately, including the direct-contact double application
-  (Fireball 10 + explosion 5/KB 175, Boomerang 7 + effect 7/KB 150), smoke spawning at the
-  caster's position after its 1.2 s cast delay, and the meteor telegraph's 0/KB 100 push.
-  Don't "fix" these without a new decision.
+  (Fireball 10 + explosion 5/KB 175, Boomerang 7 + effect 7/KB 150) and smoke spawning at
+  the caster's position after its 1.2 s cast delay. Don't "fix" these without a new decision.
+- **Correction (2026-10-14).** The meteor telegraph's 0/KB 100 values are *declared but never
+  applied* — in the port and in the POC. The POC's `MeteorIncoming` wired `area_entered` to a
+  handler its script never defined (dangling connection, no push in play); the port's
+  telegraph scene wires no `area_entered` at all. The timer-strike path is the live behavior.
+  Wiring telegraph contact (or not) is a gameplay decision left to M4 tuning.
 - Verified by an A/B headless probe (identical damage/knockback/lifetime traces before and
   after, modulo 1 physics frame).
 
@@ -81,7 +85,8 @@ because it reads unambiguously to newcomers, which is the stated naming priority
 - **Status:** accepted (documentation; implementation not scheduled yet)
 - **Date:** 2026-10-14
 
-**Context.** A 7-champion League corpus audit (`python/out/audit.md`) showed 4 of 7
+**Context.** A 7-champion League corpus audit (private research, not committed to this
+public repo) showed 4 of 7
 champions depend on basic-attack modifiers (Udyr's stances, Kled W, Riven P, Shaco P,
 Jhin P) while the game has no basic-attack system at all — no attack timer, weapon, or
 on-attack event. Options weighed: a universal 7th button (breaks the 6 spells +
@@ -111,11 +116,14 @@ family.
 - Where empower charges live (Unit-side state vs querying `AttributeContainer`) is an
   implementation choice; the documented vocabulary stays "Buff with stacks" regardless.
 
+**Addendum (2026-10-14).** The money wizard's Attack ability is **Smoke**; its 1.2 s pose
+becomes the sheet's `CastBase` clip (rename of `CastSmoke`, planned — D-005).
+
 **Not doing.** Auto-attack without a button; a universal always-equipped attack button;
 separately pickable melee/ranged variants (melee vs ranged is character identity).
 
-**References.** `docs/spells.md` (Core words: Attack), `python/out/audit.md`,
-`godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+**References.** `docs/spells.md` (Core words: Attack), the private champion-corpus audit
+(not in repo), `godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
 
 ## D-004 — Cast abort ("cancel") rules
 
@@ -177,8 +185,9 @@ names are the contract:
 | Slot | Playback | Selected by |
 |---|---|---|
 | `Idle` / `Move` | loop | state machine |
+| `Aim` | static hold | aiming (`AimState`) |
 | `Hit` | one-shot | hit reaction (`HitState`) |
-| `Death` | one-shot | match flow (M5) |
+| `Dead` | one-shot | match flow (M5) |
 | `CastOffensive` / `CastDefensive` / `CastUtility` | one-shot, speed-scaled to the cast delay | `SpellType` |
 | `Attack` | one-shot, speed-scaled | basic attack ability (D-003) |
 | `Channel` | loop | channeled casts (M4) |
@@ -197,15 +206,43 @@ names are the contract:
 
 - New characters implement the slots they have; a missing flavor clip falls back
   automatically, a missing required slot is an asset bug surfaced by `push_warning`.
-- M2 ports all POC clips (Death and Taunt included) but wires only the state and cast slots;
-  Death wiring lands with M5's match flow, Taunt with M6.
+- M2 ports all POC clips (Dead and Taunt included) but wires only the state and cast slots;
+  Dead wiring lands with the match flow (M3, D-006), Taunt with M6.
 - The slot names are also the vocabulary future character sheets are authored against.
 
-**Not doing.** Per-spell animation enums; auto-generated animation tables; an aim pose (the
-aim marker carries aiming, POC parity); instant-cast poses (revisit with Blink in M4).
+**Amendment (2026-10-14, trigger pass).** Playback is one generic entry point,
+`PlayerVisuals.play(clip)` (DJR parity: states pass their own name — `play(self.name)`;
+`DeadState` names `&"Dead"`). The windup priority lives in `play`: clips in
+`CAST_DEFERRED` (`Idle`, `Move`, `Aim`) are deferred while `is_windup_active()`, one-shot
+slots override the cast clip. The cast slot speed is always derived, never passed:
+`PlayerVisuals.play_cast(clip, cast_delay)` applies
+`BaseAbility.cast_animation_speed(clip.length, CAST_DELAY)`. When a cast releases playback,
+`CastHandler` calls `PlayerVisuals.reassert_animation()`, which replays the current state's
+clip if its name is in `CAST_DEFERRED` — one-shot states (Hit/Dead) are excluded, so a
+force-aborted cast can no longer stomp a hit reaction. New slots need no `PlayerVisuals`
+changes — a state calling `play(&"Attack")` is the whole wiring.
+
+**Amendment 2 (2026-10-14, constants pass).** The slot names now live in
+**`AnimationSlots`** (`godot/src/common/animation_slots.gd`, a `class_name` constants
+holder — the `AttributeNames` pattern, not the autoload): cast slots, `CAST_DEFERRED`, and
+the `REQUIRED` set. The death slot is canonically **`Dead`** — state node, clip, and
+constant agree, so `DeadState` keeps the uniform `play(self.name)` (this supersedes the
+table's original `Death` name). `godot/tests/m2/test_animation_slots.gd` pins the contract:
+required slots exist on the wizard sheet, the deferred slots are implemented, the
+locomotion state nodes are named after their clips, and one-shot slots don't loop.
+
+**Planned (not yet applied).** Smoke is the money wizard's Attack (D-003), so its 1.2 s
+flavour clip `CastSmoke` will be renamed **`CastBase`** — the sheet's required base cast
+pose (`AnimationSlots.CAST_BASE` joins `REQUIRED`). Resolution is unchanged (the pose is
+still named via `CAST_ANIMATION`), and the reserved `Attack` slot stays reserved for
+D-003's ability wiring. Prioritised in `docs/plan.md` (M4); nothing implemented yet.
+
+**Not doing.** Per-spell animation enums; auto-generated animation tables; instant-cast poses
+(revisit with Blink in M4).
 
 **References.** `docs/spells.md` (Character animation slots),
-`godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+`godot/src/common/animation_slots.gd`, `godot/src/abilities/base_ability.gd`,
+`godot/src/player/player.gd`, `godot/tests/m2/test_animation_slots.gd`.
 
 ## D-006 — Match flow & loadout selection
 
@@ -223,7 +260,7 @@ future rounds/gold can extend without rework.
   `SELECTING → RUNNING → GAME_OVER`: it locks units until RUNNING, freezes them on
   GAME_OVER, and shows a placeholder match-over banner ("PLAYER N WINS", accept/button
   restarts) — the full win screen replaces it in M5.
-- Death plays the `Death` clip: the Dead state resets `speed_scale` and plays it (POC
+- Death plays the `Dead` clip: the Dead state resets `speed_scale` and plays it (POC
   parity), so a lethal hit never leaves the corpse in the previous pose — including a
   death that lands mid-`Hit`.
 - Selection is **auto-ready at 6 picks** (POC parity — no ready button). A picked spell
@@ -236,7 +273,10 @@ future rounds/gold can extend without rework.
 
 **Consequences.**
 
-- `Unit.is_match_ready` gates movement and casting; `spells_are_ready` is the ready gate.
+- `Unit.is_match_ready` gates movement and casting. Readiness is **manager-side**: the
+  `MatchManager` marks a player ready when its selection completes (`loadout_complete`), so
+  later loadout writes (e.g. a shop apply) can never ready a player by accident;
+  `Unit.loadout_applied` is informational only.
 - The 6 + 2 limit is enforced by selection only; the temporary `player_N_spell_6` dev
   action is retired.
 - Units start with an empty `AbilityContainer` — every runtime ability comes from the
@@ -245,3 +285,174 @@ future rounds/gold can extend without rework.
 **References.** `godot/src/match/match_manager.gd`, `godot/src/match/loadout.gd`,
 `godot/src/ui/spell_select.gd`, `godot/src/ui/match_over.gd`, `godot/src/player/player.gd`,
 `godot/src/player/states/dead_state.gd`.
+
+## D-007 — Physics layer contract (2D)
+
+- **Status:** accepted (M3, documentation of the M1/Phase-0 wiring)
+- **Date:** 2026-10-14
+
+**Context.** Layer names were ported POC-verbatim in Phase 0, but the actual masks on the
+spell/effect/wall scenes were picked per-scene and never written down. Reading a scene file
+doesn't tell you why a mask says 95 — and M4 (more spells, consumables) plus M5 (lava,
+camera) will copy these numbers unless the intent is recorded.
+
+**Decision.** The mapping below is the contract. Changing any value means changing this
+entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
+
+**Layers**
+
+| Layer | Name | Who is on it |
+|---|---|---|
+| 1 | `player_0` | **All players and their Hurtboxes** (every controller, today) |
+| 2–4 | `player_1..3` | Reserved — named, but nothing assigns them yet (see caveat) |
+| 5 | `projectile` | Spell areas (concrete projectiles) and Effect areas |
+| 6 | `lava` | Reserved for M5 |
+| 7 | `Environment` | `AniviaWall` area + its `StaticBody2D`; future environment areas |
+
+**Scene masks (verified 2026-10-14)**
+
+| Scene | Layer | Mask | Wires `area_entered`? | Why |
+|---|---|---|---|---|
+| Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
+| Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers |
+| Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
+| Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited Timer is unwired) |
+| Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via Timer |
+| MeteorIncoming telegraph | 16 | 95 | **no** | contact values exist but are inert (D-001 correction); Timer spawns the strike |
+| MeteorExplosion / ExplosionEffect | 16 | 1 | yes (inherited from `effect.tscn`) | 15 dmg / KB 250 and 5 / KB 175 |
+| AniviaWall area | 64 | 31 = 1–4 + 16 | yes | despawns when any spell touches it |
+| AniviaWall StaticBody | 64 | 15 | — | blocks player movement |
+
+**Consequences.**
+
+- Spells masking layer 16 means **spells collide with each other** (a Fireball hitting a
+  Boomerang explodes) — a deliberate consequence of POC parity; don't "fix" it silently.
+- Connections are inherited from instanced base scenes (`spell_scene.tscn` declares none;
+  `effect.tscn` declares `area_entered`, so all effect scenes get it).
+- Effects mask layer 1 only. If players ever move to their named layers 2–4 (4-player
+  support), effect masks must widen to 15 or effects will miss players 3/4.
+- Layer names live in `project.godot` (`layer_names/2d_physics/layer_N`) and are asserted
+  by the contract test.
+
+**Not doing.** Per-player collision layers for the current 2-player build (all players share
+layer 1 — friend fire is on by design and `SourceFilter` handles self-immunity);
+renumbering the POC layers.
+
+**References.** `godot/project.godot`, `godot/tests/phase0/test_layer_contract.gd`,
+`godot/src/abilities/spells/*.tscn`, `godot/src/abilities/effects/*.tscn`,
+`godot/src/player/player.tscn`.
+
+## D-008 — Player presentation components own their nodes (M3)
+
+- **Status:** accepted (M3)
+- **Date:** 2026-10-14
+
+**Context.** The M3 cleanup split `Unit` (`player.gd`) into `CastController` and
+`PlayerVisuals` child nodes. The first cut of `PlayerVisuals` owned no nodes — it reached into
+the unit's children through the parent, reading as ceremony: a "visuals" node containing no
+visuals. M4 adds more spells and animations, so fixing the shape now is cheaper than renaming
+animation track paths later.
+
+**Decision.**
+
+- `PlayerVisuals` is a `Node2D` that **owns the sprite subtree it is named for**:
+  `PlayerVisuals/Flippable/{PlayerSprite,LargeShadow}` and `PlayerVisuals/AimSprite`.
+  The `AnimationPlayer` tracks resolve through it
+  (`PlayerVisuals/Flippable/PlayerSprite:frame`).
+- The **`AimSprite` must stay outside `Flippable`**: it is positioned by
+  `offset = Vector2(360, 0)` + rotation, and a facing flip (`scale.x = -1`) would mirror its
+  world position to the wrong side while facing left.
+- `CastController` stays a controller-style node (owns no nodes, acts via `@export unit`),
+  matching the existing `AbilityHandler` and `StateMachine` precedents. Components are for
+  logic with its own state; a pass-through that only forwards calls is not worth a node.
+  **Amendment (2026-10-14):** renamed **`CastHandler`** and reduced to cast execution only
+  when the input layer landed — see D-009.
+- `facing_scale` stays a `Unit` variable (read by cast and locomotion); the flip is applied
+  through `PlayerVisuals.set_facing()`.
+- **Amendment (2026-10-14, presentation pass):** animation playback moved behind
+  `PlayerVisuals` — states and `CastHandler` no longer touch the `AnimationPlayer` directly.
+  The node stays a child of `Unit` so the track paths are untouched; the "deferred clips yield
+  to an active cast windup" priority lives in `PlayerVisuals.play`. `Unit.TURN_ACCELERATION` →
+  `PlayerVisuals.AIM_TURN_SPEED` (only the aim sprite read it). See D-005's trigger amendment
+  for the generic `play`/`play_cast`/`reassert_animation` model.
+
+**Consequences.** Restructuring the sprite subtree means rewriting those track paths by hand
+in the `.tscn`; the resolution test `godot/tests/m3/test_player_visuals.gd` catches mistakes
+(wrong track paths silently no-op at runtime). The POC's `Flippable` node is kept as a nested
+node so sprite transforms stay unchanged.
+
+**References.** `godot/src/player/player.tscn`, `godot/src/player/components/player_visuals.gd`,
+`godot/src/player/components/cast_handler.gd`, `godot/tests/m3/test_player_visuals.gd`.
+
+## D-009 — Controllers own input, Unit owns intents (controller slot)
+
+- **Status:** accepted (refactor branch)
+- **Date:** 2026-10-14
+
+**Context.** `CastController` was added in the M3 cleanup to hold cast lifecycle glue, but it
+also read the global `Input` singleton for aim steering and spell presses (`update_direction`,
+`handle_spell_input`), while two more input reads lived outside it (`Unit._update_move_direction`
+for movement, `AimState.physics_update` for the spell release). Three local-input sites, no seam:
+an AI or network-driven player would have to fake `Input` actions, and there was no swappable
+"controller" despite the name. The sibling project DragonJumpRemastered is the pattern to follow:
+`PlayerCharacterController` base → `PlayerOneController`/`PlayerAITrainingController`, a
+`ControllerContainer` slot on the player, and a `NONE` controller type for tests/replay.
+
+**Decision.**
+
+- Input sources become **controller nodes** in `src/player/controllers/`:
+  `PlayerController` (base, `unit` injected) and `LocalPlayerController` — the only class in the
+  game that reads `Input`. Future `AI`/`Remote` controllers subclass the base and call the same
+  intent API.
+- `Unit` owns a controller slot: `enum ControllerType { NONE, LOCAL }`,
+  `@export controller_type` factory + `set_controller()` (the controller becomes a direct child
+  of the Unit). `NONE` (default in `player.tscn`) creates no controller so tests/replay drive the
+  Unit directly; `main.tscn` sets `LOCAL`.
+- Controllers send **intents**, the Unit decides legality: `set_move_input(dir)`,
+  `set_aim_input(dir)`, `request_cast(slot)`, `request_release()` (consumed by `AimState` via
+  `consume_release_request()`). Active-cast abort, cooldown checks, the Aim transition and the
+  tap/hold decision stay unit/state-side. Intents are plain data, so a network layer can carry
+  them later.
+- `Unit` drives the tick (`controller.update(delta)` at the top of `_physics_process`; no
+  `_physics_process` on controllers) so tests that disable unit physics stay deterministic.
+- `CastController` → **`CastHandler`**, reduced to cast execution
+  (`try_cast`/abort/windup/cooldown-spawn/cast animation). `Unit.try_cast`/`try_abort_cast`
+  forwarders remain.
+
+**Addendum (2026-10-14).** `ControllerContainer` was dropped: with a single `controller`
+reference on the Unit, a container node was one noun for one child. `LocalPlayerController`
+now owns its **input index** (`player_index`): it builds the `player_N_*` action names itself
+and the factory passes `PLAYER_CONTROLLER`, so the unit's seat stays identity (palette, HUD,
+winner) while an explicit index can differ for tests / a future join flow. The action-name
+helpers moved off `Unit` with it — they had no other user.
+
+**Addendum 2 (2026-10-14, input-shaping pass).** The stick deadzone moved into
+`LocalPlayerController` (applied once to the raw stick before both move and aim intents): it is
+input-hardware shaping, not intent legality — and the unit-side check only covered aim, so
+sub-deadzone drift normalised to a full-speed walk. `Unit.set_aim_input` keeps a zero-guard
+only. `StateMachine._unhandled_input` → `State.handle_input` stays as the state-machine
+pattern's input hook even though no state consumes it.
+
+**Consequences.**
+
+- The input surface is one class; movement/aim/press/release can no longer drift apart.
+- Tests exercise intents directly (no real `Input`); the suite stays logic-first.
+- A bot is `ControllerType.AI` + an `AIPlayerController` calling the same four intent methods;
+  netplay is a remote controller receiving the same payloads.
+- Pressing a spell freezes position one frame earlier than before (Aim enter precedes
+  `move_and_slide`); the controller checks release only for `aiming_slot`, so releasing another
+  slot while aiming behaves as before.
+
+**Not doing.** Command objects (DJR's `Command` + inner `Params` are thin wrappers over one
+intent call — worth adding only when queued/replayed intents exist); seat-per-class controllers
+(`PlayerOneController`/`PlayerTwoController`): one class per input **kind**, one instance per
+seat — a subclass per seat duplicates logic and explodes `ControllerType` once AI/Remote seats
+arrive (DJR only ever shipped one local seat); a second exported index on `Unit` (the factory
+derives `player_index` from `PLAYER_CONTROLLER`, an explicit override is code-only); AI/Remote
+controller classes before their milestone; input buffering (still parked in `controls.md`).
+
+**References.** `godot/src/player/player.gd`,
+`godot/src/player/controllers/player_controller.gd`,
+`godot/src/player/controllers/local_player_controller.gd`,
+`godot/src/player/states/aim_state.gd`, `godot/src/player/components/cast_handler.gd`,
+`godot/tests/m3/test_player_controller.gd`.

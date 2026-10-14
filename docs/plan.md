@@ -141,9 +141,10 @@ cast/hit animations sync; aim sprite rotation smoothing.
 - [x] Arcade loadout UI: stick-driven focus navigation, pick 6 spells into slots
       (auto-ready on the 6th pick, POC parity), 2 reserved consumable slots (empty for now)
 - [x] Selection applies to Unit: `add_ability` + `try_grant` (revoke/replace supported)
-- [x] `spells_are_ready` flow → all players ready → match starts (port of POC ready-gate)
+- [x] Selection-complete flow → all players ready → match starts (manager-side ready gate;
+      `Unit.loadout_applied` is informational — a shop apply can't ready a player)
 - [x] HUD spell slots rebuild after selection (icons + cooldowns, 6 + 2 empty consumables)
-- [x] Death handling: the Dead state plays the `Death` clip; placeholder "PLAYER N WINS"
+- [x] Death handling: the Dead state plays the `Dead` clip; placeholder "PLAYER N WINS"
       banner with accept-to-restart (the real win screen replaces it in M5)
 - [x] Dev shortcut: `MatchManager.skip_selection` applies a default loadout (fast editor
       iteration for M4); the retired 7th dev slot (`player_N_spell_6`) is gone
@@ -154,6 +155,8 @@ full pick flow with stick only; HUD rebuilds; both players ready → match start
 
 ## M4 — Rest of the spells → `v0.4.0`
 
+- [ ] **Priority:** rename the money wizard's `CastSmoke` flavour clip → **`CastBase`** (its
+      required base cast pose; Smoke is its Attack — D-003, D-005 planned note)
 - [ ] Hook (POC: fireball params with negative knockback = pull; give it proper behavior)
 - [ ] Blink (new-project instant teleport) kept & wired as INSTANT tap-cast
 - [ ] Consumable slot architecture (usable items; content later)
@@ -204,6 +207,9 @@ Runs after all gameplay milestones (M1–M5.5); dev floor until then is 4.6.3.
 
 - [ ] Flip `config/features` → `("4.7", "Forward Plus")` and swap the local
       `/Applications/Godot.app` to a 4.7.x build; re-pin CI to 4.7 (single PR)
+- [ ] Re-vendor both GDExtensions (rebuild macOS `gameplay-attributes` binaries, refresh all
+      platforms) — upstream has moved since the initial vendor (attributes master `97225bd`,
+      2025-09-30; abilities `6d1ce71`, 2026-01-19, paths-only); provenance in `THIRD_PARTY.md`
 - **Already rehearsed 2026-10-12**: project verified fully green on the official
   4.7.2-stable binary (clean `.godot` import, ClassDB probe, gdUnit4 suite) — both GDExtensions
   forward-load fine, so residual risk is low. Watch-out: a 4.7 editor opening/saving this
@@ -234,3 +240,7 @@ Runs after all gameplay milestones (M1–M5.5); dev floor until then is 4.6.3.
 - POC parity vs new pipelines: flat knockback until M5.5 by design — don't "fix" early
   (hit application ownership is the one exception made in M1 — see D-001)
 - CI minutes: public repo = unlimited standard minutes; keep headless runs lean (~2–3 min)
+- GDExtension log noise (upstream, cosmetic, only fixable by rebuilding at the 4.7
+  re-vendor): `gameplay-abilities` logs a `Dictionary::operator[]` "Bug" engine error when
+  `has_ability` is called for a removed ability; `gameplay-attributes` logs an
+  `Instantiated AttributeOperation used as default value` warning at load
