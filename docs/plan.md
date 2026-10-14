@@ -23,7 +23,9 @@ Spell naming & structure: see [`docs/spells.md`](spells.md). The vocabulary ther
     `M1 → v0.1.0`, `M2 → v0.2.0`, `M3 → v0.3.0`, `M4 → v0.4.0`, `M5 → v0.5.0`, `M5.5 → v0.5.1`
   - unit tests (gdUnit4) covering that milestone's new logic
   - the manual verification checklist below ticked off
-- CI (`.github/workflows/test.yml`) must be green on every PR — merge gate.
+- CI (`.github/workflows/test.yml`) must be green on every PR — **enforced** via branch
+  protection on `main`: required check `gdunit4` (strict), admins included, direct pushes
+  and force-pushes rejected. Unlocked by the public-repo flip below.
 - Repo made **public** (unlimited GitHub Actions minutes).
 - One milestone = one user-visible version; keep the game runnable in-editor at every merge.
 
@@ -65,8 +67,10 @@ rehearsed successfully on the official 4.7.2 binary, so the final-phase bump is 
       note: CmdTool requires `--ignoreHeadlessMode` for headless runs)
 - [x] `.github/workflows/test.yml`: ubuntu runner → chickensoft `Setup-Godot` **(4.6.3,
       matching dev editor)** → headless import → gdUnit4 suite → report artifacts;
-      runs on push/PR; **green = merge gate**
-- [ ] Flip repo to **public** (unlimited Actions minutes) — repo owner action
+      runs on PR events only (`opened`/`synchronize`/`reopened` — no post-merge run);
+      **green = merge gate**
+- [x] Flip repo to **public** (unlimited Actions minutes) — done 2026-10-14; branch
+      protection on `main` enabled right after (required check `gdunit4`, full lock)
 
 ---
 
