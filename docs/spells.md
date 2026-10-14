@@ -72,7 +72,7 @@ Every spell is a combination of four independent axes:
 8. **Attacks** — a character's basic attack is an ability like any other
    (`<shaman>_attack_ability.tres`; the scene is named after the strike, e.g.
    `ArcaneBolt`, `StaffSwing`). Empowering spells are `<What>Buff`s whose stacks are the
-   remaining empowered attacks (D-003).
+   remaining empowered attacks (D-003). The money wizard's Attack is **Smoke**.
 
 Current file/class map:
 
@@ -88,14 +88,16 @@ Current file/class map:
 
 Every character sheet ships a fixed set of `AnimationPlayer` clips — the **slots** (D-005).
 Abilities select slots, never raw clips, so a shaman without a given pose degrades to the
-generic slot instead of breaking.
+generic slot instead of breaking. The slot names live in code as constants in
+`AnimationSlots` (`godot/src/common/animation_slots.gd`), pinned by
+`godot/tests/m2/test_animation_slots.gd`.
 
 | Slot | Playback | Selected by | Money wizard |
 |---|---|---|---|
 | `Idle` / `Move` | loop | state machine | yes |
 | `Aim` | static hold | aiming (`AimState`) | yes |
 | `Hit` | one-shot | hit reaction (`HitState`) | yes |
-| `Death` | one-shot | match flow (M5) | yes |
+| `Dead` | one-shot | match flow (M5) | yes |
 | `CastOffensive` | one-shot, speed-scaled | `TYPE == OFFENSIVE` | yes |
 | `CastDefensive` | one-shot, speed-scaled | `TYPE == DEFENSIVE` | yes |
 | `CastUtility` | one-shot, speed-scaled | `TYPE == UTILITY` | yes |
@@ -148,7 +150,8 @@ Current spells:
 | Teleport | Aimed | Projectile | Self reposition | — |
 | Anivia Wall | Aimed | Wall | Blocker (despawns on contact) | — |
 
-*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004).*
+*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004). It is
+also the money wizard's Attack ability (D-003).*
 
 *`CAST_MODE` is declared on every ability but not yet branched on: all spells use the same
 press/hold/release flow, and the tap threshold only picks facing vs stick direction. Wiring

@@ -116,6 +116,9 @@ family.
 - Where empower charges live (Unit-side state vs querying `AttributeContainer`) is an
   implementation choice; the documented vocabulary stays "Buff with stacks" regardless.
 
+**Addendum (2026-10-14).** The money wizard's Attack ability is **Smoke**; its 1.2 s pose
+becomes the sheet's `CastBase` clip (rename of `CastSmoke`, planned — D-005).
+
 **Not doing.** Auto-attack without a button; a universal always-equipped attack button;
 separately pickable melee/ranged variants (melee vs ranged is character identity).
 
@@ -184,7 +187,7 @@ names are the contract:
 | `Idle` / `Move` | loop | state machine |
 | `Aim` | static hold | aiming (`AimState`) |
 | `Hit` | one-shot | hit reaction (`HitState`) |
-| `Death` | one-shot | match flow (M5) |
+| `Dead` | one-shot | match flow (M5) |
 | `CastOffensive` / `CastDefensive` / `CastUtility` | one-shot, speed-scaled to the cast delay | `SpellType` |
 | `Attack` | one-shot, speed-scaled | basic attack ability (D-003) |
 | `Channel` | loop | channeled casts (M4) |
@@ -203,27 +206,43 @@ names are the contract:
 
 - New characters implement the slots they have; a missing flavor clip falls back
   automatically, a missing required slot is an asset bug surfaced by `push_warning`.
-- M2 ports all POC clips (Death and Taunt included) but wires only the state and cast slots;
-  Death wiring lands with M5's match flow, Taunt with M6.
+- M2 ports all POC clips (Dead and Taunt included) but wires only the state and cast slots;
+  Dead wiring lands with the match flow (M3, D-006), Taunt with M6.
 - The slot names are also the vocabulary future character sheets are authored against.
 
 **Amendment (2026-10-14, trigger pass).** Playback is one generic entry point,
 `PlayerVisuals.play(clip)` (DJR parity: states pass their own name — `play(self.name)`;
-`DeadState` names `&"Death"`). The windup priority lives in `play`: clips in
-`CAST_DEFERRED_CLIPS` (`Idle`, `Move`, `Aim`) are deferred while `is_windup_active()`, one-shot
+`DeadState` names `&"Dead"`). The windup priority lives in `play`: clips in
+`CAST_DEFERRED` (`Idle`, `Move`, `Aim`) are deferred while `is_windup_active()`, one-shot
 slots override the cast clip. The cast slot speed is always derived, never passed:
 `PlayerVisuals.play_cast(clip, cast_delay)` applies
 `BaseAbility.cast_animation_speed(clip.length, CAST_DELAY)`. When a cast releases playback,
 `CastHandler` calls `PlayerVisuals.reassert_animation()`, which replays the current state's
-clip if its name is in `CAST_DEFERRED_CLIPS` — one-shot states (Hit/Dead) are excluded, so a
+clip if its name is in `CAST_DEFERRED` — one-shot states (Hit/Dead) are excluded, so a
 force-aborted cast can no longer stomp a hit reaction. New slots need no `PlayerVisuals`
 changes — a state calling `play(&"Attack")` is the whole wiring.
+
+**Amendment 2 (2026-10-14, constants pass).** The slot names now live in
+**`AnimationSlots`** (`godot/src/common/animation_slots.gd`, a `class_name` constants
+holder — the `AttributeNames` pattern, not the autoload): cast slots, `CAST_DEFERRED`, and
+the `REQUIRED` set. The death slot is canonically **`Dead`** — state node, clip, and
+constant agree, so `DeadState` keeps the uniform `play(self.name)` (this supersedes the
+table's original `Death` name). `godot/tests/m2/test_animation_slots.gd` pins the contract:
+required slots exist on the wizard sheet, the deferred slots are implemented, the
+locomotion state nodes are named after their clips, and one-shot slots don't loop.
+
+**Planned (not yet applied).** Smoke is the money wizard's Attack (D-003), so its 1.2 s
+flavour clip `CastSmoke` will be renamed **`CastBase`** — the sheet's required base cast
+pose (`AnimationSlots.CAST_BASE` joins `REQUIRED`). Resolution is unchanged (the pose is
+still named via `CAST_ANIMATION`), and the reserved `Attack` slot stays reserved for
+D-003's ability wiring. Prioritised in `docs/plan.md` (M4); nothing implemented yet.
 
 **Not doing.** Per-spell animation enums; auto-generated animation tables; instant-cast poses
 (revisit with Blink in M4).
 
 **References.** `docs/spells.md` (Character animation slots),
-`godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+`godot/src/common/animation_slots.gd`, `godot/src/abilities/base_ability.gd`,
+`godot/src/player/player.gd`, `godot/tests/m2/test_animation_slots.gd`.
 
 ## D-006 — Match flow & loadout selection
 
@@ -241,7 +260,7 @@ future rounds/gold can extend without rework.
   `SELECTING → RUNNING → GAME_OVER`: it locks units until RUNNING, freezes them on
   GAME_OVER, and shows a placeholder match-over banner ("PLAYER N WINS", accept/button
   restarts) — the full win screen replaces it in M5.
-- Death plays the `Death` clip: the Dead state resets `speed_scale` and plays it (POC
+- Death plays the `Dead` clip: the Dead state resets `speed_scale` and plays it (POC
   parity), so a lethal hit never leaves the corpse in the previous pose — including a
   death that lands mid-`Hit`.
 - Selection is **auto-ready at 6 picks** (POC parity — no ready button). A picked spell

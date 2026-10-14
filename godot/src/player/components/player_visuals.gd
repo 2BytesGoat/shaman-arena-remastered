@@ -1,7 +1,6 @@
 class_name PlayerVisuals extends Node2D
 
 const AIM_TURN_SPEED := 15.0
-const CAST_DEFERRED_CLIPS := [&"Idle", &"Move", &"Aim"]
 
 @export var unit: Unit
 
@@ -10,7 +9,7 @@ const CAST_DEFERRED_CLIPS := [&"Idle", &"Move", &"Aim"]
 
 
 func play(clip: StringName) -> void:
-	if clip in CAST_DEFERRED_CLIPS and unit.cast_handler.is_windup_active():
+	if clip in AnimationSlots.CAST_DEFERRED and unit.cast_handler.is_windup_active():
 		return
 	unit.animation_player.speed_scale = 1.0
 	unit.animation_player.play(clip)
@@ -25,7 +24,7 @@ func play_cast(clip: StringName, cast_delay: float) -> void:
 
 func reassert_animation() -> void:
 	var state_name := unit.state_machine.state.name
-	if state_name in CAST_DEFERRED_CLIPS:
+	if state_name in AnimationSlots.CAST_DEFERRED:
 		play(state_name)
 
 
@@ -34,7 +33,7 @@ func set_facing(scale: float) -> void:
 
 
 func apply_palette() -> void:
-	var palette: Array = Constants.player_colors.get("player_%d" % unit.PLAYER_CONTROLLER, [])
+	var palette: Array = Constants.palette_for(unit.PLAYER_CONTROLLER)
 	if palette.is_empty() or not (unit.material is ShaderMaterial):
 		return
 	(unit.material as ShaderMaterial).set_shader_parameter("to_colors", PackedColorArray(palette))

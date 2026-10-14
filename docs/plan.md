@@ -144,7 +144,7 @@ cast/hit animations sync; aim sprite rotation smoothing.
 - [x] Selection-complete flow → all players ready → match starts (manager-side ready gate;
       `Unit.loadout_applied` is informational — a shop apply can't ready a player)
 - [x] HUD spell slots rebuild after selection (icons + cooldowns, 6 + 2 empty consumables)
-- [x] Death handling: the Dead state plays the `Death` clip; placeholder "PLAYER N WINS"
+- [x] Death handling: the Dead state plays the `Dead` clip; placeholder "PLAYER N WINS"
       banner with accept-to-restart (the real win screen replaces it in M5)
 - [x] Dev shortcut: `MatchManager.skip_selection` applies a default loadout (fast editor
       iteration for M4); the retired 7th dev slot (`player_N_spell_6`) is gone
@@ -155,6 +155,8 @@ full pick flow with stick only; HUD rebuilds; both players ready → match start
 
 ## M4 — Rest of the spells → `v0.4.0`
 
+- [ ] **Priority:** rename the money wizard's `CastSmoke` flavour clip → **`CastBase`** (its
+      required base cast pose; Smoke is its Attack — D-003, D-005 planned note)
 - [ ] Hook (POC: fireball params with negative knockback = pull; give it proper behavior)
 - [ ] Blink (new-project instant teleport) kept & wired as INSTANT tap-cast
 - [ ] Consumable slot architecture (usable items; content later)

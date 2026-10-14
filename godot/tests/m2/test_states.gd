@@ -87,7 +87,7 @@ func test_player_palette_applies_configured_colors() -> void:
 	var unit: Unit = await _make_unit()
 	var material := unit.material as ShaderMaterial
 	assert_object(material).is_not_null()
-	var expected := PackedColorArray(Constants.player_colors["player_0"])
+	var expected := PackedColorArray(Constants.palette_for(0))
 	assert_bool(material.get_shader_parameter("to_colors") == expected).is_true()
 
 
@@ -100,7 +100,7 @@ func test_second_player_gets_its_own_palette() -> void:
 	auto_free(unit)
 	await get_tree().process_frame
 	var material := unit.material as ShaderMaterial
-	var expected := PackedColorArray(Constants.player_colors["player_1"])
+	var expected := PackedColorArray(Constants.palette_for(1))
 	assert_bool(material.get_shader_parameter("to_colors") == expected).is_true()
 
 
@@ -120,7 +120,7 @@ func test_lethal_hit_transitions_to_death_animation() -> void:
 	unit.take_hit(null, 100.0, 0.0, Vector2.RIGHT)
 	assert_bool(unit.player_dead).is_true()
 	assert_str(unit.state_machine.state.name).is_equal("Dead")
-	assert_str(String(unit.animation_player.current_animation)).is_equal("Death")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Dead")
 
 
 func test_lethal_hit_during_hit_state_transitions_to_death_animation() -> void:
@@ -130,4 +130,4 @@ func test_lethal_hit_during_hit_state_transitions_to_death_animation() -> void:
 	unit.take_hit(null, 9.0, 0.0, Vector2.RIGHT)
 	assert_bool(unit.player_dead).is_true()
 	assert_str(unit.state_machine.state.name).is_equal("Dead")
-	assert_str(String(unit.animation_player.current_animation)).is_equal("Death")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Dead")

@@ -107,7 +107,7 @@ func request_cast(slot: int) -> void:
 		return
 	if ability_container.is_ability_cooldown_active(ability):
 		return
-	state_machine.transition_to("Aim", {"slot": slot, "ability": ability})
+	state_machine.transition_to(AnimationSlots.AIM, {"slot": slot, "ability": ability})
 
 
 func request_release() -> void:
@@ -194,7 +194,7 @@ func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: 
 			return
 	velocity += impact_direction * knockback
 	hit_locked = true
-	state_machine.transition_to("Hit")
+	state_machine.transition_to(AnimationSlots.HIT)
 
 
 static func is_lethal(attribute_name: String, new_value: float) -> bool:
@@ -224,5 +224,5 @@ func _die() -> void:
 		return
 	player_dead = true
 	cast_handler.abort_active_casts(true)
-	state_machine.transition_to("Dead")
+	state_machine.transition_to(AnimationSlots.DEAD)
 	player_died.emit(PLAYER_CONTROLLER)

@@ -7,4 +7,4 @@ func enter(_msg := {}) -> void:
 
 func physics_update(_delta: float) -> void:
 	if owner.move_direction != Vector2.ZERO:
-		state_machine.transition_to("Move")
+		state_machine.transition_to(AnimationSlots.MOVE)

@@ -30,4 +30,4 @@ func physics_update(delta: float) -> void:
 	if owner.consume_release_request():
 		var direction: Vector2 = owner.facing_direction() if is_tap(hold_time) else owner.cast_direction
 		owner.try_cast(ability, direction)
-		state_machine.transition_to("Idle")
+		state_machine.transition_to(AnimationSlots.IDLE)
