@@ -1,4 +1,4 @@
-class_name CastController extends Node
+class_name CastHandler extends Node
 
 @export var unit: Unit
 
@@ -10,30 +10,6 @@ func try_cast(ability: Ability, direction: Vector2) -> int:
 	if result == RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_DURATION_STARTED:
 		_play_cast_animation(ability, direction)
 	return result
-
-
-func update_direction() -> void:
-	var stick := Vector2(
-		Input.get_axis(unit.action_name("left"), unit.action_name("right")),
-		Input.get_axis(unit.action_name("up"), unit.action_name("down"))
-	)
-	if stick.length() > Unit.STICK_DEADZONE:
-		unit.cast_direction = stick.normalized()
-		unit.cast_angle = unit.cast_direction.angle()
-
-
-func handle_spell_input() -> void:
-	for slot in mini(unit.ability_slots.size(), Unit.MAX_SPELL_SLOTS):
-		if not Input.is_action_just_pressed(unit.spell_action(slot)):
-			continue
-		var ability := unit.ability_slots[slot]
-		if unit.ability_container.is_ability_active(ability):
-			try_abort_cast(ability)
-			return
-		if unit.ability_container.is_ability_cooldown_active(ability):
-			return
-		unit.state_machine.transition_to("Aim", {"slot": slot, "ability": ability})
-		return
 
 
 static func is_cast_interruptible(ability: Ability) -> bool:
@@ -85,7 +61,7 @@ func _play_cast_animation(ability: Ability, direction: Vector2) -> void:
 	)
 	unit.animation_player.play(clip)
 	unit.facing_scale = Unit.facing_sign(direction, unit.facing_scale)
-	unit.flippable.scale.x = unit.facing_scale
+	unit.visuals.set_facing(unit.facing_scale)
 
 
 func stop_cast_animation() -> void:

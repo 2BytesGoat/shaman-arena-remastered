@@ -43,6 +43,20 @@ func test_picking_both_players_starts_the_match() -> void:
 	assert_bool((main.get_node("SelectionLayer") as CanvasLayer).visible).is_false()
 
 
+func test_players_get_local_controllers_from_the_scene() -> void:
+	var main: Node = (load("res://main.tscn") as PackedScene).instantiate()
+	add_child(main)
+	auto_free(main)
+	await get_tree().process_frame
+	var manager := main.get_node("MatchManager") as MatchManager
+	for controller_index in 2:
+		var unit := manager.player_for(controller_index)
+		assert_bool(unit.controller is LocalPlayerController).is_true()
+		assert_object(unit.controller.unit).is_same(unit)
+		assert_int(unit.controller.player_index).is_equal(controller_index)
+		assert_object(unit.controller.get_parent()).is_same(unit)
+
+
 func test_death_shows_match_over_for_the_winner() -> void:
 	var main: Node = await _started_main()
 	var manager := main.get_node("MatchManager") as MatchManager

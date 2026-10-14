@@ -1,6 +1,13 @@
-class_name PlayerVisuals extends Node
+class_name PlayerVisuals extends Node2D
 
 @export var unit: Unit
+
+@onready var flippable: Node2D = $Flippable
+@onready var aim_sprite: Sprite2D = $AimSprite
+
+
+func set_facing(scale: float) -> void:
+	flippable.scale.x = scale
 
 
 func apply_palette() -> void:
@@ -21,9 +28,9 @@ func layout_hud() -> void:
 
 
 func update_aim_sprite(delta: float) -> void:
-	if unit.aim_sprite == null:
+	if aim_sprite == null:
 		return
-	var difference := wrapf(unit.cast_angle - unit.aim_sprite.rotation, -PI, PI)
-	unit.aim_sprite.rotation += clampf(
+	var difference := wrapf(unit.cast_angle - aim_sprite.rotation, -PI, PI)
+	aim_sprite.rotation += clampf(
 		difference, -Unit.TURN_ACCELERATION * delta, Unit.TURN_ACCELERATION * delta
 	)

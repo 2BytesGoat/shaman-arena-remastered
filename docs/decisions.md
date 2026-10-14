@@ -309,3 +309,105 @@ renumbering the POC layers.
 **References.** `godot/project.godot`, `godot/tests/phase0/test_layer_contract.gd`,
 `godot/src/abilities/spells/*.tscn`, `godot/src/abilities/effects/*.tscn`,
 `godot/src/player/player.tscn`.
+
+## D-008 — Player presentation components own their nodes (M3)
+
+- **Status:** accepted (M3)
+- **Date:** 2026-10-14
+
+**Context.** The M3 cleanup split `Unit` (`player.gd`) into `CastController` and
+`PlayerVisuals` child nodes. The first cut of `PlayerVisuals` owned no nodes — it reached into
+the unit's children through the parent, reading as ceremony: a "visuals" node containing no
+visuals. M4 adds more spells and animations, so fixing the shape now is cheaper than renaming
+animation track paths later.
+
+**Decision.**
+
+- `PlayerVisuals` is a `Node2D` that **owns the sprite subtree it is named for**:
+  `PlayerVisuals/Flippable/{PlayerSprite,LargeShadow}` and `PlayerVisuals/AimSprite`.
+  The `AnimationPlayer` tracks resolve through it
+  (`PlayerVisuals/Flippable/PlayerSprite:frame`).
+- The **`AimSprite` must stay outside `Flippable`**: it is positioned by
+  `offset = Vector2(360, 0)` + rotation, and a facing flip (`scale.x = -1`) would mirror its
+  world position to the wrong side while facing left.
+- `CastController` stays a controller-style node (owns no nodes, acts via `@export unit`),
+  matching the existing `AbilityHandler` and `StateMachine` precedents. Components are for
+  logic with its own state; a pass-through that only forwards calls is not worth a node.
+  **Amendment (2026-10-14):** renamed **`CastHandler`** and reduced to cast execution only
+  when the input layer landed — see D-009.
+- `facing_scale` stays a `Unit` variable (read by cast and locomotion); the flip is applied
+  through `PlayerVisuals.set_facing()`.
+
+**Consequences.** Restructuring the sprite subtree means rewriting those track paths by hand
+in the `.tscn`; the resolution test `godot/tests/m3/test_player_visuals.gd` catches mistakes
+(wrong track paths silently no-op at runtime). The POC's `Flippable` node is kept as a nested
+node so sprite transforms stay unchanged.
+
+**References.** `godot/src/player/player.tscn`, `godot/src/player/components/player_visuals.gd`,
+`godot/src/player/components/cast_handler.gd`, `godot/tests/m3/test_player_visuals.gd`.
+
+## D-009 — Controllers own input, Unit owns intents (controller slot)
+
+- **Status:** accepted (refactor branch)
+- **Date:** 2026-10-14
+
+**Context.** `CastController` was added in the M3 cleanup to hold cast lifecycle glue, but it
+also read the global `Input` singleton for aim steering and spell presses (`update_direction`,
+`handle_spell_input`), while two more input reads lived outside it (`Unit._update_move_direction`
+for movement, `AimState.physics_update` for the spell release). Three local-input sites, no seam:
+an AI or network-driven player would have to fake `Input` actions, and there was no swappable
+"controller" despite the name. The sibling project DragonJumpRemastered is the pattern to follow:
+`PlayerCharacterController` base → `PlayerOneController`/`PlayerAITrainingController`, a
+`ControllerContainer` slot on the player, and a `NONE` controller type for tests/replay.
+
+**Decision.**
+
+- Input sources become **controller nodes** in `src/player/controllers/`:
+  `PlayerController` (base, `unit` injected) and `LocalPlayerController` — the only class in the
+  game that reads `Input`. Future `AI`/`Remote` controllers subclass the base and call the same
+  intent API.
+- `Unit` owns a controller slot: `enum ControllerType { NONE, LOCAL }`,
+  `@export controller_type` factory + `set_controller()` (the controller becomes a direct child
+  of the Unit). `NONE` (default in `player.tscn`) creates no controller so tests/replay drive the
+  Unit directly; `main.tscn` sets `LOCAL`.
+- Controllers send **intents**, the Unit decides legality: `set_move_input(dir)`,
+  `set_aim_input(dir)`, `request_cast(slot)`, `request_release()` (consumed by `AimState` via
+  `consume_release_request()`). Active-cast abort, cooldown checks, the Aim transition and the
+  tap/hold decision stay unit/state-side. Intents are plain data, so a network layer can carry
+  them later.
+- `Unit` drives the tick (`controller.update(delta)` at the top of `_physics_process`; no
+  `_physics_process` on controllers) so tests that disable unit physics stay deterministic.
+- `CastController` → **`CastHandler`**, reduced to cast execution
+  (`try_cast`/abort/windup/cooldown-spawn/cast animation). `Unit.try_cast`/`try_abort_cast`
+  forwarders remain.
+
+**Addendum (2026-10-14).** `ControllerContainer` was dropped: with a single `controller`
+reference on the Unit, a container node was one noun for one child. `LocalPlayerController`
+now owns its **input index** (`player_index`): it builds the `player_N_*` action names itself
+and the factory passes `PLAYER_CONTROLLER`, so the unit's seat stays identity (palette, HUD,
+winner) while an explicit index can differ for tests / a future join flow. The action-name
+helpers moved off `Unit` with it — they had no other user.
+
+**Consequences.**
+
+- The input surface is one class; movement/aim/press/release can no longer drift apart.
+- Tests exercise intents directly (no real `Input`); the suite stays logic-first.
+- A bot is `ControllerType.AI` + an `AIPlayerController` calling the same four intent methods;
+  netplay is a remote controller receiving the same payloads.
+- Pressing a spell freezes position one frame earlier than before (Aim enter precedes
+  `move_and_slide`); the controller checks release only for `aiming_slot`, so releasing another
+  slot while aiming behaves as before.
+
+**Not doing.** Command objects (DJR's `Command` + inner `Params` are thin wrappers over one
+intent call — worth adding only when queued/replayed intents exist); seat-per-class controllers
+(`PlayerOneController`/`PlayerTwoController`): one class per input **kind**, one instance per
+seat — a subclass per seat duplicates logic and explodes `ControllerType` once AI/Remote seats
+arrive (DJR only ever shipped one local seat); a second exported index on `Unit` (the factory
+derives `player_index` from `PLAYER_CONTROLLER`, an explicit override is code-only); AI/Remote
+controller classes before their milestone; input buffering (still parked in `controls.md`).
+
+**References.** `godot/src/player/player.gd`,
+`godot/src/player/controllers/player_controller.gd`,
+`godot/src/player/controllers/local_player_controller.gd`,
+`godot/src/player/states/aim_state.gd`, `godot/src/player/components/cast_handler.gd`,
+`godot/tests/m3/test_player_controller.gd`.

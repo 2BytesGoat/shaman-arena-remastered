@@ -15,10 +15,12 @@
 
 [node name="Player" parent="." unique_id=101039518 instance=ExtResource("1_player")]
 position = Vector2(500, 292)
+controller_type = 1
 
 [node name="Player2" parent="." unique_id=208701586 instance=ExtResource("1_player")]
 position = Vector2(652, 292)
 PLAYER_CONTROLLER = 1
+controller_type = 1
 
 [node name="SelectionLayer" type="CanvasLayer" parent="."]
 

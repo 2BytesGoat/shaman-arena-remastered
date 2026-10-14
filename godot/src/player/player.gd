@@ -14,24 +14,29 @@ const SPELL_SPAWN_OFFSET := 360.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
 const CONSUMABLE_SLOTS := Loadout.CONSUMABLE_SLOTS
 
-@export var aim_sprite: Sprite2D
+enum ControllerType { NONE, LOCAL }
+
 @export var attribute_container: AttributeContainer
 @export var ability_container: AbilityContainer
 @export var PLAYER_CONTROLLER := 0
+@export var controller_type: ControllerType = ControllerType.NONE:
+	set = _on_controller_type_changed
 @export var max_health := 10.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
-@onready var flippable: Node2D = $Flippable
 @onready var ability_handler: AbilityHandler = $AbilityHandler
 @onready var hud_margin: MarginContainer = $CanvasLayer/MarginContainer
-@onready var cast_controller: CastController = $CastController
+@onready var cast_handler: CastHandler = $CastHandler
 @onready var visuals: PlayerVisuals = $PlayerVisuals
 
+var controller: PlayerController
 var move_direction := Vector2.ZERO
 var cast_direction := Vector2.RIGHT
 var cast_angle := 0.0
 var aiming := false
+var aiming_slot := -1
+var release_cast_requested := false
 var hit_locked := false
 var player_dead := false
 var is_match_ready := false
@@ -39,6 +44,7 @@ var facing_scale := 1.0
 
 var ability_slots: Array[Ability] = []
 var _last_move_direction := Vector2.RIGHT
+var _applied_controller_type := -1
 
 
 func _enter_tree() -> void:
@@ -49,7 +55,7 @@ func _ready() -> void:
 	ability_slots = ability_container.get_initial_abilities()
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
-	ability_container.cooldown_start.connect(cast_controller.on_spell_cooldown_start)
+	ability_container.cooldown_start.connect(cast_handler.on_spell_cooldown_start)
 	visuals.apply_palette()
 	visuals.layout_hud()
 
@@ -57,21 +63,11 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if player_dead or not is_match_ready:
 		return
-	_update_move_direction()
+	if controller:
+		controller.update(delta)
 	_apply_movement(delta)
-	cast_controller.update_direction()
 	_update_facing()
-	if not aiming and not hit_locked:
-		cast_controller.handle_spell_input()
 	visuals.update_aim_sprite(delta)
-
-
-func action_name(suffix: String) -> StringName:
-	return StringName("player_%d_%s" % [PLAYER_CONTROLLER, suffix])
-
-
-func spell_action(slot: int) -> StringName:
-	return action_name("spell_%d" % slot)
 
 
 func spell_spawn_position(direction: Vector2) -> Vector2:
@@ -83,7 +79,73 @@ func facing_direction() -> Vector2:
 
 
 func can_player_move() -> bool:
-	return not aiming and not hit_locked and not cast_controller.is_windup_active()
+	return not aiming and not hit_locked and not cast_handler.is_windup_active()
+
+
+func set_move_input(direction: Vector2) -> void:
+	if not can_player_move():
+		move_direction = Vector2.ZERO
+		return
+	move_direction = direction.normalized()
+	if move_direction != Vector2.ZERO:
+		_last_move_direction = move_direction
+
+
+func set_aim_input(direction: Vector2) -> void:
+	if direction.length() <= STICK_DEADZONE:
+		return
+	cast_direction = direction.normalized()
+	cast_angle = cast_direction.angle()
+
+
+func request_cast(slot: int) -> void:
+	if player_dead or not is_match_ready or aiming or hit_locked:
+		return
+	if slot < 0 or slot >= mini(ability_slots.size(), MAX_SPELL_SLOTS):
+		return
+	var ability := ability_slots[slot]
+	if ability_container.is_ability_active(ability):
+		try_abort_cast(ability)
+		return
+	if ability_container.is_ability_cooldown_active(ability):
+		return
+	state_machine.transition_to("Aim", {"slot": slot, "ability": ability})
+
+
+func request_release() -> void:
+	if aiming:
+		release_cast_requested = true
+
+
+func consume_release_request() -> bool:
+	var requested := release_cast_requested
+	release_cast_requested = false
+	return requested
+
+
+func set_controller(new_controller: PlayerController) -> void:
+	if not is_node_ready():
+		await ready
+	if is_instance_valid(controller):
+		controller.queue_free()
+	controller = new_controller
+	if controller:
+		add_child(controller)
+
+
+func _on_controller_type_changed(new_type: ControllerType) -> void:
+	controller_type = new_type
+	if _applied_controller_type == new_type:
+		return
+	_applied_controller_type = new_type
+	set_controller(_make_controller())
+
+
+func _make_controller() -> PlayerController:
+	match controller_type:
+		ControllerType.LOCAL:
+			return LocalPlayerController.new(self, PLAYER_CONTROLLER)
+	return null
 
 
 static func facing_sign(direction: Vector2, current: float) -> float:
@@ -99,22 +161,22 @@ static func step_velocity(current: Vector2, direction: Vector2, delta: float) ->
 
 
 func play_locomotion_animation(animation_name: StringName) -> void:
-	if cast_controller.is_windup_active():
+	if cast_handler.is_windup_active():
 		return
 	animation_player.speed_scale = 1.0
 	animation_player.play(animation_name)
 
 
 func try_cast(ability: Ability, direction: Vector2) -> int:
-	return cast_controller.try_cast(ability, direction)
+	return cast_handler.try_cast(ability, direction)
 
 
 func try_abort_cast(ability: Ability, ignore_uninterruptible := false) -> bool:
-	return cast_controller.try_abort_cast(ability, ignore_uninterruptible)
+	return cast_handler.try_abort_cast(ability, ignore_uninterruptible)
 
 
 func apply_loadout(picks: Array[Ability]) -> void:
-	cast_controller.abort_active_casts(true)
+	cast_handler.abort_active_casts(true)
 	for ability in ability_slots:
 		ability_container.try_revoke(ability)
 		ability_container.remove_ability(ability)
@@ -134,7 +196,7 @@ func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: 
 		return
 	if damage <= 0.0 and knockback <= 0.0:
 		return
-	cast_controller.abort_active_casts()
+	cast_handler.abort_active_casts()
 	if damage > 0.0:
 		attribute_container.apply_buff(HealthDamage.new(damage))
 		if player_dead:
@@ -151,19 +213,7 @@ static func is_lethal(attribute_name: String, new_value: float) -> bool:
 func _update_facing() -> void:
 	var direction := cast_direction if aiming else _last_move_direction
 	facing_scale = facing_sign(direction, facing_scale)
-	flippable.scale.x = facing_scale
-
-
-func _update_move_direction() -> void:
-	if not can_player_move():
-		move_direction = Vector2.ZERO
-		return
-	move_direction = Vector2(
-		Input.get_axis(action_name("left"), action_name("right")),
-		Input.get_axis(action_name("up"), action_name("down"))
-	).normalized()
-	if move_direction != Vector2.ZERO:
-		_last_move_direction = move_direction
+	visuals.set_facing(facing_scale)
 
 
 func _apply_movement(delta: float) -> void:
@@ -182,6 +232,6 @@ func _die() -> void:
 	if player_dead:
 		return
 	player_dead = true
-	cast_controller.abort_active_casts(true)
+	cast_handler.abort_active_casts(true)
 	state_machine.transition_to("Dead")
 	player_died.emit(PLAYER_CONTROLLER)

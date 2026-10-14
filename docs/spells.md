@@ -107,7 +107,7 @@ generic slot instead of breaking.
 - **Flavor clips** — `BaseAbility.CAST_ANIMATION` may name a character-specific clip
   (Smoke → `CastSmoke`, the 1.2 s pose). Resolution at cast time: flavor clip *if this
   character's sheet has it* → else the slot for `TYPE` → else `push_warning` + `Idle`.
-- Frames live on `Flippable/PlayerSprite`; facing flips via `Flippable.scale.x`, never baked
+- Frames live on `PlayerVisuals/Flippable/PlayerSprite`; facing flips via the `Flippable` node's scale, never baked
   into the sheet.
 
 ## Second-member rule
