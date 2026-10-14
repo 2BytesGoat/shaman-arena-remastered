@@ -136,14 +136,17 @@ cast/hit animations sync; aim sprite rotation smoothing.
 
 ## M3 — Spell selection → `v0.3.0`
 
-- [ ] `MatchManager` (autoload or main-scene node): `SELECTING → RUNNING → GAME_OVER`
+- [x] `MatchManager` (main-scene node): `SELECTING → RUNNING → GAME_OVER`
       (state machine ready for future rounds/gold without rework)
-- [ ] Arcade loadout UI: stick-driven focus navigation, pick up to 6 spells into slots,
-      2 reserved consumable slots (empty for now)
-- [ ] Selection applies to Unit: `add_ability` + `try_grant` (revoke/replace supported)
-- [ ] Selection flags empower spells that require the Attack pick (grey-out + hint — D-003)
-- [ ] `spells_are_ready` flow → all players ready → match starts (port of POC ready-gate)
-- [ ] HUD spell slots rebuild after selection (icons + cooldowns)
+- [x] Arcade loadout UI: stick-driven focus navigation, pick 6 spells into slots
+      (auto-ready on the 6th pick, POC parity), 2 reserved consumable slots (empty for now)
+- [x] Selection applies to Unit: `add_ability` + `try_grant` (revoke/replace supported)
+- [x] `spells_are_ready` flow → all players ready → match starts (port of POC ready-gate)
+- [x] HUD spell slots rebuild after selection (icons + cooldowns, 6 + 2 empty consumables)
+- [x] Death handling: the Dead state plays the `Death` clip; placeholder "PLAYER N WINS"
+      banner with accept-to-restart (the real win screen replaces it in M5)
+- [x] Dev shortcut: `MatchManager.skip_selection` applies a default loadout (fast editor
+      iteration for M4); the retired 7th dev slot (`player_N_spell_6`) is gone
 
 **Tests:** loadout apply → `get_runtime_abilities` contains picks; MAX 6/duplicates
 rejection; ready-gate aggregation; SELECTING→RUNNING transition. **Verify (manual):**
@@ -155,6 +158,8 @@ full pick flow with stick only; HUD rebuilds; both players ready → match start
 - [ ] Blink (new-project instant teleport) kept & wired as INSTANT tap-cast
 - [ ] Consumable slot architecture (usable items; content later)
 - [ ] Balance pass across all spells (damage, cooldowns, curves)
+- [ ] Selection flags empower spells that require the Attack pick (grey-out + hint — D-003;
+      deferred from M3)
 
 **Tests:** hook pull impulse sign/direction; consumable slots reject spells and vice
 versa. **Verify (manual):** each spell slot populated by a selection run (8 slots,

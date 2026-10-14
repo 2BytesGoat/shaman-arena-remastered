@@ -14,8 +14,16 @@ func _make_unit(at := Vector2(100.0, 0.0)) -> Unit:
 	unit.set_physics_process(false)
 	add_child(unit)
 	unit.global_position = at
+	unit.apply_loadout(_picks(["fireball", "smoke"]))
 	auto_free(unit)
 	return unit
+
+
+func _picks(names: Array) -> Array[Ability]:
+	var picks: Array[Ability] = []
+	for name in names:
+		picks.append(load("res://src/resources/abilities/%s_ability.tres" % name))
+	return picks
 
 
 func _ability(unit: Unit, ability_id: StringName) -> BaseAbility:

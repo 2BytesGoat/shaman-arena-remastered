@@ -18,7 +18,7 @@ func test_ggas_and_gga_classes_are_registered() -> void:
 
 
 func test_project_version_is_current() -> void:
-	assert_str(str(ProjectSettings.get_setting("application/config/version"))).is_equal("0.2.0")
+	assert_str(str(ProjectSettings.get_setting("application/config/version"))).is_equal("0.3.0")
 
 
 func test_per_player_actions_exist() -> void:

@@ -14,13 +14,6 @@
 [ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="12_dead"]
 [ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="13_handler"]
 [ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
-[ext_resource type="Ability" path="res://src/resources/abilities/blink_ability.tres" id="15_blink"]
-[ext_resource type="Ability" path="res://src/resources/abilities/fireball_ability.tres" id="16_fireball"]
-[ext_resource type="Ability" path="res://src/resources/abilities/boomerang_ability.tres" id="17_boomerang"]
-[ext_resource type="Ability" path="res://src/resources/abilities/meteor_ability.tres" id="18_meteor"]
-[ext_resource type="Ability" path="res://src/resources/abilities/smoke_ability.tres" id="19_smoke"]
-[ext_resource type="Ability" path="res://src/resources/abilities/teleport_ability.tres" id="20_teleport"]
-[ext_resource type="Ability" path="res://src/resources/abilities/anivia_wall_ability.tres" id="21_wall"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_palette"]
 resource_local_to_scene = true
@@ -292,7 +285,6 @@ libraries/ = SubResource("AnimationLibrary_player")
 attribute_set = SubResource("AttributeSet_player")
 
 [node name="AbilityContainer" type="AbilityContainer" parent="." unique_id=2083348264]
-abilities = Array[Ability]([ExtResource("15_blink"), ExtResource("16_fireball"), ExtResource("17_boomerang"), ExtResource("18_meteor"), ExtResource("19_smoke"), ExtResource("20_teleport"), ExtResource("21_wall")])
 
 [node name="AbilityHandler" type="Node" parent="." unique_id=716700696 node_paths=PackedStringArray("ability_container", "button_container")]
 script = ExtResource("13_handler")

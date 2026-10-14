@@ -7,9 +7,17 @@ func _make_unit() -> Unit:
 	unit.set_physics_process(false)
 	add_child(unit)
 	unit.get_node("StateMachine").set_physics_process(false)
+	unit.apply_loadout(_picks(["fireball", "smoke"]))
 	auto_free(unit)
 	await get_tree().process_frame
 	return unit
+
+
+func _picks(names: Array) -> Array[Ability]:
+	var picks: Array[Ability] = []
+	for name in names:
+		picks.append(load("res://src/resources/abilities/%s_ability.tres" % name))
+	return picks
 
 
 func _ability(unit: Unit, ability_id: StringName) -> BaseAbility:
@@ -103,3 +111,21 @@ func test_hit_state_locks_and_releases_on_animation_finish() -> void:
 	unit.state_machine.state._on_animation_player_animation_finished(&"Hit")
 	assert_str(unit.state_machine.state.name).is_equal("Idle")
 	assert_bool(unit.hit_locked).is_false()
+
+
+func test_lethal_hit_transitions_to_death_animation() -> void:
+	var unit: Unit = await _make_unit()
+	unit.take_hit(null, 100.0, 0.0, Vector2.RIGHT)
+	assert_bool(unit.player_dead).is_true()
+	assert_str(unit.state_machine.state.name).is_equal("Dead")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Death")
+
+
+func test_lethal_hit_during_hit_state_transitions_to_death_animation() -> void:
+	var unit: Unit = await _make_unit()
+	unit.take_hit(null, 1.0, 0.0, Vector2.RIGHT)
+	assert_str(unit.state_machine.state.name).is_equal("Hit")
+	unit.take_hit(null, 9.0, 0.0, Vector2.RIGHT)
+	assert_bool(unit.player_dead).is_true()
+	assert_str(unit.state_machine.state.name).is_equal("Dead")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("Death")
