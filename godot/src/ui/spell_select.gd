@@ -58,13 +58,14 @@ func set_locked(value: bool) -> void:
 static func move_focus(index: int, direction: Vector2i, columns: int, count: int) -> int:
 	if count <= 0:
 		return 0
+	@warning_ignore("integer_division")
 	var row := index / columns
 	var column := index % columns
 	if direction.x != 0:
-		var target := index + direction.x
+		var target_index := index + direction.x
 		var target_column := column + direction.x
-		if target_column >= 0 and target_column < columns and target < count:
-			return target
+		if target_column >= 0 and target_column < columns and target_index < count:
+			return target_index
 		return index
 	if direction.y == 0:
 		return index

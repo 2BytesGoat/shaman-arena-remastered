@@ -138,10 +138,11 @@ func update_cast_direction() -> void:
 		cast_angle = cast_direction.angle()
 
 
-func take_hit(source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:
+func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:
 	if player_dead:
 		return
 	if damage <= 0.0 and knockback <= 0.0:
+		
 		return
 	_abort_active_casts()
 	if damage > 0.0:
