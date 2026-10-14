@@ -116,3 +116,44 @@ separately pickable melee/ranged variants (melee vs ranged is character identity
 
 **References.** `docs/spells.md` (Core words: Attack), `python/out/audit.md`,
 `godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+
+## D-004 — Cast abort ("cancel") rules
+
+- **Status:** accepted (M2)
+- **Date:** 2026-10-14
+
+**Context.** A released cast could not be taken back: `cooldown_start` (which spawns the
+spell) fires at the end of the GGAS duration, and nothing interrupted it — not hits, not
+even death (a corpse would still fire its pending spell). LoL-style move-to-cancel was
+considered, but in this single-stick scheme the stick already steers the cast during the
+delay (owner change), so "movement" cannot be told apart from steering without an
+angle-threshold heuristic.
+
+**Decision.** Three abort paths, all **free** (no cooldown — a cancelled cast is as if it
+was never cast):
+
+- **Re-press** the same spell button during its cast delay → aborts. Uses
+  `AbilityContainer.try_end` (probed: fires `ability_ended` without `cooldown_start`,
+  leaves no cooldown, immediately re-activatable). Cancel-only — no auto re-aim, so a
+  quick release after the abort cannot chain into a tap-cast.
+- **Taking a hit** during the cast delay aborts it too — unless the spell is flagged
+  `UNINTERRUPTIBLE` (Smoke), which ignores hits and re-presses; only death stops it.
+- **Death** aborts every pending cast (`_die`, flag ignored; `_on_spell_cooldown_start`
+  also guards `player_dead`).
+
+The stick never cancels; it only steers.
+
+**Consequences.**
+
+- Mashing a spell button aborts your own cast (double-tap = cancel) — accepted trade-off.
+- "Uninterruptible" joins the `spells.md` vocabulary; future spells must choose the flag
+  deliberately.
+- Free aborts make feints cheap by design; commitment comes from letting the delay
+  finish, not from cooldown.
+
+**Not doing.** Stick-flick cancel gesture; abort on a *different* spell's press (parked —
+it currently starts aiming the new spell while the old cast still lands); any cooldown
+cost for aborts.
+
+**References.** `godot/src/player/player.gd`, `godot/src/abilities/base_ability.gd`,
+`godot/tests/m2/test_cast_abort.gd`.

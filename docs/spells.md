@@ -34,6 +34,8 @@ Decisions behind this are recorded in [[decisions]] (D-002).
   or hinders. Duration and stacks are configuration, never part of the name.
 - **Crowd control (CC)** — a debuff that removes control (stun, root, silence…). Still
   named `...Debuff`.
+- **Uninterruptible** — a cast that cannot be aborted: hits and spell-button re-presses do
+  not stop it; only death does. `BaseAbility.UNINTERRUPTIBLE` (currently Smoke only, D-004).
 
 ## The four axes
 
@@ -115,6 +117,8 @@ Current spells:
 | Smoke | Instant (self) | Field | Hit on entry | — |
 | Teleport | Aimed | Projectile | Self reposition | — |
 | Anivia Wall | Aimed | Wall | Blocker (despawns on contact) | — |
+
+*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004).*
 
 Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 

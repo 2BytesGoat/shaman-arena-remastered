@@ -120,9 +120,12 @@ ticks down; each of the 6 spells behaves like POC.
       animation speed scaled to cast delay
 - [ ] Stick deadzone/aim retention tuning (keep last nonzero direction)
 - [ ] Cast marker/aim indicator polish
+- [x] Cast abort rules (D-004): re-press during cast delay → free abort; hits abort except
+      `UNINTERRUPTIBLE` (Smoke); death always stops casts (corpse-cast fixed)
 
 **Tests:** state machine transitions Idle↔Move↔Aim (mocked input), facing-flip math,
-`move_toward` velocity integration. **Verify (manual):** movement feels like POC;
+`move_toward` velocity integration, cast abort semantics (GGAS `try_end` trace,
+interruptibility flags, death guard). **Verify (manual):** movement feels like POC;
 cast/hit animations sync; aim sprite rotation smoothing.
 
 ## M3 — Spell selection → `v0.3.0`
@@ -202,7 +205,8 @@ Runs after all gameplay milestones (M1–M5.5); dev floor until then is 4.6.3.
 
 - `Unit` stays the player class name (bot-friendly)
 - Old POC visuals ported as intermediate art (money wizard, spell icons)
-- P1 keyboard binding parity with POC (arrows), P0 WASD — arcade panels override later
+- Dev keyboard: player_0 (the owner's seat) = arrows to move + `1`–`6` to cast;
+  player_1 dev bindings are throwaway (WASD) — arcade panels override later
 - Godot 4.6.x is the dev floor for the entire port (4.7 upgrade deferred to Phase LAST)
 
 ## Risks

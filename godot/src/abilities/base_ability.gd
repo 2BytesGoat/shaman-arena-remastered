@@ -17,6 +17,7 @@ enum CastMode {
 @export var CAST_DELAY: float = 0.0
 @export var COOLDOWN: float = 5.0
 @export var SPELL_SCENE: PackedScene
+@export var UNINTERRUPTIBLE: bool = false
 
 
 func cast(unit: Unit, direction: Vector2) -> void:

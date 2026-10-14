@@ -37,14 +37,14 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_update_aim_sprite(delta)
 	if player_dead:
 		return
 	_update_move_direction()
 	_apply_movement(delta)
+	update_cast_direction()
 	if not aiming and not hit_locked:
 		_handle_spell_input()
-
+	_update_aim_sprite(delta)
 
 func action_name(suffix: String) -> StringName:
 	return StringName("player_%d_%s" % [PLAYER_CONTROLLER, suffix])
@@ -87,6 +87,7 @@ func take_hit(source: Unit, damage: float, knockback: float, impact_direction: V
 		return
 	if damage <= 0.0 and knockback <= 0.0:
 		return
+	_abort_active_casts()
 	if damage > 0.0:
 		attribute_container.apply_buff(HealthDamage.new(damage))
 		if player_dead:
@@ -98,6 +99,24 @@ func take_hit(source: Unit, damage: float, knockback: float, impact_direction: V
 
 static func is_lethal(attribute_name: String, new_value: float) -> bool:
 	return attribute_name == AttributeNames.HEALTH and new_value <= 0.0
+
+
+static func is_cast_interruptible(ability: Ability) -> bool:
+	return not (ability is BaseAbility) or not (ability as BaseAbility).UNINTERRUPTIBLE
+
+
+func try_abort_cast(ability: Ability, ignore_uninterruptible := false) -> bool:
+	if not ability_container.is_ability_active(ability):
+		return false
+	if not ignore_uninterruptible and not is_cast_interruptible(ability):
+		return false
+	ability_container.try_end(ability)
+	return true
+
+
+func _abort_active_casts(ignore_uninterruptible := false) -> void:
+	for ability in ability_slots:
+		try_abort_cast(ability, ignore_uninterruptible)
 
 
 func _update_aim_sprite(delta: float) -> void:
@@ -132,7 +151,10 @@ func _handle_spell_input() -> void:
 		if not Input.is_action_just_pressed(spell_action(slot)):
 			continue
 		var ability := ability_slots[slot]
-		if ability_container.is_ability_cooldown_active(ability) or ability_container.is_ability_active(ability):
+		if ability_container.is_ability_active(ability):
+			try_abort_cast(ability)
+			return
+		if ability_container.is_ability_cooldown_active(ability):
 			return
 		state_machine.transition_to("Aim", {"slot": slot, "ability": ability})
 		return
@@ -146,6 +168,8 @@ func _is_spell_windup_active() -> bool:
 
 
 func _on_spell_cooldown_start(ability: Ability) -> void:
+	if player_dead:
+		return
 	if ability is BaseAbility:
 		(ability as BaseAbility).cast(self, cast_direction)
 
@@ -161,5 +185,6 @@ func _die() -> void:
 	if player_dead:
 		return
 	player_dead = true
+	_abort_active_casts(true)
 	state_machine.transition_to("Dead")
 	player_died.emit(PLAYER_CONTROLLER)
