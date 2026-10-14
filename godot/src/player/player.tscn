@@ -9,11 +9,12 @@
 [ext_resource type="Script" uid="uid://df82k7klapx0m" path="res://src/player/states/idle_state.gd" id="7_idle"]
 [ext_resource type="Script" uid="uid://0o8fgeehpie5" path="res://src/player/states/move_state.gd" id="8_move"]
 [ext_resource type="Script" uid="uid://b820hk1d8w8w1" path="res://src/player/states/aim_state.gd" id="9_aim"]
-[ext_resource type="Script" uid="uid://cnj0fwdl1gxlr" path="res://src/player/states/cast_state.gd" id="10_cast"]
 [ext_resource type="Script" uid="uid://cagrb1lgpn58f" path="res://src/player/states/hit_state.gd" id="11_hit"]
 [ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="12_dead"]
 [ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="13_handler"]
 [ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
+[ext_resource type="Script" uid="uid://6r2x7rh1ymnm" path="res://src/player/components/cast_controller.gd" id="15_castctrl"]
+[ext_resource type="Script" uid="uid://dbwvnierlgiau" path="res://src/player/components/player_visuals.gd" id="16_visuals"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_palette"]
 resource_local_to_scene = true
@@ -269,9 +270,6 @@ script = ExtResource("8_move")
 [node name="Aim" type="Node" parent="StateMachine" unique_id=1856118867]
 script = ExtResource("9_aim")
 
-[node name="Cast" type="Node" parent="StateMachine" unique_id=574827851]
-script = ExtResource("10_cast")
-
 [node name="Hit" type="Node" parent="StateMachine" unique_id=131030727]
 script = ExtResource("11_hit")
 
@@ -291,6 +289,14 @@ script = ExtResource("13_handler")
 ability_container = NodePath("../AbilityContainer")
 button_container = NodePath("../CanvasLayer/MarginContainer/HBoxContainer")
 ability_button_scene = ExtResource("14_button")
+
+[node name="CastController" type="Node" parent="." unique_id=1201234001 node_paths=PackedStringArray("unit")]
+script = ExtResource("15_castctrl")
+unit = NodePath("..")
+
+[node name="PlayerVisuals" type="Node" parent="." unique_id=1201234002 node_paths=PackedStringArray("unit")]
+script = ExtResource("16_visuals")
+unit = NodePath("..")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=997381523]
 

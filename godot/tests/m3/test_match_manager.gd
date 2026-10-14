@@ -41,7 +41,7 @@ func test_one_ready_player_does_not_start() -> void:
 	var first := _make_unit(0)
 	_make_unit(1)
 	var manager := _make_manager()
-	first.apply_loadout(_picks(["fireball"]))
+	manager._on_loadout_complete(0, _picks(["fireball"]))
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.SELECTING)
 	assert_bool(first.is_match_ready).is_false()
 
@@ -52,21 +52,21 @@ func test_all_ready_starts_match_and_unlocks() -> void:
 	var manager := _make_manager()
 	var phases: Array = []
 	manager.phase_changed.connect(func(phase: int) -> void: phases.append(phase))
-	first.apply_loadout(_picks(["fireball"]))
-	second.apply_loadout(_picks(["smoke"]))
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	assert_array(phases).contains_exactly([MatchManager.MatchPhase.RUNNING])
 	assert_bool(first.is_match_ready).is_true()
 	assert_bool(second.is_match_ready).is_true()
 
 
-func test_repeated_ready_signal_is_counted_once() -> void:
+func test_repeated_loadout_completion_is_counted_once() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
-	first.apply_loadout(_picks(["fireball"]))
-	first.spells_are_ready.emit()
-	second.apply_loadout(_picks(["smoke"]))
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	assert_int(manager._ready_players.size()).is_equal(2)
 
@@ -75,8 +75,8 @@ func test_death_ends_match_and_locks_survivor() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
-	first.apply_loadout(_picks(["fireball"]))
-	second.apply_loadout(_picks(["smoke"]))
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
 	assert_bool(first.player_dead).is_true()
@@ -87,11 +87,10 @@ func test_no_transition_out_of_game_over() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
-	first.apply_loadout(_picks(["fireball"]))
-	second.apply_loadout(_picks(["smoke"]))
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
-	second.spells_are_ready.emit()
-	second.apply_loadout(_picks(["teleport"]))
+	manager._on_loadout_complete(1, _picks(["teleport"]))
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
 
 

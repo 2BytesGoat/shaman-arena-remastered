@@ -6,6 +6,6 @@ static func ignores(source: Variant, area: Area2D) -> bool:
 		return false
 	if area.get_parent() == source:
 		return true
-	if not area.is_in_group(&"Spell") and not area.is_in_group(&"Explosion"):
-		return false
-	return area.get(&"source") == source
+	if area is SpellScene or area is Effect:
+		return area.source == source
+	return false

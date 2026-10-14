@@ -64,9 +64,9 @@ func test_try_abort_inactive_ability_returns_false() -> void:
 func test_interruptibility_flags() -> void:
 	var fireball: BaseAbility = load("res://src/resources/abilities/fireball_ability.tres")
 	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
-	assert_bool(Unit.is_cast_interruptible(fireball)).is_true()
-	assert_bool(Unit.is_cast_interruptible(smoke)).is_false()
-	assert_bool(Unit.is_cast_interruptible(BaseAbility.new())).is_true()
+	assert_bool(CastController.is_cast_interruptible(fireball)).is_true()
+	assert_bool(CastController.is_cast_interruptible(smoke)).is_false()
+	assert_bool(CastController.is_cast_interruptible(BaseAbility.new())).is_true()
 
 
 func test_hit_aborts_interruptible_windup() -> void:
@@ -126,9 +126,9 @@ func test_cooldown_start_guard_skips_spawn_when_dead() -> void:
 	var fake := FakeAbility.new()
 
 	unit.player_dead = true
-	unit._on_spell_cooldown_start(fake)
+	unit.cast_controller.on_spell_cooldown_start(fake)
 	assert_bool(fake.cast_called).is_false()
 
 	unit.player_dead = false
-	unit._on_spell_cooldown_start(fake)
+	unit.cast_controller.on_spell_cooldown_start(fake)
 	assert_bool(fake.cast_called).is_true()

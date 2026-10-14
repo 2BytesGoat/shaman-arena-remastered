@@ -28,9 +28,13 @@ attacker-side.
 - Attacking areas must mask the hurtbox layer (1); the hurtbox no longer monitors
   anything and is no longer wired to a signal.
 - POC parity kept deliberately, including the direct-contact double application
-  (Fireball 10 + explosion 5/KB 175, Boomerang 7 + effect 7/KB 150), smoke spawning at the
-  caster's position after its 1.2 s cast delay, and the meteor telegraph's 0/KB 100 push.
-  Don't "fix" these without a new decision.
+  (Fireball 10 + explosion 5/KB 175, Boomerang 7 + effect 7/KB 150) and smoke spawning at
+  the caster's position after its 1.2 s cast delay. Don't "fix" these without a new decision.
+- **Correction (2026-10-14).** The meteor telegraph's 0/KB 100 values are *declared but never
+  applied* — in the port and in the POC. The POC's `MeteorIncoming` wired `area_entered` to a
+  handler its script never defined (dangling connection, no push in play); the port's
+  telegraph scene wires no `area_entered` at all. The timer-strike path is the live behavior.
+  Wiring telegraph contact (or not) is a gameplay decision left to M4 tuning.
 - Verified by an A/B headless probe (identical damage/knockback/lifetime traces before and
   after, modulo 1 physics frame).
 
@@ -81,7 +85,8 @@ because it reads unambiguously to newcomers, which is the stated naming priority
 - **Status:** accepted (documentation; implementation not scheduled yet)
 - **Date:** 2026-10-14
 
-**Context.** A 7-champion League corpus audit (`python/out/audit.md`) showed 4 of 7
+**Context.** A 7-champion League corpus audit (private research, not committed to this
+public repo) showed 4 of 7
 champions depend on basic-attack modifiers (Udyr's stances, Kled W, Riven P, Shaco P,
 Jhin P) while the game has no basic-attack system at all — no attack timer, weapon, or
 on-attack event. Options weighed: a universal 7th button (breaks the 6 spells +
@@ -114,8 +119,8 @@ family.
 **Not doing.** Auto-attack without a button; a universal always-equipped attack button;
 separately pickable melee/ranged variants (melee vs ranged is character identity).
 
-**References.** `docs/spells.md` (Core words: Attack), `python/out/audit.md`,
-`godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+**References.** `docs/spells.md` (Core words: Attack), the private champion-corpus audit
+(not in repo), `godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
 
 ## D-004 — Cast abort ("cancel") rules
 
@@ -236,7 +241,10 @@ future rounds/gold can extend without rework.
 
 **Consequences.**
 
-- `Unit.is_match_ready` gates movement and casting; `spells_are_ready` is the ready gate.
+- `Unit.is_match_ready` gates movement and casting. Readiness is **manager-side**: the
+  `MatchManager` marks a player ready when its selection completes (`loadout_complete`), so
+  later loadout writes (e.g. a shop apply) can never ready a player by accident;
+  `Unit.loadout_applied` is informational only.
 - The 6 + 2 limit is enforced by selection only; the temporary `player_N_spell_6` dev
   action is retired.
 - Units start with an empty `AbilityContainer` — every runtime ability comes from the
@@ -245,3 +253,59 @@ future rounds/gold can extend without rework.
 **References.** `godot/src/match/match_manager.gd`, `godot/src/match/loadout.gd`,
 `godot/src/ui/spell_select.gd`, `godot/src/ui/match_over.gd`, `godot/src/player/player.gd`,
 `godot/src/player/states/dead_state.gd`.
+
+## D-007 — Physics layer contract (2D)
+
+- **Status:** accepted (M3, documentation of the M1/Phase-0 wiring)
+- **Date:** 2026-10-14
+
+**Context.** Layer names were ported POC-verbatim in Phase 0, but the actual masks on the
+spell/effect/wall scenes were picked per-scene and never written down. Reading a scene file
+doesn't tell you why a mask says 95 — and M4 (more spells, consumables) plus M5 (lava,
+camera) will copy these numbers unless the intent is recorded.
+
+**Decision.** The mapping below is the contract. Changing any value means changing this
+entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
+
+**Layers**
+
+| Layer | Name | Who is on it |
+|---|---|---|
+| 1 | `player_0` | **All players and their Hurtboxes** (every controller, today) |
+| 2–4 | `player_1..3` | Reserved — named, but nothing assigns them yet (see caveat) |
+| 5 | `projectile` | Spell areas (concrete projectiles) and Effect areas |
+| 6 | `lava` | Reserved for M5 |
+| 7 | `Environment` | `AniviaWall` area + its `StaticBody2D`; future environment areas |
+
+**Scene masks (verified 2026-10-14)**
+
+| Scene | Layer | Mask | Wires `area_entered`? | Why |
+|---|---|---|---|---|
+| Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
+| Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers |
+| Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
+| Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited Timer is unwired) |
+| Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via Timer |
+| MeteorIncoming telegraph | 16 | 95 | **no** | contact values exist but are inert (D-001 correction); Timer spawns the strike |
+| MeteorExplosion / ExplosionEffect | 16 | 1 | yes (inherited from `effect.tscn`) | 15 dmg / KB 250 and 5 / KB 175 |
+| AniviaWall area | 64 | 31 = 1–4 + 16 | yes | despawns when any spell touches it |
+| AniviaWall StaticBody | 64 | 15 | — | blocks player movement |
+
+**Consequences.**
+
+- Spells masking layer 16 means **spells collide with each other** (a Fireball hitting a
+  Boomerang explodes) — a deliberate consequence of POC parity; don't "fix" it silently.
+- Connections are inherited from instanced base scenes (`spell_scene.tscn` declares none;
+  `effect.tscn` declares `area_entered`, so all effect scenes get it).
+- Effects mask layer 1 only. If players ever move to their named layers 2–4 (4-player
+  support), effect masks must widen to 15 or effects will miss players 3/4.
+- Layer names live in `project.godot` (`layer_names/2d_physics/layer_N`) and are asserted
+  by the contract test.
+
+**Not doing.** Per-player collision layers for the current 2-player build (all players share
+layer 1 — friend fire is on by design and `SourceFilter` handles self-immunity);
+renumbering the POC layers.
+
+**References.** `godot/project.godot`, `godot/tests/phase0/test_layer_contract.gd`,
+`godot/src/abilities/spells/*.tscn`, `godot/src/abilities/effects/*.tscn`,
+`godot/src/player/player.tscn`.

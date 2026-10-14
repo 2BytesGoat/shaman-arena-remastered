@@ -1,7 +1,7 @@
 class_name Unit extends CharacterBody2D
 
 signal player_died(player_number: int)
-signal spells_are_ready
+signal loadout_applied
 
 const PLAYERS_GROUP := &"players"
 
@@ -25,6 +25,8 @@ const CONSUMABLE_SLOTS := Loadout.CONSUMABLE_SLOTS
 @onready var flippable: Node2D = $Flippable
 @onready var ability_handler: AbilityHandler = $AbilityHandler
 @onready var hud_margin: MarginContainer = $CanvasLayer/MarginContainer
+@onready var cast_controller: CastController = $CastController
+@onready var visuals: PlayerVisuals = $PlayerVisuals
 
 var move_direction := Vector2.ZERO
 var cast_direction := Vector2.RIGHT
@@ -47,9 +49,9 @@ func _ready() -> void:
 	ability_slots = ability_container.get_initial_abilities()
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
-	ability_container.cooldown_start.connect(_on_spell_cooldown_start)
-	_apply_player_palette()
-	_apply_hud_layout()
+	ability_container.cooldown_start.connect(cast_controller.on_spell_cooldown_start)
+	visuals.apply_palette()
+	visuals.layout_hud()
 
 
 func _physics_process(delta: float) -> void:
@@ -57,11 +59,11 @@ func _physics_process(delta: float) -> void:
 		return
 	_update_move_direction()
 	_apply_movement(delta)
-	update_cast_direction()
+	cast_controller.update_direction()
 	_update_facing()
 	if not aiming and not hit_locked:
-		_handle_spell_input()
-	_update_aim_sprite(delta)
+		cast_controller.handle_spell_input()
+	visuals.update_aim_sprite(delta)
 
 
 func action_name(suffix: String) -> StringName:
@@ -81,7 +83,7 @@ func facing_direction() -> Vector2:
 
 
 func can_player_move() -> bool:
-	return not aiming and not hit_locked and not _is_spell_windup_active()
+	return not aiming and not hit_locked and not cast_controller.is_windup_active()
 
 
 static func facing_sign(direction: Vector2, current: float) -> float:
@@ -97,23 +99,22 @@ static func step_velocity(current: Vector2, direction: Vector2, delta: float) ->
 
 
 func play_locomotion_animation(animation_name: StringName) -> void:
-	if _is_spell_windup_active():
+	if cast_controller.is_windup_active():
 		return
 	animation_player.speed_scale = 1.0
 	animation_player.play(animation_name)
 
 
 func try_cast(ability: Ability, direction: Vector2) -> int:
-	cast_direction = direction
-	cast_angle = direction.angle()
-	var result := ability_container.try_activate(ability)
-	if result == RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_DURATION_STARTED:
-		_play_cast_animation(ability, direction)
-	return result
+	return cast_controller.try_cast(ability, direction)
+
+
+func try_abort_cast(ability: Ability, ignore_uninterruptible := false) -> bool:
+	return cast_controller.try_abort_cast(ability, ignore_uninterruptible)
 
 
 func apply_loadout(picks: Array[Ability]) -> void:
-	_abort_active_casts(true)
+	cast_controller.abort_active_casts(true)
 	for ability in ability_slots:
 		ability_container.try_revoke(ability)
 		ability_container.remove_ability(ability)
@@ -125,26 +126,15 @@ func apply_loadout(picks: Array[Ability]) -> void:
 		ability_container.try_grant(ability)
 		ability_slots.append(ability)
 	ability_handler.rebuild(ability_slots)
-	spells_are_ready.emit()
-
-
-func update_cast_direction() -> void:
-	var stick := Vector2(
-		Input.get_axis(action_name("left"), action_name("right")),
-		Input.get_axis(action_name("up"), action_name("down"))
-	)
-	if stick.length() > STICK_DEADZONE:
-		cast_direction = stick.normalized()
-		cast_angle = cast_direction.angle()
+	loadout_applied.emit()
 
 
 func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:
 	if player_dead:
 		return
 	if damage <= 0.0 and knockback <= 0.0:
-		
 		return
-	_abort_active_casts()
+	cast_controller.abort_active_casts()
 	if damage > 0.0:
 		attribute_container.apply_buff(HealthDamage.new(damage))
 		if player_dead:
@@ -158,76 +148,10 @@ static func is_lethal(attribute_name: String, new_value: float) -> bool:
 	return attribute_name == AttributeNames.HEALTH and new_value <= 0.0
 
 
-static func is_cast_interruptible(ability: Ability) -> bool:
-	return not (ability is BaseAbility) or not (ability as BaseAbility).UNINTERRUPTIBLE
-
-
-func try_abort_cast(ability: Ability, ignore_uninterruptible := false) -> bool:
-	if not ability_container.is_ability_active(ability):
-		return false
-	if not ignore_uninterruptible and not is_cast_interruptible(ability):
-		return false
-	ability_container.try_end(ability)
-	_stop_cast_animation()
-	return true
-
-
-func _abort_active_casts(ignore_uninterruptible := false) -> void:
-	for ability in ability_slots:
-		try_abort_cast(ability, ignore_uninterruptible)
-
-
-func _play_cast_animation(ability: Ability, direction: Vector2) -> void:
-	if not (ability is BaseAbility):
-		return
-	var base_ability := ability as BaseAbility
-	if base_ability.CAST_DELAY <= 0.0:
-		return
-	var clip := BaseAbility.resolve_cast_animation(base_ability, animation_player)
-	if clip == &"":
-		return
-	animation_player.speed_scale = BaseAbility.cast_animation_speed(
-		animation_player.get_animation(clip).length,
-		base_ability.CAST_DELAY
-	)
-	animation_player.play(clip)
-	facing_scale = facing_sign(direction, facing_scale)
-	flippable.scale.x = facing_scale
-
-
-func _stop_cast_animation() -> void:
-	animation_player.speed_scale = 1.0
-	animation_player.play(&"Idle")
-
-
 func _update_facing() -> void:
 	var direction := cast_direction if aiming else _last_move_direction
 	facing_scale = facing_sign(direction, facing_scale)
 	flippable.scale.x = facing_scale
-
-
-func _apply_player_palette() -> void:
-	var palette: Array = Constants.player_colors.get("player_%d" % PLAYER_CONTROLLER, [])
-	if palette.is_empty() or not (material is ShaderMaterial):
-		return
-	(material as ShaderMaterial).set_shader_parameter("to_colors", PackedColorArray(palette))
-
-
-func _apply_hud_layout() -> void:
-	if PLAYER_CONTROLLER % 2 == 0:
-		return
-	hud_margin.anchor_left = 1.0
-	hud_margin.anchor_right = 1.0
-	hud_margin.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	hud_margin.add_theme_constant_override("margin_left", 0)
-	hud_margin.add_theme_constant_override("margin_right", 45)
-
-
-func _update_aim_sprite(delta: float) -> void:
-	if aim_sprite == null:
-		return
-	var difference := wrapf(cast_angle - aim_sprite.rotation, -PI, PI)
-	aim_sprite.rotation += clampf(difference, -TURN_ACCELERATION * delta, TURN_ACCELERATION * delta)
 
 
 func _update_move_direction() -> void:
@@ -247,35 +171,6 @@ func _apply_movement(delta: float) -> void:
 	move_and_slide()
 
 
-func _handle_spell_input() -> void:
-	for slot in mini(ability_slots.size(), MAX_SPELL_SLOTS):
-		if not Input.is_action_just_pressed(spell_action(slot)):
-			continue
-		var ability := ability_slots[slot]
-		if ability_container.is_ability_active(ability):
-			try_abort_cast(ability)
-			return
-		if ability_container.is_ability_cooldown_active(ability):
-			return
-		state_machine.transition_to("Aim", {"slot": slot, "ability": ability})
-		return
-
-
-func _is_spell_windup_active() -> bool:
-	for runtime_ability in ability_container.get_runtime_abilities():
-		if runtime_ability.is_active():
-			return true
-	return false
-
-
-func _on_spell_cooldown_start(ability: Ability) -> void:
-	if player_dead:
-		return
-	if ability is BaseAbility:
-		(ability as BaseAbility).cast(self, cast_direction)
-	_stop_cast_animation()
-
-
 func _on_attribute_changed(attribute: Variant, _previous_value: float, new_value: float) -> void:
 	if attribute == null:
 		return
@@ -287,6 +182,6 @@ func _die() -> void:
 	if player_dead:
 		return
 	player_dead = true
-	_abort_active_casts(true)
+	cast_controller.abort_active_casts(true)
 	state_machine.transition_to("Dead")
 	player_died.emit(PLAYER_CONTROLLER)

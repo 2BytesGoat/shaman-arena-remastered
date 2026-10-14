@@ -10,6 +10,22 @@ following third-party work, which remains under its own license.
 - Source: https://github.com/OctoD/godot-gameplay-abilities
 - License: MIT — Copyright (c) 2021 Paolo Roth
 - The vendored copy ships without a license file; the MIT text below applies.
+- Vendored snapshot: predates upstream `6d1ce71` (2026-01-19), which renamed the upstream
+  `linux`/`windows` binary paths — our `.gdextension` paths and shipped binaries match each
+  other, so no action is needed; re-vendor in the Phase LAST engine upgrade (`docs/plan.md`).
+
+## godot_gameplay_attributes (GGA)
+
+- Location: `godot/addons/gameplay-attributes/`
+- Author: Paolo Roth (OctoD)
+- Source: https://github.com/OctoD/godot_gameplay_attributes
+- License: MIT — Copyright (c) Paolo Roth; the vendored copy ships without a license file,
+  the MIT text below applies.
+- The macOS arm64 binaries were built by us from upstream source (scons, godot-cpp
+  `godot-4.5-stable`, `compatibility_minimum = 4.4`) per `docs/plan.md` Phase 0; the other
+  platform binaries are vendored from upstream.
+- Vendored snapshot: upstream master at review time `97225bd` (2025-09-30, includes the
+  reparenting fix); re-vendor in the Phase LAST engine upgrade (`docs/plan.md`).
 
 ## gdUnit4
 

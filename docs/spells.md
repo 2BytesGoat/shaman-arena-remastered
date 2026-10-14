@@ -46,7 +46,7 @@ Every spell is a combination of four independent axes:
 
 | Axis | Values | Code home |
 |---|---|---|
-| **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` (Instant/Aimed implemented) |
+| **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` (Instant/Aimed declared; reserved — not branched on until M4 wires the INSTANT tap path) |
 | **Delivery** | Self, Projectile, Field, Wall, Aura, Beam, Summon | `SpellScene` subclasses |
 | **Impact** | Hit (damage), Explosion, Push, Pull, Chain, None | `Effect` scenes via `HitArea.apply` (D-001) |
 | **Status** | none, Buff, Debuff (duration and stacks are configuration; instant is *not* a status) | `AttributeBuff` subclasses in `src/attributes/` |
@@ -143,11 +143,16 @@ Current spells:
 | Fireball | Aimed | Projectile | Hit + ExplosionEffect | — |
 | Boomerang | Aimed | Projectile (returns) | Hit + BoomerangEffect | — |
 | Meteor | Aimed | Projectile | MeteorIncoming → MeteorExplosion | — |
-| Smoke | Instant (self) | Field | Hit on entry | — |
+| Smoke | Aimed (self) | Field | Hit on entry | — |
 | Teleport | Aimed | Projectile | Self reposition | — |
 | Anivia Wall | Aimed | Wall | Blocker (despawns on contact) | — |
 
 *Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004).*
+
+*`CAST_MODE` is declared on every ability but not yet branched on: all spells use the same
+press/hold/release flow, and the tap threshold only picks facing vs stick direction. Wiring
+the INSTANT tap-cast (Blink) is scheduled for M4 — until then the Cast column above records
+each ability's declared mode, not a different input path.*
 
 Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 
