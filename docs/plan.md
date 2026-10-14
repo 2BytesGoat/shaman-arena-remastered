@@ -23,7 +23,9 @@ Spell naming & structure: see [`docs/spells.md`](spells.md). The vocabulary ther
     `M1 → v0.1.0`, `M2 → v0.2.0`, `M3 → v0.3.0`, `M4 → v0.4.0`, `M5 → v0.5.0`, `M5.5 → v0.5.1`
   - unit tests (gdUnit4) covering that milestone's new logic
   - the manual verification checklist below ticked off
-- CI (`.github/workflows/test.yml`) must be green on every PR — merge gate.
+- CI (`.github/workflows/test.yml`) must be green on every PR — **enforced** via branch
+  protection on `main`: required check `gdunit4` (strict), admins included, direct pushes
+  and force-pushes rejected. Unlocked by the public-repo flip below.
 - Repo made **public** (unlimited GitHub Actions minutes).
 - One milestone = one user-visible version; keep the game runnable in-editor at every merge.
 
@@ -65,8 +67,10 @@ rehearsed successfully on the official 4.7.2 binary, so the final-phase bump is 
       note: CmdTool requires `--ignoreHeadlessMode` for headless runs)
 - [x] `.github/workflows/test.yml`: ubuntu runner → chickensoft `Setup-Godot` **(4.6.3,
       matching dev editor)** → headless import → gdUnit4 suite → report artifacts;
-      runs on push/PR; **green = merge gate**
-- [ ] Flip repo to **public** (unlimited Actions minutes) — repo owner action
+      runs on PR events only (`opened`/`synchronize`/`reopened` — no post-merge run);
+      **green = merge gate**
+- [x] Flip repo to **public** (unlimited Actions minutes) — done 2026-10-14; branch
+      protection on `main` enabled right after (required check `gdunit4`, full lock)
 
 ---
 
@@ -111,18 +115,23 @@ ticks down; each of the 6 spells behaves like POC.
 
 ## M2 — Movement polish → `v0.2.0`
 
-- [ ] Port POC tuning: `MOVE_MAX_SPEED 140`, acceleration `345`, friction `690`,
+- [x] Port POC tuning: `MOVE_MAX_SPEED 140`, acceleration `345`, friction `690`,
       velocity `move_toward`, acceleration/deceleration feel on analogue stick
-- [ ] Port `money wizard` sprite + AnimationPlayer (Idle/Move/facing flip `Flippable` node)
-- [ ] Palette shader port (per-player colors via `Constants` autoload)
-- [ ] `HitState` = knockback drift + settle → back to Idle (animation sync)
-- [ ] Cast animations per spell TYPE (CastOffensive/CastDefensive/CastSmoke/CastUtility),
-      animation speed scaled to cast delay
-- [ ] Stick deadzone/aim retention tuning (keep last nonzero direction)
-- [ ] Cast marker/aim indicator polish
+- [x] Port `money wizard` sprite + AnimationPlayer (Idle/Move/facing flip `Flippable` node)
+- [x] Palette shader port (per-player colors via `Constants` autoload)
+- [x] `HitState` = knockback drift + settle → back to Idle (animation sync)
+- [x] Cast animations per spell TYPE via the D-005 slot contract
+      (CastOffensive/CastDefensive/CastUtility + Smoke's `CastSmoke` flavor clip),
+      animation speed scaled to cast delay; Attack/Channel slots reserved, Death/Taunt clips
+      ported unwired
+- [x] Stick deadzone/aim retention tuning (keep last nonzero direction)
+- [x] Cast marker/aim indicator polish
+- [x] Cast abort rules (D-004): re-press during cast delay → free abort; hits abort except
+      `UNINTERRUPTIBLE` (Smoke); death always stops casts (corpse-cast fixed)
 
 **Tests:** state machine transitions Idle↔Move↔Aim (mocked input), facing-flip math,
-`move_toward` velocity integration. **Verify (manual):** movement feels like POC;
+`move_toward` velocity integration, cast abort semantics (GGAS `try_end` trace,
+interruptibility flags, death guard). **Verify (manual):** movement feels like POC;
 cast/hit animations sync; aim sprite rotation smoothing.
 
 ## M3 — Spell selection → `v0.3.0`
@@ -202,7 +211,8 @@ Runs after all gameplay milestones (M1–M5.5); dev floor until then is 4.6.3.
 
 - `Unit` stays the player class name (bot-friendly)
 - Old POC visuals ported as intermediate art (money wizard, spell icons)
-- P1 keyboard binding parity with POC (arrows), P0 WASD — arcade panels override later
+- Dev keyboard: player_0 (the owner's seat) = arrows to move + `1`–`6` to cast;
+  player_1 dev bindings are throwaway (WASD) — arcade panels override later
 - Godot 4.6.x is the dev floor for the entire port (4.7 upgrade deferred to Phase LAST)
 
 ## Risks

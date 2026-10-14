@@ -34,6 +34,11 @@ Decisions behind this are recorded in [[decisions]] (D-002).
   or hinders. Duration and stacks are configuration, never part of the name.
 - **Crowd control (CC)** — a debuff that removes control (stun, root, silence…). Still
   named `...Debuff`.
+- **Uninterruptible** — a cast that cannot be aborted: hits and spell-button re-presses do
+  not stop it; only death does. `BaseAbility.UNINTERRUPTIBLE` (currently Smoke only, D-004).
+- **Animation slot** — a fixed clip name every character sheet provides (`Idle`,
+  `CastOffensive`, …). Abilities select slots, never raw clips; character-flavor clips are
+  opt-in via `CAST_ANIMATION` (full contract below, D-005).
 
 ## The four axes
 
@@ -79,6 +84,32 @@ Current file/class map:
 | Effects | `effect.gd` (`Effect`) + the effect scenes |
 | Statuses | `health_damage.gd` (`HealthDamage`), `initialize_attributes.gd` (`InitializeAttributes`) |
 
+## Character animation slots
+
+Every character sheet ships a fixed set of `AnimationPlayer` clips — the **slots** (D-005).
+Abilities select slots, never raw clips, so a shaman without a given pose degrades to the
+generic slot instead of breaking.
+
+| Slot | Playback | Selected by | Money wizard |
+|---|---|---|---|
+| `Idle` / `Move` | loop | state machine | yes |
+| `Hit` | one-shot | hit reaction (`HitState`) | yes |
+| `Death` | one-shot | match flow (M5) | yes |
+| `CastOffensive` | one-shot, speed-scaled | `TYPE == OFFENSIVE` | yes |
+| `CastDefensive` | one-shot, speed-scaled | `TYPE == DEFENSIVE` | yes |
+| `CastUtility` | one-shot, speed-scaled | `TYPE == UTILITY` | yes |
+| `Attack` | one-shot, speed-scaled | basic attack ability (D-003) | reserved (M3) |
+| `Channel` | loop | channeled casts (M4) | reserved |
+| `Taunt` | one-shot | taunt button (M6, optional) | yes |
+
+- **Speed-scaled** = `speed_scale = clip.length / CAST_DELAY`, so the pose fills the GGAS
+  cast duration exactly; `CAST_DELAY == 0` (Blink) plays nothing for now.
+- **Flavor clips** — `BaseAbility.CAST_ANIMATION` may name a character-specific clip
+  (Smoke → `CastSmoke`, the 1.2 s pose). Resolution at cast time: flavor clip *if this
+  character's sheet has it* → else the slot for `TYPE` → else `push_warning` + `Idle`.
+- Frames live on `Flippable/PlayerSprite`; facing flips via `Flippable.scale.x`, never baked
+  into the sheet.
+
 ## Second-member rule
 
 Don't invent an archetype base class for a single spell — with one sample you can't tell
@@ -116,6 +147,8 @@ Current spells:
 | Teleport | Aimed | Projectile | Self reposition | — |
 | Anivia Wall | Aimed | Wall | Blocker (despawns on contact) | — |
 
+*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004).*
+
 Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 
 | Spell | Cast | Delivery | Impact | Status |
@@ -131,7 +164,8 @@ Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 ## Naming a new spell — checklist
 
 1. Fill in the four axes. If a value is missing from the reserved vocabulary, add it to
-   this doc first.
+   this doc first. The cast animation slot follows from `TYPE` automatically — set
+   `CAST_ANIMATION` only to request a character-flavor clip.
 2. Ability resource: `<name>_ability.tres`.
 3. Spell scene: script named after the spell; an archetype base only on the second
    member (rule above).
@@ -143,6 +177,6 @@ Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 ## See also
 
 - [[decisions]] — D-001 attacker-applies hit pipeline, D-002 this vocabulary,
-  D-003 basic attack model
-- [[plan]] — M1 spell core, M4 rest of the spells
+  D-003 basic attack model, D-004 cast-abort rules, D-005 animation slots
+- [[plan]] — M1 spell core, M2 movement polish, M4 rest of the spells
 - [[controls]] — input model (aim/tap casting)

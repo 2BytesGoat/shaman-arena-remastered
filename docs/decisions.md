@@ -116,3 +116,93 @@ separately pickable melee/ranged variants (melee vs ranged is character identity
 
 **References.** `docs/spells.md` (Core words: Attack), `python/out/audit.md`,
 `godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.
+
+## D-004 — Cast abort ("cancel") rules
+
+- **Status:** accepted (M2)
+- **Date:** 2026-10-14
+
+**Context.** A released cast could not be taken back: `cooldown_start` (which spawns the
+spell) fires at the end of the GGAS duration, and nothing interrupted it — not hits, not
+even death (a corpse would still fire its pending spell). LoL-style move-to-cancel was
+considered, but in this single-stick scheme the stick already steers the cast during the
+delay (owner change), so "movement" cannot be told apart from steering without an
+angle-threshold heuristic.
+
+**Decision.** Three abort paths, all **free** (no cooldown — a cancelled cast is as if it
+was never cast):
+
+- **Re-press** the same spell button during its cast delay → aborts. Uses
+  `AbilityContainer.try_end` (probed: fires `ability_ended` without `cooldown_start`,
+  leaves no cooldown, immediately re-activatable). Cancel-only — no auto re-aim, so a
+  quick release after the abort cannot chain into a tap-cast.
+- **Taking a hit** during the cast delay aborts it too — unless the spell is flagged
+  `UNINTERRUPTIBLE` (Smoke), which ignores hits and re-presses; only death stops it.
+- **Death** aborts every pending cast (`_die`, flag ignored; `_on_spell_cooldown_start`
+  also guards `player_dead`).
+
+The stick never cancels; it only steers.
+
+**Consequences.**
+
+- Mashing a spell button aborts your own cast (double-tap = cancel) — accepted trade-off.
+- "Uninterruptible" joins the `spells.md` vocabulary; future spells must choose the flag
+  deliberately.
+- Free aborts make feints cheap by design; commitment comes from letting the delay
+  finish, not from cooldown.
+
+**Not doing.** Stick-flick cancel gesture; abort on a *different* spell's press (parked —
+it currently starts aiming the new spell while the old cast still lands); any cooldown
+cost for aborts.
+
+**References.** `godot/src/player/player.gd`, `godot/src/abilities/base_ability.gd`,
+`godot/tests/m2/test_cast_abort.gd`.
+
+## D-005 — Character animation slots (abilities name slots, not clips)
+
+- **Status:** accepted (M2)
+- **Date:** 2026-10-14
+
+**Context.** M2 ports the POC player sheet (money wizard): every state and cast played a clip
+by name — 4 cast clips picked by the old 4-value type enum, frame tracks hard-wired into the
+states. Two things broke that model: D-002 shrank `SpellType` to
+`OFFENSIVE/DEFENSIVE/UTILITY` (no more `SMOKE`, so "which cast clip" is no longer readable
+from the type alone), and later milestones add content (basic attacks, channels) plus new
+characters whose sheets will not all carry the same clips. An ability pointing at a raw clip
+name (`CastSmoke`) would break the day a shaman ships without that pose.
+
+**Decision.** Every character sheet provides a fixed set of **animation slots** — the clip
+names are the contract:
+
+| Slot | Playback | Selected by |
+|---|---|---|
+| `Idle` / `Move` | loop | state machine |
+| `Hit` | one-shot | hit reaction (`HitState`) |
+| `Death` | one-shot | match flow (M5) |
+| `CastOffensive` / `CastDefensive` / `CastUtility` | one-shot, speed-scaled to the cast delay | `SpellType` |
+| `Attack` | one-shot, speed-scaled | basic attack ability (D-003) |
+| `Channel` | loop | channeled casts (M4) |
+| `Taunt` | one-shot | taunt button (M6, optional) |
+
+- Abilities reference **slots, never raw clips** — with one deliberate escape hatch:
+  `BaseAbility.CAST_ANIMATION` may name a character-flavor clip (Smoke → `CastSmoke`).
+- Resolution order at cast time: flavor clip **if this character's `AnimationPlayer` has
+  it** → else the slot for `TYPE` → else `push_warning` + `Idle`. A character without the
+  flavor clip degrades to the generic slot; no ability edits needed.
+- Cast slots play once with `speed_scale = clip.length / CAST_DELAY` (POC formula), filling
+  the GGAS duration exactly; `Channel` loops.
+- Instant casts (`CAST_DELAY == 0`, Blink) play no cast slot for now.
+
+**Consequences.**
+
+- New characters implement the slots they have; a missing flavor clip falls back
+  automatically, a missing required slot is an asset bug surfaced by `push_warning`.
+- M2 ports all POC clips (Death and Taunt included) but wires only the state and cast slots;
+  Death wiring lands with M5's match flow, Taunt with M6.
+- The slot names are also the vocabulary future character sheets are authored against.
+
+**Not doing.** Per-spell animation enums; auto-generated animation tables; an aim pose (the
+aim marker carries aiming, POC parity); instant-cast poses (revisit with Blink in M4).
+
+**References.** `docs/spells.md` (Character animation slots),
+`godot/src/abilities/base_ability.gd`, `godot/src/player/player.gd`.

@@ -25,7 +25,6 @@ func exit() -> void:
 
 func physics_update(delta: float) -> void:
 	hold_time += delta
-	owner.update_cast_direction()
 	if Input.is_action_just_released(owner.spell_action(slot)):
 		var direction: Vector2 = owner.facing_direction() if is_tap(hold_time) else owner.cast_direction
 		owner.try_cast(ability, direction)

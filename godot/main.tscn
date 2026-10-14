@@ -2,11 +2,11 @@
 
 [ext_resource type="PackedScene" uid="uid://blew3m0ysy1j4" path="res://src/player/player.tscn" id="1_player"]
 
-[node name="Main" type="Node"]
+[node name="Main" type="Node" unique_id=1676124959]
 
-[node name="Player" parent="." instance=ExtResource("1_player")]
+[node name="Player" parent="." unique_id=101039518 instance=ExtResource("1_player")]
 position = Vector2(500, 292)
 
-[node name="Player2" parent="." instance=ExtResource("1_player")]
+[node name="Player2" parent="." unique_id=208701586 instance=ExtResource("1_player")]
 position = Vector2(652, 292)
 PLAYER_CONTROLLER = 1

@@ -1,23 +1,37 @@
-[gd_scene load_steps=22 format=3 uid="uid://blew3m0ysy1j4"]
+[gd_scene format=3 uid="uid://blew3m0ysy1j4"]
 
 [ext_resource type="Script" uid="uid://bawlnukkfmpbd" path="res://src/player/player.gd" id="1_player"]
 [ext_resource type="Texture2D" uid="uid://b3stugs7p45dt" path="res://icon.svg" id="2_icon"]
-[ext_resource type="Script" uid="uid://td15gffk6sym" path="res://src/player/states/state_machine.gd" id="3_machine"]
-[ext_resource type="Script" uid="uid://df82k7klapx0m" path="res://src/player/states/idle_state.gd" id="4_idle"]
-[ext_resource type="Script" uid="uid://0o8fgeehpie5" path="res://src/player/states/move_state.gd" id="5_move"]
-[ext_resource type="Script" path="res://src/player/states/aim_state.gd" id="6_aim"]
-[ext_resource type="Script" uid="uid://cnj0fwdl1gxlr" path="res://src/player/states/cast_state.gd" id="7_cast"]
-[ext_resource type="Script" uid="uid://b2wkroel3f8ry" path="res://src/player/states/damaged_state.gd" id="8_damaged"]
-[ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="9_dead"]
-[ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="10_handler"]
-[ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="11_button"]
-[ext_resource type="Resource" path="res://src/resources/abilities/blink_ability.tres" id="12_blink"]
-[ext_resource type="Resource" path="res://src/resources/abilities/fireball_ability.tres" id="13_fireball"]
-[ext_resource type="Resource" path="res://src/resources/abilities/boomerang_ability.tres" id="14_boomerang"]
-[ext_resource type="Resource" path="res://src/resources/abilities/meteor_ability.tres" id="15_meteor"]
-[ext_resource type="Resource" path="res://src/resources/abilities/smoke_ability.tres" id="16_smoke"]
-[ext_resource type="Resource" path="res://src/resources/abilities/teleport_ability.tres" id="17_teleport"]
-[ext_resource type="Resource" path="res://src/resources/abilities/anivia_wall_ability.tres" id="18_wall"]
+[ext_resource type="Shader" uid="uid://b3eedso637lpg" path="res://assets/shaders/player_palette.gdshader" id="3_palette"]
+[ext_resource type="Texture2D" uid="uid://l4ytno1d3obv" path="res://assets/player/money wizard.png" id="4_wizard"]
+[ext_resource type="Texture2D" uid="uid://ktshf8t4vg2d" path="res://assets/player/large_shadow.png" id="5_shadow"]
+[ext_resource type="Script" uid="uid://td15gffk6sym" path="res://src/player/states/state_machine.gd" id="6_machine"]
+[ext_resource type="Script" uid="uid://df82k7klapx0m" path="res://src/player/states/idle_state.gd" id="7_idle"]
+[ext_resource type="Script" uid="uid://0o8fgeehpie5" path="res://src/player/states/move_state.gd" id="8_move"]
+[ext_resource type="Script" uid="uid://b820hk1d8w8w1" path="res://src/player/states/aim_state.gd" id="9_aim"]
+[ext_resource type="Script" uid="uid://cnj0fwdl1gxlr" path="res://src/player/states/cast_state.gd" id="10_cast"]
+[ext_resource type="Script" uid="uid://cagrb1lgpn58f" path="res://src/player/states/hit_state.gd" id="11_hit"]
+[ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="12_dead"]
+[ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="13_handler"]
+[ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
+[ext_resource type="Ability" path="res://src/resources/abilities/blink_ability.tres" id="15_blink"]
+[ext_resource type="Ability" path="res://src/resources/abilities/fireball_ability.tres" id="16_fireball"]
+[ext_resource type="Ability" path="res://src/resources/abilities/boomerang_ability.tres" id="17_boomerang"]
+[ext_resource type="Ability" path="res://src/resources/abilities/meteor_ability.tres" id="18_meteor"]
+[ext_resource type="Ability" path="res://src/resources/abilities/smoke_ability.tres" id="19_smoke"]
+[ext_resource type="Ability" path="res://src/resources/abilities/teleport_ability.tres" id="20_teleport"]
+[ext_resource type="Ability" path="res://src/resources/abilities/anivia_wall_ability.tres" id="21_wall"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_palette"]
+resource_local_to_scene = true
+shader = ExtResource("3_palette")
+shader_parameter/from_colors = PackedColorArray(0.9843137, 0.23921569, 0.21176471, 1, 0.7607843, 0.19607843, 0.1764706, 1, 0.2, 0.09411765, 0.09019608, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/to_colors = PackedColorArray(0.8784314, 0.011764706, 0.003921569, 1, 0.54509807, 0, 0.007843138, 1, 0.003921569, 0.003921569, 0.003921569, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/tolerance = 0.01
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 
 [sub_resource type="Attribute" id="Attribute_max_health"]
 attribute_name = "MaxHealth"
@@ -28,77 +42,267 @@ attribute_name = "Health"
 [sub_resource type="AttributeSet" id="AttributeSet_player"]
 attributes = Array[AttributeBase]([SubResource("Attribute_max_health"), SubResource("Attribute_health")])
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(20, 20)
+[sub_resource type="Animation" id="Animation_cast_offensive"]
+resource_name = "CastOffensive"
+length = 0.6
+step = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [20, 21]
+}
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
-size = Vector2(20, 20)
+[sub_resource type="Animation" id="Animation_cast_defensive"]
+resource_name = "CastDefensive"
+length = 0.6
+step = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [24, 26]
+}
 
-[node name="Player" type="CharacterBody2D" node_paths=PackedStringArray("aim_sprite", "attribute_container", "ability_container")]
-collision_layer = 1
+[sub_resource type="Animation" id="Animation_cast_smoke"]
+resource_name = "CastSmoke"
+length = 1.2
+step = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [16, 17, 18]
+}
+
+[sub_resource type="Animation" id="Animation_cast_utility"]
+resource_name = "CastUtility"
+length = 0.6
+step = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [32, 33]
+}
+
+[sub_resource type="Animation" id="Animation_death"]
+resource_name = "Death"
+length = 0.5
+loop_mode = 1
+step = 0.05
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [36, 37]
+}
+
+[sub_resource type="Animation" id="Animation_hit"]
+resource_name = "Hit"
+step = 0.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [28, 29, 30, 29, 29]
+}
+
+[sub_resource type="Animation" id="Animation_idle"]
+resource_name = "Idle"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_move"]
+resource_name = "Move"
+length = 0.4
+loop_mode = 1
+step = 0.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [4, 5]
+}
+
+[sub_resource type="Animation" id="Animation_taunt"]
+resource_name = "Taunt"
+step = 0.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.6, 0.60010004),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [12, 16, 12]
+}
+
+[sub_resource type="Animation" id="Animation_reset"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Flippable/PlayerSprite:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_player"]
+_data = {
+&"CastDefensive": SubResource("Animation_cast_defensive"),
+&"CastOffensive": SubResource("Animation_cast_offensive"),
+&"CastSmoke": SubResource("Animation_cast_smoke"),
+&"CastUtility": SubResource("Animation_cast_utility"),
+&"Death": SubResource("Animation_death"),
+&"Hit": SubResource("Animation_hit"),
+&"Idle": SubResource("Animation_idle"),
+&"Move": SubResource("Animation_move"),
+&"RESET": SubResource("Animation_reset"),
+&"Taunt": SubResource("Animation_taunt")
+}
+
+[node name="Player" type="CharacterBody2D" unique_id=1428290400 node_paths=PackedStringArray("aim_sprite", "attribute_container", "ability_container")]
+material = SubResource("ShaderMaterial_palette")
 collision_mask = 65
 script = ExtResource("1_player")
 aim_sprite = NodePath("AimSprite")
 attribute_container = NodePath("AttributeContainer")
 ability_container = NodePath("AbilityContainer")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("2_icon")
+[node name="Flippable" type="Node2D" parent="."]
+use_parent_material = true
 
-[node name="AimSprite" type="Sprite2D" parent="."]
-scale = Vector2(0.25, 0.25)
-texture = ExtResource("2_icon")
-offset = Vector2(250, 0)
+[node name="PlayerSprite" type="Sprite2D" parent="Flippable"]
+z_index = 1
+use_parent_material = true
+texture = ExtResource("4_wizard")
+hframes = 4
+vframes = 10
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="LargeShadow" type="Sprite2D" parent="Flippable"]
+show_behind_parent = true
+position = Vector2(0, 15)
+scale = Vector2(0.84375, 0.65)
+use_parent_material = true
+texture = ExtResource("5_shadow")
+
+[node name="AimSprite" type="Sprite2D" parent="." unique_id=1165862109]
+self_modulate = Color(0, 18.892157, 0, 1)
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("2_icon")
+offset = Vector2(360, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1926628]
 position = Vector2(0, 6)
 shape = SubResource("RectangleShape2D_body")
 
-[node name="Hurtbox" type="Area2D" parent="."]
-collision_layer = 1
+[node name="Hurtbox" type="Area2D" parent="." unique_id=253723091]
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=403579025]
 shape = SubResource("RectangleShape2D_hurtbox")
 
-[node name="StateMachine" type="Node" parent="."]
-script = ExtResource("3_machine")
+[node name="StateMachine" type="Node" parent="." unique_id=1238713105]
+script = ExtResource("6_machine")
 initial_state = NodePath("Idle")
 
-[node name="Idle" type="Node" parent="StateMachine"]
-script = ExtResource("4_idle")
+[node name="Idle" type="Node" parent="StateMachine" unique_id=1653586387]
+script = ExtResource("7_idle")
 
-[node name="Move" type="Node" parent="StateMachine"]
-script = ExtResource("5_move")
+[node name="Move" type="Node" parent="StateMachine" unique_id=1092480029]
+script = ExtResource("8_move")
 
-[node name="Aim" type="Node" parent="StateMachine"]
-script = ExtResource("6_aim")
+[node name="Aim" type="Node" parent="StateMachine" unique_id=1856118867]
+script = ExtResource("9_aim")
 
-[node name="Cast" type="Node" parent="StateMachine"]
-script = ExtResource("7_cast")
+[node name="Cast" type="Node" parent="StateMachine" unique_id=574827851]
+script = ExtResource("10_cast")
 
-[node name="Damaged" type="Node" parent="StateMachine"]
-script = ExtResource("8_damaged")
+[node name="Hit" type="Node" parent="StateMachine" unique_id=131030727]
+script = ExtResource("11_hit")
 
-[node name="Dead" type="Node" parent="StateMachine"]
-script = ExtResource("9_dead")
+[node name="Dead" type="Node" parent="StateMachine" unique_id=1164105433]
+script = ExtResource("12_dead")
 
-[node name="AttributeContainer" type="AttributeContainer" parent="."]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries/ = SubResource("AnimationLibrary_player")
+
+[node name="AttributeContainer" type="AttributeContainer" parent="." unique_id=295091902]
 attribute_set = SubResource("AttributeSet_player")
 
-[node name="AbilityContainer" type="AbilityContainer" parent="."]
-abilities = Array[Ability]([ExtResource("12_blink"), ExtResource("13_fireball"), ExtResource("14_boomerang"), ExtResource("15_meteor"), ExtResource("16_smoke"), ExtResource("17_teleport"), ExtResource("18_wall")])
+[node name="AbilityContainer" type="AbilityContainer" parent="." unique_id=2083348264]
+abilities = Array[Ability]([ExtResource("15_blink"), ExtResource("16_fireball"), ExtResource("17_boomerang"), ExtResource("18_meteor"), ExtResource("19_smoke"), ExtResource("20_teleport"), ExtResource("21_wall")])
 
-[node name="AbilityHandler" type="Node" parent="." node_paths=PackedStringArray("ability_container", "button_container")]
-script = ExtResource("10_handler")
+[node name="AbilityHandler" type="Node" parent="." unique_id=716700696 node_paths=PackedStringArray("ability_container", "button_container")]
+script = ExtResource("13_handler")
 ability_container = NodePath("../AbilityContainer")
 button_container = NodePath("../CanvasLayer/MarginContainer/HBoxContainer")
-ability_button_scene = ExtResource("11_button")
+ability_button_scene = ExtResource("14_button")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=997381523]
 
-[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer"]
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer" unique_id=173200785]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -108,8 +312,10 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_constants/margin_left = 45
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/MarginContainer" unique_id=851904664]
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 8
 theme_override_constants/separation = 8
+
+[connection signal="animation_finished" from="AnimationPlayer" to="StateMachine/Hit" method="_on_animation_player_animation_finished"]
