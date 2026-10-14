@@ -10,5 +10,6 @@ script = ExtResource("1_script")
 ICON = ExtResource("3_icon")
 TYPE = 1
 CAST_DELAY = 1.2
+CAST_ANIMATION = &"CastSmoke"
 SPELL_SCENE = ExtResource("2_scene")
 UNINTERRUPTIBLE = true

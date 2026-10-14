@@ -111,15 +111,17 @@ ticks down; each of the 6 spells behaves like POC.
 
 ## M2 — Movement polish → `v0.2.0`
 
-- [ ] Port POC tuning: `MOVE_MAX_SPEED 140`, acceleration `345`, friction `690`,
+- [x] Port POC tuning: `MOVE_MAX_SPEED 140`, acceleration `345`, friction `690`,
       velocity `move_toward`, acceleration/deceleration feel on analogue stick
-- [ ] Port `money wizard` sprite + AnimationPlayer (Idle/Move/facing flip `Flippable` node)
-- [ ] Palette shader port (per-player colors via `Constants` autoload)
-- [ ] `HitState` = knockback drift + settle → back to Idle (animation sync)
-- [ ] Cast animations per spell TYPE (CastOffensive/CastDefensive/CastSmoke/CastUtility),
-      animation speed scaled to cast delay
-- [ ] Stick deadzone/aim retention tuning (keep last nonzero direction)
-- [ ] Cast marker/aim indicator polish
+- [x] Port `money wizard` sprite + AnimationPlayer (Idle/Move/facing flip `Flippable` node)
+- [x] Palette shader port (per-player colors via `Constants` autoload)
+- [x] `HitState` = knockback drift + settle → back to Idle (animation sync)
+- [x] Cast animations per spell TYPE via the D-005 slot contract
+      (CastOffensive/CastDefensive/CastUtility + Smoke's `CastSmoke` flavor clip),
+      animation speed scaled to cast delay; Attack/Channel slots reserved, Death/Taunt clips
+      ported unwired
+- [x] Stick deadzone/aim retention tuning (keep last nonzero direction)
+- [x] Cast marker/aim indicator polish
 - [x] Cast abort rules (D-004): re-press during cast delay → free abort; hits abort except
       `UNINTERRUPTIBLE` (Smoke); death always stops casts (corpse-cast fixed)
 

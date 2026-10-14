@@ -11,13 +11,14 @@ config_version=5
 [application]
 
 config/name="shaman-arena-remastered"
-config/version="0.1.0"
+config/version="0.2.0"
 run/main_scene="uid://ccjsp8utreawi"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
+Constants="*uid://byn7qqiumbl8x"
 Utils="*uid://cdsymwgphm3xk"
 VersionLabel="*uid://dp67ikfl7fv21"
 

@@ -22,7 +22,7 @@ func test_apply_damages_unit_and_knocks_it_back() -> void:
 	assert_float(victim.velocity.x).is_equal_approx(50.0, 0.1)
 	assert_float(victim.velocity.y).is_equal_approx(0.0, 0.1)
 	assert_bool(victim.hit_locked).is_true()
-	assert_str(victim.state_machine.state.name).is_equal("Damaged")
+	assert_str(victim.state_machine.state.name).is_equal("Hit")
 
 
 func test_apply_ignores_own_hurtbox() -> void:
