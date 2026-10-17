@@ -1,15 +1,15 @@
 [gd_resource type="Ability" script_class="BaseAbility" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/abilities/base_ability.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://dmjr2i4ngq6qd" path="res://src/abilities/spells/boomerang.tscn" id="2_scene"]
-[ext_resource type="Texture2D" uid="uid://bbqil6hg0jiyy" path="res://assets/UI/icons/83.png" id="3_icon"]
+[ext_resource type="PackedScene" uid="uid://du8hbv75y3ytd" path="res://src/abilities/spells/projectile/meteor.tscn" id="2_scene"]
+[ext_resource type="Texture2D" uid="uid://t1gdh0d55id7" path="res://assets/UI/icons/6.png" id="3_icon"]
 
 [resource]
 script = ExtResource("1_script")
-ability_name = &"Boomerang"
+ability_name = &"Meteor"
 ICON = ExtResource("3_icon")
 TYPE = 0
 CAST_MODE = 1
-CAST_DELAY = 0.2
-COOLDOWN = 7.0
+CAST_DELAY = 0.15
+COOLDOWN = 9.0
 SPELL_SCENE = ExtResource("2_scene")

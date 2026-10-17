@@ -60,7 +60,7 @@ func test_spell_touching_own_hurtbox_does_not_despawn() -> void:
 	add_child(unit)
 	auto_free(unit)
 	await get_tree().process_frame
-	var spell_scene: PackedScene = load("res://src/abilities/spells/fireball.tscn")
+	var spell_scene: PackedScene = load("res://src/abilities/spells/projectile/fireball.tscn")
 	var fireball := spell_scene.instantiate() as SpellScene
 	fireball.set_physics_process(false)
 	add_child(fireball)

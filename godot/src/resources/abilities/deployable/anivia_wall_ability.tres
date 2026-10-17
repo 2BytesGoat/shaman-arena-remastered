@@ -1,0 +1,15 @@
+[gd_resource type="Ability" script_class="BaseAbility" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/abilities/base_ability.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://balqudfjryl06" path="res://src/abilities/spells/deployable/anivia_wall.tscn" id="2_scene"]
+[ext_resource type="Texture2D" uid="uid://bw6s6w4ym87dt" path="res://assets/UI/icons/182.png" id="3_icon"]
+
+[resource]
+script = ExtResource("1_script")
+ability_name = &"AniviaWall"
+ICON = ExtResource("3_icon")
+TYPE = 1
+CAST_MODE = 1
+CAST_DELAY = 0.2
+COOLDOWN = 13.0
+SPELL_SCENE = ExtResource("2_scene")

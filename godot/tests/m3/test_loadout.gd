@@ -1,8 +1,10 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 func _ability(name: String) -> Ability:
-	return load("res://src/resources/abilities/%s_ability.tres" % name)
+	return load(AbilityPaths.path(name))
 
 
 func test_pick_up_to_six_spells() -> void:

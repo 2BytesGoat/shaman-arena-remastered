@@ -8,7 +8,7 @@ class_name SpellScene extends Area2D
 var source: Unit
 var cast_direction := Vector2.ZERO
 
-@onready var timer: Timer = get_node_or_null("Timer")
+@onready var expiry_timer: Timer = get_node_or_null("ExpiryTimer")
 
 
 func cast(cast_source: Unit, direction: Vector2) -> void:
@@ -17,7 +17,7 @@ func cast(cast_source: Unit, direction: Vector2) -> void:
 	rotation = direction.angle()
 
 
-func _on_timer_timeout() -> void:
+func _on_expiry_timer_timeout() -> void:
 	_on_hit()
 
 

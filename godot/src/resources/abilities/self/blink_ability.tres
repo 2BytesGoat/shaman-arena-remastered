@@ -1,6 +1,6 @@
-[gd_resource type="Ability" script_class="BlinkAbility" load_steps=3 format=3]
+[gd_resource type="Ability" script_class="BlinkAbility" format=3]
 
-[ext_resource type="Script" path="res://src/abilities/blink_ability.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://b0vvgk2lgursg" path="res://src/abilities/spells/self/blink_ability.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://l05hk8icllsj" path="res://assets/UI/icons/default.png" id="2_icon"]
 
 [resource]

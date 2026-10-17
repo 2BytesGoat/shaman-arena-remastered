@@ -2,13 +2,13 @@
 
 [ext_resource type="Script" uid="uid://bxjjlielvgwug" path="res://src/ui/spell_select.gd" id="1_select"]
 [ext_resource type="PackedScene" path="res://src/ui/spell_select_button.tscn" id="2_button"]
-[ext_resource type="Ability" path="res://src/resources/abilities/blink_ability.tres" id="3_blink"]
-[ext_resource type="Ability" path="res://src/resources/abilities/fireball_ability.tres" id="4_fireball"]
-[ext_resource type="Ability" path="res://src/resources/abilities/boomerang_ability.tres" id="5_boomerang"]
-[ext_resource type="Ability" path="res://src/resources/abilities/meteor_ability.tres" id="6_meteor"]
-[ext_resource type="Ability" path="res://src/resources/abilities/smoke_ability.tres" id="7_smoke"]
-[ext_resource type="Ability" path="res://src/resources/abilities/teleport_ability.tres" id="8_teleport"]
-[ext_resource type="Ability" path="res://src/resources/abilities/anivia_wall_ability.tres" id="9_wall"]
+[ext_resource type="Ability" path="res://src/resources/abilities/self/blink_ability.tres" id="3_blink"]
+[ext_resource type="Ability" path="res://src/resources/abilities/projectile/fireball_ability.tres" id="4_fireball"]
+[ext_resource type="Ability" path="res://src/resources/abilities/projectile/boomerang_ability.tres" id="5_boomerang"]
+[ext_resource type="Ability" path="res://src/resources/abilities/projectile/meteor_ability.tres" id="6_meteor"]
+[ext_resource type="Ability" path="res://src/resources/abilities/field/smoke_ability.tres" id="7_smoke"]
+[ext_resource type="Ability" path="res://src/resources/abilities/projectile/teleport_ability.tres" id="8_teleport"]
+[ext_resource type="Ability" path="res://src/resources/abilities/deployable/anivia_wall_ability.tres" id="9_wall"]
 
 [node name="SpellSelect" type="MarginContainer" node_paths=PackedStringArray("title_label", "grid", "slots_container", "hint_label")]
 script = ExtResource("1_select")

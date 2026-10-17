@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 func _make_unit() -> Unit:
 	var scene: PackedScene = load("res://src/player/player.tscn")
@@ -16,7 +18,7 @@ func _make_unit() -> Unit:
 func _picks(names: Array) -> Array[Ability]:
 	var picks: Array[Ability] = []
 	for name in names:
-		picks.append(load("res://src/resources/abilities/%s_ability.tres" % name))
+		picks.append(load(AbilityPaths.path(name)))
 	return picks
 
 

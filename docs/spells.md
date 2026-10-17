@@ -5,7 +5,7 @@ related:
   - "[[plan]]"
   - "[[decisions]]"
   - "[[controls]]"
-search_terms: [spells, abilities, naming, convention, buff, debuff, aura, channel, toggle, projectile, field, wall, effect, health damage, attack, basic attack, restore, heal, warcraft, league]
+search_terms: [spells, abilities, naming, convention, buff, debuff, aura, channel, toggle, projectile, field, wall, deployable, turret, effect, health damage, attack, basic attack, restore, heal, warcraft, league]
 ---
 
 # Spells — Naming & Structure
@@ -22,10 +22,15 @@ Decisions behind this are recorded in [[decisions]] (D-002).
 - **Attack** — a shaman's basic strike. Per-character (melee or ranged, `Instant` or
   `Aimed` by design), picked in the loadout like any other spell, and the host for
   on-hit empowerments (D-003).
-- **Spell** — the world object an ability spawns (projectile, field, wall…). Lives in
-  `src/abilities/spells/`, base class `SpellScene`.
+- **Spell** — the world object an ability spawns (projectile, field, deployable…). Lives in
+  `src/abilities/spells/<delivery>/`, base class `SpellScene`.
 - **Effect** — an impact or telegraph scene: visuals first, doubles as a hitbox per
-  D-001. Lives in `src/abilities/effects/`, base class `Effect`.
+  D-001. Impacts live in `src/abilities/effects/impact/` (base class `Effect`, base scene
+  `effects/effect.tscn` at the `effects/` root); telegraphs live in
+  `src/abilities/effects/telegraph/`.
+- **Deployable** — a placed world object that persists at its spot and can block or act
+  (wall, turret, box, ward). Its presence on the field separates it from a **Field**,
+  which is an area effect.
 - **Damage** — an instant health loss. **Not** a buff or debuff; applied via
   `HealthDamage`.
 - **Restore** — an instant health gain, the counterpart of Damage. **Not** a buff or
@@ -46,24 +51,25 @@ Every spell is a combination of four independent axes:
 
 | Axis | Values | Code home |
 |---|---|---|
-| **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` (Instant/Aimed declared; reserved — not branched on until M4 wires the INSTANT tap path) |
-| **Delivery** | Self, Projectile, Field, Wall, Aura, Beam, Summon | `SpellScene` subclasses |
+| **Cast** | Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive | `BaseAbility.CAST_MODE` — `Instant` fires on press (no Aim phase, facing direction); `Aimed` uses press/hold/release |
+| **Delivery** | Self, Projectile, Field, Deployable, Aura, Beam, Summon | `SpellScene` subclasses, one folder per value under `spells/` |
 | **Impact** | Hit (damage), Explosion, Push, Pull, Chain, None | `Effect` scenes via `HitArea.apply` (D-001) |
 | **Status** | none, Buff, Debuff (duration and stacks are configuration; instant is *not* a status) | `AttributeBuff` subclasses in `src/attributes/` |
 
 ## Naming rules
 
-1. **Abilities** — player-facing name in `ability_name`; files `<name>_ability.tres`.
+1. **Abilities** — player-facing name in `ability_name`; files
+   `src/resources/abilities/<delivery>/<name>_ability.tres` (mirrors `spells/`).
    Cast-mode behaviors only when a mode needs code: `ChanneledAbility`, `AuraAbility`,
    `ToggleAbility`, `PassiveAbility`.
 2. **Spell scenes** — a concrete script is named after the spell (`Fireball`, `Smoke`).
    A spell with no behavior of its own uses its archetype class directly
    (Boomerang is a plain `ProjectileSpell` scene).
-3. **Archetype bases** — `ProjectileSpell`, `FieldSpell`, `AuraSpell`, `WallSpell`,
+3. **Archetype bases** — `ProjectileSpell`, `FieldSpell`, `DeployableSpell`, `AuraSpell`,
    `BeamSpell`; introduced only on the second member (see below).
 4. **Impact / telegraph scenes** — `<Spell><Role>` ending in `Effect` for the impact
-   family (`ExplosionEffect`, `PushEffect`, `MeteorExplosion`). The first telegraph keeps
-   its POC name until a second one exists.
+   family (`ExplosionEffect`, `PushEffect`, `MeteorExplosion`), filed under `effects/impact/`.
+   The first telegraph keeps its POC name until a second one exists, in `effects/telegraph/`.
 5. **Statuses** — `<What>Buff` / `<What>Debuff` (`FrostArmorBuff`, `SlowDebuff`,
    `BurnDebuff`). Auras share their status (`DevotionAura` → `DevotionAuraBuff`).
 6. **Instant effects** — `HealthDamage` subtracts Health, `HealthRestore` adds it;
@@ -78,10 +84,14 @@ Current file/class map:
 
 | Layer | Files |
 |---|---|
-| Abilities | `src/abilities/base_ability.gd` (`BaseAbility`), `src/resources/abilities/*_ability.tres` |
-| Spells | `spell_scene.gd` (`SpellScene`), `projectile_spell.gd` (`ProjectileSpell`), `fireball.gd`, `teleport.gd` |
-| Field / Wall | `smoke.gd` (`Smoke`), `anivia_wall.gd` (`AniviaWall`) — still on `SpellScene` until a second member |
-| Effects | `effect.gd` (`Effect`) + the effect scenes |
+| Abilities | `src/abilities/base_ability.gd` (`BaseAbility`), `src/resources/abilities/<delivery>/*_ability.tres` (mirrors the spell folders) |
+| Spell bases | `src/abilities/spell_scene.gd` + `spell_scene.tscn` (`SpellScene`), `src/abilities/projectile_spell.gd` (`ProjectileSpell`) |
+| Projectiles | `src/abilities/spells/projectile/` — `fireball.gd/.tscn`, `boomerang.tscn`, `meteor.tscn`, `teleport.gd/.tscn` |
+| Field | `src/abilities/spells/field/smoke.gd/.tscn` (`Smoke`) — still on `SpellScene` until a second member |
+| Deployables | `src/abilities/spells/deployable/anivia_wall.gd/.tscn` (`AniviaWall`) — still on `SpellScene` until a second member |
+| Self | `src/abilities/spells/self/blink_ability.gd` (`BlinkAbility`) — no scene; the ability's `cast()` is the whole spell |
+| Effects | `src/abilities/effects/impact/` — `effect.gd` / `effect.tscn` base at the `effects/` root + the impact scenes |
+| Telegraphs | `src/abilities/effects/telegraph/` — `meteor_incoming.gd/.tscn` (`MeteorIncoming`) |
 | Statuses | `health_damage.gd` (`HealthDamage`), `initialize_attributes.gd` (`InitializeAttributes`) |
 
 ## Character animation slots
@@ -119,17 +129,27 @@ Don't invent an archetype base class for a single spell — with one sample you 
 shared behavior from the incidental. Extract the base when the **second** spell of that
 archetype exists, then make both extend it.
 
-- **Projectile** — Fireball, Boomerang, Meteor, Teleport → `ProjectileSpell` exists.
-- **Field** — Smoke only → wait for the second (e.g. Blizzard).
-- **Wall** — AniviaWall only → wait.
+Folders don't follow the second-member rule: concrete spells are filed by Delivery value
+(`spells/projectile/`, `spells/field/`, `spells/deployable/`, `spells/self/`) as soon as they exist,
+and archetype base classes live one level up at `src/abilities/` root. A one-member folder
+(Field, Deployable) is expected — that's where the second member lands, at which point the base
+class (`FieldSpell`, `DeployableSpell`, …) appears next to `projectile_spell.gd`. Ability
+resources mirror the same folders under `src/resources/abilities/` (a spell's tuning resources,
+like Boomerang's speed curve, live with its ability resource).
+
+- **Projectile** — Fireball, Boomerang, Meteor, Teleport (`spells/projectile/`) → `ProjectileSpell` exists.
+- **Field** — Smoke only (`spells/field/`) → wait for the second (e.g. Blizzard).
+- **Deployable** — AniviaWall only (`spells/deployable/`) → wait for the second (turret, box, ward…).
+- **Self** — Blink only (`spells/self/`) — an ability script, not a scene; waits for a second
+  self-cast ability before any base is extracted.
 - **Aura / Beam / Summon** — none yet → names reserved.
-- **Telegraphs** — MeteorIncoming is the only one → keeps its name for now.
+- **Telegraphs** — MeteorIncoming is the only one (`effects/telegraph/`) → keeps its name for now.
 - **`src/attributes/status/` folder** — split it out when the second status exists.
 
 ## Reserved vocabulary — always reuse, never invent a synonym
 
 - **Cast:** Instant, Aimed, Unit, Channel, Toggle, Aura, Autocast, Passive
-- **Delivery:** Projectile, Field, Wall, Aura, Beam, Summon
+- **Delivery:** Projectile, Field, Deployable, Aura, Beam, Summon
 - **Impact:** Hit, Explosion, Push, Pull, Chain
 - **Status:** Buff, Debuff (CC is a Debuff); instant damage is `HealthDamage`, not a status
 
@@ -146,17 +166,17 @@ Current spells:
 | Fireball | Aimed | Projectile | Hit + ExplosionEffect | — |
 | Boomerang | Aimed | Projectile (returns) | Hit + BoomerangEffect | — |
 | Meteor | Aimed | Projectile | MeteorIncoming → MeteorExplosion | — |
-| Smoke | Aimed (self) | Field | Hit on entry | — |
+| Smoke | Instant (self) | Field | Hit on entry | — |
 | Teleport | Aimed | Projectile | Self reposition | — |
-| Anivia Wall | Aimed | Wall | Blocker (despawns on contact) | — |
+| Anivia Wall | Aimed | Deployable (wall) | Blocker (despawns on contact) | — |
 
 *Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004). It is
 also the money wizard's Attack ability (D-003).*
 
-*`CAST_MODE` is declared on every ability but not yet branched on: all spells use the same
-press/hold/release flow, and the tap threshold only picks facing vs stick direction. Wiring
-the INSTANT tap-cast (Blink) is scheduled for M4 — until then the Cast column above records
-each ability's declared mode, not a different input path.*
+*`CAST_MODE` is branched on in `Unit.request_cast`: `Instant` spells (Blink, Smoke) cast the
+moment the button goes down — no Aim phase, direction is the current facing (`Smoke.cast()`
+ignores it) — while `Aimed` spells keep the press/hold/release flow, where the ~150 ms tap
+threshold picks facing vs stick direction.*
 
 Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
 
@@ -176,8 +196,9 @@ Reference spells these conventions must cover (WC3 / LoL), for M4 and later:
    this doc first. The cast animation slot follows from `TYPE` automatically — set
    `CAST_ANIMATION` only to request a character-flavor clip.
 2. Ability resource: `<name>_ability.tres`.
-3. Spell scene: script named after the spell; an archetype base only on the second
-   member (rule above).
+3. Spell scene: script named after the spell under `spells/<delivery>/`; an archetype base only
+   on the second member (rule above). A self-cast spell with no scene (Blink) files its ability
+   script under `spells/self/` instead.
 4. Impact scenes: `<Spell><Role>Effect`.
 5. Statuses: `<What>Buff` / `<What>Debuff`; instant damage is `HealthDamage`.
 6. Add a row to the catalogue table.

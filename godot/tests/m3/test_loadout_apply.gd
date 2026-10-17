@@ -1,10 +1,12 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 func _picks(names: Array) -> Array[Ability]:
 	var picks: Array[Ability] = []
 	for name in names:
-		picks.append(load("res://src/resources/abilities/%s_ability.tres" % name))
+		picks.append(load(AbilityPaths.path(name)))
 	return picks
 
 
@@ -55,7 +57,7 @@ func test_apply_loadout_grants_picks_and_rebuilds_hud() -> void:
 func test_reapplying_replaces_previous_loadout() -> void:
 	var unit := _make_unit()
 	await get_tree().process_frame
-	var fireball: Ability = load("res://src/resources/abilities/fireball_ability.tres")
+	var fireball: Ability = load(AbilityPaths.path("fireball"))
 	unit.apply_loadout(_picks(["fireball", "smoke"]))
 	unit.apply_loadout(_picks(["teleport"]))
 	assert_array(_runtime_names(unit)).contains_exactly(["Teleport"])

@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 func _make_unit(names: Array = ["fireball", "smoke"], controller_type := Unit.ControllerType.NONE) -> Unit:
 	var scene: PackedScene = load("res://src/player/player.tscn")
@@ -18,7 +20,7 @@ func _make_unit(names: Array = ["fireball", "smoke"], controller_type := Unit.Co
 func _picks(names: Array) -> Array[Ability]:
 	var picks: Array[Ability] = []
 	for name in names:
-		picks.append(load("res://src/resources/abilities/%s_ability.tres" % name))
+		picks.append(load(AbilityPaths.path(name)))
 	return picks
 
 
@@ -113,11 +115,34 @@ func test_local_controller_applies_stick_deadzone() -> void:
 
 
 func test_request_cast_enters_aim_with_slot() -> void:
-	var unit := await _make_unit()
+	var unit := await _make_unit(["smoke", "fireball"])
 	unit.request_cast(1)
 	assert_str(unit.state_machine.state.name).is_equal("Aim")
 	assert_bool(unit.aiming).is_true()
 	assert_int(unit.aiming_slot).is_equal(1)
+
+
+func test_instant_spell_fires_on_press_without_aim() -> void:
+	var unit := await _make_unit(["smoke", "fireball"])
+	var smoke := _ability(unit, &"Smoke")
+	unit.request_cast(0)
+	assert_bool(unit.aiming).is_false()
+	assert_int(unit.aiming_slot).is_equal(-1)
+	assert_str(unit.state_machine.state.name).is_equal("Idle")
+	assert_bool(unit.ability_container.is_ability_active(smoke)).is_true()
+	assert_str(String(unit.animation_player.current_animation)).is_equal("CastSmoke")
+
+
+func test_instant_spell_casts_in_facing_direction() -> void:
+	var unit := await _make_unit(["blink", "fireball"])
+	var blink := _ability(unit, &"Blink")
+	unit.set_move_input(Vector2.LEFT)
+	var start := unit.global_position
+	unit.request_cast(0)
+	var expected := start + Vector2.LEFT * BlinkAbility.MAX_DISTANCE
+	assert_float(unit.global_position.distance_to(expected)).is_equal_approx(0.0, 0.01)
+	assert_bool(unit.aiming).is_false()
+	assert_bool(unit.ability_container.is_ability_cooldown_active(blink)).is_true()
 
 
 func test_request_cast_aborts_active_windup() -> void:

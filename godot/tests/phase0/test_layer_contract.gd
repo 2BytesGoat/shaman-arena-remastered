@@ -1,7 +1,11 @@
 extends GdUnitTestSuite
 
-const SPELLS := "res://src/abilities/spells/"
+const PROJECTILES := "res://src/abilities/spells/projectile/"
+const FIELDS := "res://src/abilities/spells/field/"
+const DEPLOYABLES := "res://src/abilities/spells/deployable/"
 const EFFECTS := "res://src/abilities/effects/"
+const IMPACTS := "res://src/abilities/effects/impact/"
+const TELEGRAPHS := "res://src/abilities/effects/telegraph/"
 
 
 func _area(path: String) -> Area2D:
@@ -44,7 +48,7 @@ func test_player_body_collides_with_other_player_and_environment() -> void:
 
 func test_direct_projectiles_mask_players_projectiles_and_environment() -> void:
 	for name: String in ["fireball", "boomerang"]:
-		var area := _area(SPELLS + name + ".tscn")
+		var area := _area(PROJECTILES + name + ".tscn")
 		assert_int(area.collision_layer).is_equal(16)
 		assert_int(area.collision_mask).is_equal(95)
 		assert_int(_area_links(area)).is_equal(1)
@@ -52,36 +56,41 @@ func test_direct_projectiles_mask_players_projectiles_and_environment() -> void:
 
 func test_travel_only_spells_leave_their_inherited_mask_inert() -> void:
 	for name: String in ["teleport", "meteor"]:
-		var area := _area(SPELLS + name + ".tscn")
+		var area := _area(PROJECTILES + name + ".tscn")
 		assert_int(area.collision_layer).is_equal(0)
 		assert_int(area.collision_mask).is_equal(15)
 		assert_int(_area_links(area)).is_equal(0)
 
 
 func test_smoke_hits_players_only_and_expires_on_animation() -> void:
-	var smoke := _area(SPELLS + "smoke.tscn")
+	var smoke := _area(FIELDS + "smoke.tscn")
 	assert_int(smoke.collision_layer).is_equal(16)
 	assert_int(smoke.collision_mask).is_equal(1)
 	assert_int(_area_links(smoke)).is_equal(1)
 
 
 func test_meteor_telegraph_contact_is_inert() -> void:
-	var telegraph := _area(EFFECTS + "meteor_incoming.tscn")
+	var telegraph := _area(TELEGRAPHS + "meteor_incoming.tscn")
 	assert_int(telegraph.collision_layer).is_equal(16)
 	assert_int(telegraph.collision_mask).is_equal(95)
 	assert_int(_area_links(telegraph)).is_equal(0)
 
 
 func test_effects_hit_players_only_and_inherit_the_area_handler() -> void:
-	for name: String in ["effect", "explosion_effect", "meteor_explosion"]:
-		var area := _area(EFFECTS + name + ".tscn")
+	var paths := [
+		EFFECTS + "effect.tscn",
+		IMPACTS + "explosion_effect.tscn",
+		IMPACTS + "meteor_explosion.tscn",
+	]
+	for path: String in paths:
+		var area := _area(path)
 		assert_int(area.collision_layer).is_equal(16)
 		assert_int(area.collision_mask).is_equal(1)
 		assert_int(_area_links(area)).is_equal(1)
 
 
 func test_wall_blocks_bodies_and_despawns_on_spell_contact() -> void:
-	var wall := _area(SPELLS + "anivia_wall.tscn")
+	var wall := _area(DEPLOYABLES + "anivia_wall.tscn")
 	assert_int(wall.collision_layer).is_equal(64)
 	assert_int(wall.collision_mask).is_equal(31)
 	assert_int(_area_links(wall)).is_equal(1)
