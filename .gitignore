@@ -6,6 +6,9 @@ godot/reports/*
 godot/tests/reports/*
 !godot/tests/reports/.gdignore
 
+# Godot/Windows temp copies left beside locked GDExtension libraries (~name.dll, ~name~RF*.TMP)
+~*
+
 # Python research scripts
 python/.venv/
 python/cache/
