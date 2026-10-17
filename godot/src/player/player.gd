@@ -8,9 +8,7 @@ const PLAYERS_GROUP := &"players"
 const MOVE_MAX_SPEED := 140.0
 const MOVE_ACCELERATION := 345.0
 const MOVE_FRICTION := 690.0
-const SPELL_SPAWN_OFFSET := 360.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
-const CONSUMABLE_SLOTS := Loadout.CONSUMABLE_SLOTS
 
 enum ControllerType { NONE, LOCAL }
 
@@ -19,7 +17,7 @@ enum ControllerType { NONE, LOCAL }
 @export var PLAYER_CONTROLLER := 0
 @export var controller_type: ControllerType = ControllerType.NONE:
 	set = _on_controller_type_changed
-@export var max_health := 10.0
+@export var max_health := 100.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
@@ -39,6 +37,10 @@ var hit_locked := false
 var player_dead := false
 var is_match_ready := false
 var facing_scale := 1.0
+var spawn_position := Vector2.ZERO
+
+## Assigned by `MatchManager`; the draft pool is seeded from its basic spells (D-013).
+var character_class: CharacterClass
 
 var ability_slots: Array[Ability] = []
 var _last_move_direction := Vector2.RIGHT
@@ -50,6 +52,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	spawn_position = global_position
 	ability_slots = ability_container.get_initial_abilities()
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
@@ -68,8 +71,9 @@ func _physics_process(delta: float) -> void:
 	visuals.update_aim_sprite(delta)
 
 
-func spell_spawn_position(direction: Vector2) -> Vector2:
-	return global_position + direction * SPELL_SPAWN_OFFSET
+## Where spells leave the unit: the aim icon's drawn world position (offset included).
+func spell_spawn_position() -> Vector2:
+	return visuals.aim_icon_position()
 
 
 func facing_direction() -> Vector2:
@@ -102,8 +106,8 @@ func request_cast(slot: int) -> void:
 	if slot < 0 or slot >= mini(ability_slots.size(), MAX_SPELL_SLOTS):
 		return
 	var ability := ability_slots[slot]
+	# A released cast commits (D-016): a re-press during the cast delay is ignored.
 	if ability_container.is_ability_active(ability):
-		try_abort_cast(ability)
 		return
 	if ability_container.is_ability_cooldown_active(ability):
 		return
@@ -183,6 +187,33 @@ func apply_loadout(picks: Array[Ability]) -> void:
 		ability_slots.append(ability)
 	ability_handler.rebuild(ability_slots)
 	loadout_applied.emit()
+
+
+## Clears running cooldowns so a fresh round starts with every spell ready (D-015). GGAS has
+## no direct reset API: `revoke` clears the cooldown/duration timers and emits `cooldown_end`
+## (which stops the HUD fill), and `grant` makes the ability castable again. Only cooling
+## abilities are touched, so an in-flight cast (duration active) is never silently cancelled.
+func reset_ability_cooldowns() -> void:
+	for ability in ability_slots:
+		if ability_container.is_ability_cooldown_active(ability):
+			ability_container.try_revoke(ability)
+			ability_container.try_grant(ability)
+
+
+## Puts the unit back into play for the next round: at its spawn point, full health, idle,
+## every spell off cooldown. The spell pool is left alone.
+func respawn() -> void:
+	player_dead = false
+	hit_locked = false
+	aiming = false
+	aiming_slot = -1
+	release_cast_requested = false
+	velocity = Vector2.ZERO
+	move_direction = Vector2.ZERO
+	global_position = spawn_position
+	attribute_container.apply_buff(InitializeAttributes.new(max_health))
+	reset_ability_cooldowns()
+	state_machine.transition_to(AnimationSlots.IDLE)
 
 
 func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:

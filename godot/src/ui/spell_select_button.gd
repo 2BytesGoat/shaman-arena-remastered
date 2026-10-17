@@ -3,7 +3,6 @@ class_name SpellSelectButton extends Panel
 @export var icon_rect: TextureRect
 @export var name_label: Label
 @export var focus_rect: Control
-@export var dim_rect: Control
 
 var ability: Ability
 
@@ -17,7 +16,3 @@ func setup(value: Ability) -> void:
 
 func set_focused(value: bool) -> void:
 	focus_rect.visible = value
-
-
-func set_picked(value: bool) -> void:
-	dim_rect.visible = value

@@ -2,23 +2,22 @@
 
 [ext_resource type="Script" uid="uid://chl07eyq1ub2q" path="res://src/ui/spell_select_button.gd" id="1_button"]
 
-[node name="SpellSelectButton" type="Panel" node_paths=PackedStringArray("icon_rect", "name_label", "focus_rect", "dim_rect")]
-custom_minimum_size = Vector2(76, 76)
+[node name="SpellSelectButton" type="Panel" node_paths=PackedStringArray("icon_rect", "name_label", "focus_rect")]
+custom_minimum_size = Vector2(132, 160)
 script = ExtResource("1_button")
 icon_rect = NodePath("Icon")
 name_label = NodePath("Name")
 focus_rect = NodePath("Focus")
-dim_rect = NodePath("Dim")
 
 [node name="Icon" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -16.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -31,24 +30,15 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -16.0
+offset_left = 4.0
+offset_top = -28.0
+offset_right = -4.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 12
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="Dim" type="ColorRect" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0, 0, 0, 0.55)
 
 [node name="Focus" type="ColorRect" parent="."]
 visible = false

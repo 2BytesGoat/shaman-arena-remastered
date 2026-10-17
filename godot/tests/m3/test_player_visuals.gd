@@ -110,3 +110,21 @@ func test_aim_sprite_smoothing_is_rate_limited() -> void:
 	unit.visuals.aim_sprite.rotation = 0.0
 	unit.visuals.update_aim_sprite(0.001)
 	assert_float(unit.visuals.aim_sprite.rotation).is_between(0.0001, PlayerVisuals.AIM_TURN_SPEED * 0.001 + 0.0001)
+
+
+func test_spell_spawn_position_is_the_aim_icons_drawn_position() -> void:
+	var unit := _make_unit()
+	await get_tree().process_frame
+	var sprite := unit.visuals.aim_sprite
+	assert_bool(unit.spell_spawn_position().is_equal_approx(sprite.to_global(sprite.offset))).is_true()
+	assert_bool(unit.spell_spawn_position().is_equal_approx(unit.global_position)).is_false()
+
+
+func test_spell_spawn_position_orbits_with_the_aim_icon() -> void:
+	var unit := _make_unit()
+	await get_tree().process_frame
+	unit.visuals.aim_sprite.rotation = 0.0
+	var right := unit.spell_spawn_position() - unit.global_position
+	unit.visuals.aim_sprite.rotation = PI / 2.0
+	var down := unit.spell_spawn_position() - unit.global_position
+	assert_bool(down.is_equal_approx(right.rotated(PI / 2.0))).is_true()

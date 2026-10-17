@@ -80,7 +80,7 @@ func test_hit_aborts_interruptible_windup() -> void:
 	unit.take_hit(null, 1.0, 0.0, Vector2.ZERO)
 	assert_bool(unit.ability_container.is_ability_active(fireball)).is_false()
 	assert_bool(unit.ability_container.is_ability_cooldown_active(fireball)).is_false()
-	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(9.0)
+	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(99.0)
 	assert_bool(unit.hit_locked).is_true()
 
 
@@ -93,7 +93,7 @@ func test_hit_does_not_abort_uninterruptible_smoke() -> void:
 	unit.take_hit(null, 1.0, 0.0, Vector2.ZERO)
 	assert_bool(unit.ability_container.is_ability_active(smoke)).is_true()
 	assert_bool(unit.ability_container.is_ability_cooldown_active(smoke)).is_false()
-	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(9.0)
+	assert_float(unit.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(99.0)
 
 
 func test_forced_abort_during_hit_keeps_hit_animation() -> void:

@@ -13,3 +13,4 @@ CAST_MODE = 1
 CAST_DELAY = 0.2
 COOLDOWN = 7.0
 SPELL_SCENE = ExtResource("2_scene")
+HITS_SELF = true

@@ -2,6 +2,10 @@ extends GdUnitTestSuite
 
 const AbilityPaths := preload("res://tests/support/ability_paths.gd")
 
+## Test fixture: a short beat keeps the suite fast, and the beat tests still run when the
+## game's beat is disabled for development (`death_slowmo_duration = 0`).
+const BEAT_DURATION := 0.15
+
 
 func _picks(names: Array) -> Array[Ability]:
 	var picks: Array[Ability] = []
@@ -14,8 +18,11 @@ func _make_unit(controller: int) -> Unit:
 	var scene: PackedScene = load("res://src/player/player.tscn")
 	var unit := scene.instantiate() as Unit
 	unit.PLAYER_CONTROLLER = controller
-	unit.set_physics_process(false)
 	add_child(unit)
+	# Disable *after* entering the tree: an earlier call is overridden when the script's
+	# `_physics_process` is wired up on `add_child`, and the units would then shove each
+	# other out of the shared spawn point with `move_and_slide` depenetration.
+	unit.set_physics_process(false)
 	auto_free(unit)
 	return unit
 
@@ -24,9 +31,20 @@ func _make_manager(skip_selection := false, default_loadout: Array[Ability] = []
 	var manager := MatchManager.new()
 	manager.skip_selection = skip_selection
 	manager.default_loadout = default_loadout
+	# Flow tests skip the KO beat; the beat test re-arms it with `BEAT_DURATION`.
+	manager.death_slowmo_duration = 0.0
 	add_child(manager)
 	auto_free(manager)
 	return manager
+
+
+## Polls in real time (safe while the death beat has the world in slow motion). The budget
+## grows with the configured beat, so retuning `death_slowmo_duration` can't starve a wait.
+func _await_phase(manager: MatchManager, phase: int) -> void:
+	var budget := manager.death_slowmo_duration + 2.0
+	var deadline := Time.get_ticks_msec() + int(budget * 1000.0)
+	while manager.phase != phase and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
 
 
 func test_match_starts_selecting_and_locked() -> void:
@@ -73,25 +91,115 @@ func test_repeated_loadout_completion_is_counted_once() -> void:
 	assert_int(manager._ready_players.size()).is_equal(2)
 
 
-func test_death_ends_match_and_locks_survivor() -> void:
+func test_round_death_locks_players_and_resumes_with_respawns() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
 	manager._on_loadout_complete(0, _picks(["fireball"]))
 	manager._on_loadout_complete(1, _picks(["smoke"]))
+	first.global_position += Vector2(40.0, -20.0)
+	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_int(manager.round_wins_for(1)).is_equal(1)
+	assert_bool(first.player_dead).is_true()
+	assert_bool(second.is_match_ready).is_false()
+	# No panel exists here, so the round draft is skipped and the round resumes next frame.
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_bool(first.player_dead).is_false()
+	assert_bool(first.is_match_ready).is_true()
+	assert_bool(second.is_match_ready).is_true()
+	assert_bool(first.global_position.is_equal_approx(first.spawn_position)).is_true()
+	assert_float(
+		first.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
+	).is_equal(100.0)
+
+
+func test_new_round_clears_spell_cooldowns() -> void:
+	var first := _make_unit(0)
+	var second := _make_unit(1)
+	var manager := _make_manager()
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["blink"]))
+	var blink: Ability = second.ability_slots[0]
+	# Blink has no cast delay, so activating it starts its 5s cooldown synchronously.
+	assert_int(second.ability_container.try_activate(blink)).is_equal(
+		RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_COOLDOWN_STARTED
+	)
+	assert_bool(second.ability_container.is_ability_cooldown_active(blink)).is_true()
+	var cooled: Array[Ability] = []
+	second.ability_container.cooldown_end.connect(
+		func(ability: Ability) -> void: cooled.append(ability)
+	)
+	# The survivor is never re-drafted, so only the round resume can clear the cooldown.
+	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_bool(second.ability_container.is_ability_cooldown_active(blink)).is_false()
+	assert_bool(second.ability_container.is_ability_granted(blink)).is_true()
+	assert_array(cooled).contains([blink])
+	# And the spell is castable again.
+	assert_int(second.ability_container.try_activate(blink)).is_equal(
+		RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_COOLDOWN_STARTED
+	)
+
+
+func test_death_beat_slows_time_and_waits_for_the_death_clip() -> void:
+	var first := _make_unit(0)
+	var second := _make_unit(1)
+	var manager := _make_manager()
+	# Short fixture beat (see `BEAT_DURATION`); the expected scale is the manager's own
+	# tuning, so retuning `death_slowmo_scale` never breaks this test.
+	manager.death_slowmo_duration = BEAT_DURATION
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
+	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	# The round is decided immediately; the beat holds the resume back.
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_float(Engine.get_time_scale()).is_equal_approx(manager.death_slowmo_scale, 0.0001)
+	assert_bool(first.player_dead).is_true()
+	# Slow motion ends with the window, but the round only resumes once the death clip has
+	# finished (its tail plays at normal speed).
+	await _await_phase(manager, MatchManager.MatchPhase.RUNNING)
+	assert_float(Engine.get_time_scale()).is_equal(1.0)
+	assert_bool(first.player_dead).is_false()
+	assert_bool(first.is_match_ready).is_true()
+	assert_bool(second.is_match_ready).is_true()
+
+
+func test_match_point_can_skip_the_death_beat() -> void:
+	var first := _make_unit(0)
+	var second := _make_unit(1)
+	var manager := _make_manager()
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
+	for _round in MatchManager.ROUNDS_TO_WIN - 1:
+		first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+		await _await_phase(manager, MatchManager.MatchPhase.RUNNING)
+	# Arm the beat but keep it off the match point: the final death must not slow down.
+	manager.death_slowmo_duration = BEAT_DURATION
+	manager.death_slowmo_on_match_point = false
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
-	assert_bool(first.player_dead).is_true()
+	assert_float(Engine.get_time_scale()).is_equal(1.0)
 	assert_bool(second.is_match_ready).is_false()
 
 
-func test_no_transition_out_of_game_over() -> void:
+func test_five_round_wins_end_the_match() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
 	manager._on_loadout_complete(0, _picks(["fireball"]))
 	manager._on_loadout_complete(1, _picks(["smoke"]))
+	for _round in MatchManager.ROUNDS_TO_WIN - 1:
+		first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+		await get_tree().process_frame
+		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
+	assert_int(manager.round_wins_for(1)).is_equal(MatchManager.ROUNDS_TO_WIN)
+	assert_bool(first.is_match_ready).is_false()
 	manager._on_loadout_complete(1, _picks(["teleport"]))
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
 

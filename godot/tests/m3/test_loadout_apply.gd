@@ -36,7 +36,7 @@ func test_unit_starts_without_abilities_before_selection() -> void:
 	await get_tree().process_frame
 	assert_int(unit.ability_slots.size()).is_equal(0)
 	assert_int(unit.ability_container.get_runtime_abilities().size()).is_equal(0)
-	assert_int(_hud(unit).get_child_count()).is_equal(Unit.CONSUMABLE_SLOTS)
+	assert_int(_hud(unit).get_child_count()).is_equal(0)
 
 
 func test_apply_loadout_grants_picks_and_rebuilds_hud() -> void:
@@ -50,7 +50,7 @@ func test_apply_loadout_grants_picks_and_rebuilds_hud() -> void:
 	assert_bool(unit.ability_container.is_ability_granted(unit.ability_slots[0])).is_true()
 	assert_bool(unit.ability_container.is_ability_granted(unit.ability_slots[1])).is_true()
 	assert_int(unit.ability_handler.ability_buttons.size()).is_equal(2)
-	assert_int(_hud(unit).get_child_count()).is_equal(2 + Unit.CONSUMABLE_SLOTS)
+	assert_int(_hud(unit).get_child_count()).is_equal(2)
 	assert_int(applied_calls[0]).is_equal(1)
 
 
@@ -64,7 +64,7 @@ func test_reapplying_replaces_previous_loadout() -> void:
 	assert_bool(unit.ability_container.has_ability(fireball)).is_false()
 	assert_bool(unit.ability_container.is_ability_granted(fireball)).is_false()
 	assert_int(unit.ability_slots.size()).is_equal(1)
-	assert_int(_hud(unit).get_child_count()).is_equal(1 + Unit.CONSUMABLE_SLOTS)
+	assert_int(_hud(unit).get_child_count()).is_equal(1)
 
 
 func test_apply_loadout_skips_duplicates_and_nulls() -> void:
@@ -75,7 +75,7 @@ func test_apply_loadout_skips_duplicates_and_nulls() -> void:
 	picks.append(null)
 	unit.apply_loadout(picks)
 	assert_int(unit.ability_slots.size()).is_equal(1)
-	assert_int(_hud(unit).get_child_count()).is_equal(1 + Unit.CONSUMABLE_SLOTS)
+	assert_int(_hud(unit).get_child_count()).is_equal(1)
 
 
 func test_apply_loadout_preserves_pick_order() -> void:

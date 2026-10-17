@@ -17,12 +17,6 @@ func setup(ability: Ability) -> void:
 		icon_rect.texture = (ability as BaseAbility).ICON
 
 
-func setup_empty() -> void:
-	icon_rect.texture = null
-	self_modulate = Color(1.0, 1.0, 1.0, 0.35)
-	stop_cooldown()
-
-
 func start_cooldown(runtime_ability: RuntimeAbility) -> void:
 	_cooldown_total = maxf(runtime_ability.get_cooldown(), 0.001)
 	_cooldown_elapsed = 0.0

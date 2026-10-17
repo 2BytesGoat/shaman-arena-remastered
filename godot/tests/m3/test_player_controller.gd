@@ -145,13 +145,15 @@ func test_instant_spell_casts_in_facing_direction() -> void:
 	assert_bool(unit.ability_container.is_ability_cooldown_active(blink)).is_true()
 
 
-func test_request_cast_aborts_active_windup() -> void:
+func test_request_cast_ignored_during_active_windup() -> void:
 	var unit := await _make_unit()
 	var fireball := _ability(unit, &"Fireball")
 	assert_int(unit.try_cast(fireball, Vector2.RIGHT)).is_equal(RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_DURATION_STARTED)
 	unit.request_cast(0)
-	assert_bool(unit.ability_container.is_ability_active(fireball)).is_false()
+	assert_bool(unit.ability_container.is_ability_active(fireball)).is_true()
+	assert_bool(unit.aiming).is_false()
 	assert_str(unit.state_machine.state.name).is_equal("Idle")
+	assert_str(String(unit.animation_player.current_animation)).is_equal("CastOffensive")
 
 
 func test_request_cast_ignored_while_on_cooldown() -> void:

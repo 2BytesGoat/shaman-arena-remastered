@@ -8,8 +8,10 @@ func get_mouse_global_position():
 
 
 func instantiate_object_in_scene(scene: PackedScene, global_position: Vector2) -> Node:
-	var current_scene := get_tree().current_scene
+	var parent := get_tree().current_scene
+	if parent == null:
+		parent = get_tree().root
 	var instance := scene.instantiate()
-	current_scene.call_deferred("add_child", instance)
+	parent.call_deferred("add_child", instance)
 	instance.global_position = global_position
 	return instance
