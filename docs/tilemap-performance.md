@@ -61,7 +61,7 @@ alternative, the burn (the liquid tiles' physics layer 32), and the whole public
 
 ## Guardrails
 
-`tests/m5/test_arena.gd` pins the parts that are easy to break while "optimising":
+`tests/match/test_arena.gd` pins the parts that are easy to break while "optimising":
 
 - `test_repaint_plan_is_exactly_the_changed_ring` — the plan equals a brute-force scan of every
   changed cell (five scenarios, including the real r=800 step) and plans no cell twice. A missing
@@ -72,7 +72,7 @@ alternative, the burn (the liquid tiles' physics layer 32), and the whole public
   drain is bounded and is driven by `_process`, not only by tests pumping it.
 - `test_reset_while_draining_restores_the_exact_play_area` — a reset mid-drain applies the pending
   ring first and ends exactly on `classify`.
-- `tests/phase0/test_layer_contract.gd` — the tile set stays iso/32×16, the liquid keeps its
+- `tests/integration/test_layer_contract.gd` — the tile set stays iso/32×16, the liquid keeps its
   3-frame animation and its layer-32 diamond.
 
 ## Rejected: cutting the tiles to a smooth oval

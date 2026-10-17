@@ -98,7 +98,7 @@ func test_classify_matches_the_poc_cell_rules() -> void:
 	assert_int(Arena.classify(51 * 51 + 1, 50, 1)).is_equal(Arena.CellKind.LAVA)
 
 
-## The shape metric is only right if it matches how the tile set places cells (D-019): the
+## The shape metric is only right if it matches how the tile set places cells: the
 ## staggered iso grid, not a diagonal `(x - y, x + y)` one.
 func test_cell_center_matches_the_engine_iso_mapping() -> void:
 	var arena := _spawn_arena()
@@ -143,7 +143,7 @@ func test_shape_extent_covers_every_cell_inside_the_ellipse() -> void:
 
 
 ## The repaint plan is built from the distance annulus that changes, not from the ellipse's whole
-## bounding rectangle (D-019 addendum): it must contain every cell whose kind changes — a missed
+## bounding rectangle: it must contain every cell whose kind changes — a missed
 ## cell would keep a stale tile — and nothing else.
 func test_repaint_plan_is_exactly_the_changed_ring() -> void:
 	_assert_plan_matches_brute_force(96, 0, 80, 16) # First step after reset: floor -> warning band.
@@ -198,9 +198,9 @@ func test_shrink_repaints_only_the_removed_ring() -> void:
 	assert_int(arena.get_cell_alternative_tile(FLOOR_CELL)).is_equal(Arena.EDGE_ALTERNATIVE)
 
 
-## On the arcade web build a whole ring in one frame staggered for ~0.5 s (the layer is y-sorted,
-## so each repainted row rebuilds that row's canvas item): the ring must drain over frames, and
-## the drained map must be exactly the map a synchronous repaint would have painted.
+## A whole ring in one frame staggered for ~0.5 s (the layer is y-sorted, so each repainted row
+## rebuilds that row's canvas item): the ring must drain over frames, and the drained map must be
+## exactly the map a synchronous repaint would have painted.
 func test_shrink_ring_drains_over_frames() -> void:
 	var arena := _spawn_arena()
 	await get_tree().process_frame

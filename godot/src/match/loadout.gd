@@ -1,6 +1,6 @@
 class_name Loadout extends RefCounted
 
-## Total spells a player can hold — class basics plus drafted cards (D-013).
+## Total spells a player can hold — class basics plus drafted cards.
 const MAX_SPELLS := 6
 
 var picks: Array[Ability] = []

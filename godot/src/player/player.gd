@@ -9,8 +9,8 @@ const MOVE_MAX_SPEED := 140.0
 const MOVE_ACCELERATION := 345.0
 const MOVE_FRICTION := 690.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
-## Lava burn (M5/D-019): one `HealthDamage` tick per second while the hurtbox overlaps
-## magma. POC parity (`dot` float): flat damage, no hit state, no cast abort, no knockback.
+## Lava burn: one `HealthDamage` tick per second while the hurtbox overlaps magma. Flat damage
+## (`dot` float): no hit state, no cast abort, no knockback.
 const LAVA_TICK_INTERVAL := 1.0
 const LAVA_DAMAGE_PER_TICK := 25.0
 
@@ -45,7 +45,7 @@ var spawn_position := Vector2.ZERO
 ## Magma tiles currently overlapping the hurtbox; the burn ticks while this is above zero.
 var lava_contacts := 0
 
-## Assigned by `MatchManager`; the draft pool is seeded from its basic spells (D-013).
+## Assigned by `MatchManager`; the draft pool is seeded from its basic spells.
 var character_class: CharacterClass
 
 var ability_slots: Array[Ability] = []
@@ -117,7 +117,7 @@ func request_cast(slot: int) -> void:
 	if slot < 0 or slot >= mini(ability_slots.size(), MAX_SPELL_SLOTS):
 		return
 	var ability := ability_slots[slot]
-	# A released cast commits (D-016): a re-press during the cast delay is ignored.
+	# A released cast commits: a re-press during the cast delay is ignored.
 	if ability_container.is_ability_active(ability):
 		return
 	if ability_container.is_ability_cooldown_active(ability):
@@ -200,7 +200,7 @@ func apply_loadout(picks: Array[Ability]) -> void:
 	loadout_applied.emit()
 
 
-## Clears running cooldowns so a fresh round starts with every spell ready (D-015). GGAS has
+## Clears running cooldowns so a fresh round starts with every spell ready. GGAS has
 ## no direct reset API: `revoke` clears the cooldown/duration timers and emits `cooldown_end`
 ## (which stops the HUD fill), and `grant` makes the ability castable again. Only cooling
 ## abilities are touched, so an in-flight cast (duration active) is never silently cancelled.
@@ -244,7 +244,7 @@ func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: 
 	state_machine.transition_to(AnimationSlots.HIT)
 
 
-## Lava burn (M5/D-019): while alive and the hurtbox overlaps magma, one `HealthDamage`
+## Lava burn: while alive and the hurtbox overlaps magma, one `HealthDamage`
 ## every `LAVA_TICK_INTERVAL` seconds. Public so the cadence is unit-testable without
 ## physics.
 func update_lava_burn(delta: float) -> void:

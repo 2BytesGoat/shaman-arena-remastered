@@ -1,16 +1,15 @@
 class_name MatchCamera extends Camera2D
 
-## Match camera (POC `main.gd` port): follows the midpoint of the players and zooms out to
-## keep the whole spread inside the safe margins. One deliberate deviation from the POC: it
-## also zooms back in when the players regroup (the POC only ever zoomed out).
+## Match camera: follows the midpoint of the players and zooms out to keep the whole spread
+## inside the safe margins. It also zooms back in when the players regroup.
 
-## Fraction of the viewport kept around the players (POC: 0.7).
+## Fraction of the viewport kept around the players.
 @export var safe_margin_ratio := 0.7
-## Position smoothing per physics frame (POC: 0.1).
+## Position smoothing per physics frame.
 @export var follow_weight := 0.1
-## Zoom smoothing per physics frame (POC: 0.5).
+## Zoom smoothing per physics frame.
 @export var zoom_weight := 0.5
-## Furthest zoom-out, as a fraction of the scene's initial zoom (POC: 0.5).
+## Furthest zoom-out, as a fraction of the scene's initial zoom.
 @export var min_zoom_ratio := 0.5
 
 var initial_zoom := Vector2.ONE
@@ -38,7 +37,7 @@ func player_positions() -> Array[Vector2]:
 	return positions
 
 
-## Safe frame around the players, in world units (half the viewport times the POC margin).
+## Safe frame around the players, in world units (half the viewport times the safe margin).
 func safe_margin() -> Vector2:
 	return get_viewport_rect().size / 2.0 * safe_margin_ratio
 

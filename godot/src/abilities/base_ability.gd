@@ -19,7 +19,7 @@ enum CastMode {
 @export var SPELL_SCENE: PackedScene
 @export var UNINTERRUPTIBLE: bool = false
 @export var CAST_ANIMATION: StringName = &""
-## Whether this spell's impacts can hit the unit that cast it (D-018). Carried to every impact
+## Whether this spell's impacts can hit the unit that cast it. Carried to every impact
 ## scene it spawns; the default keeps `SourceFilter`'s self-immunity.
 @export var HITS_SELF: bool = false
 

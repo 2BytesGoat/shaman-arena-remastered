@@ -43,7 +43,7 @@ func test_player_body_collides_with_other_player_and_environment() -> void:
 	assert_int(player.collision_mask).is_equal(65)
 	var hurtbox := player.get_node("Hurtbox") as Area2D
 	assert_int(hurtbox.collision_layer).is_equal(1)
-	# M5 (D-019): the hurtbox listens to the lava layer for the arena burn; spell hits stay
+	# The hurtbox listens to the lava layer for the arena burn; spell hits stay
 	# attacker-side, so the projectile layers are not masked here.
 	assert_int(hurtbox.collision_mask).is_equal(32)
 

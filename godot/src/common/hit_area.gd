@@ -1,7 +1,7 @@
 class_name HitArea
 
 
-## Applies one attacker-side hit (D-001). `hits_self` opts an impact into hitting the unit that
+## Applies one attacker-side hit. `hits_self` opts an impact into hitting the unit that
 ## cast it; the default keeps `SourceFilter`'s self-immunity. Returns false only when a self-hit
 ## was rejected, so callers keep their own reaction to the contact (despawn, effects) unchanged.
 static func apply(

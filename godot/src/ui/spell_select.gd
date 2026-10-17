@@ -45,7 +45,7 @@ func action(suffix: String) -> StringName:
 
 ## Rolls a fresh hand of offers and takes over the screen. The panel starts idle and
 ## hidden; `MatchManager` calls this on the player's turn — player 1 first, then player 2
-## at match start, and the loser after every round (D-012).
+## at match start, and the loser after every round.
 func start_draft() -> void:
 	offers = SpellDraw.draw_offers(catalogue, SpellDraw.OFFER_COUNT, loadout.picks, _rng)
 	focus_index = 0
@@ -55,7 +55,7 @@ func start_draft() -> void:
 	_update_visuals()
 
 
-## Seeds the pool with the class's basic spells (D-013). Call before the first
+## Seeds the pool with the class's basic spells. Call before the first
 ## `start_draft()`: the basics are ordinary owned spells, so no hand ever offers them.
 func set_class(character_class: CharacterClass) -> void:
 	loadout = Loadout.from_class(character_class)
