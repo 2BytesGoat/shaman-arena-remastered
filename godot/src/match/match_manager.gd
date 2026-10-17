@@ -3,8 +3,12 @@ class_name MatchManager extends Node
 enum MatchPhase {
 	SELECTING,
 	RUNNING,
+	ROUND_OVER,
 	GAME_OVER
 }
+
+## Round wins needed to take the match.
+const ROUNDS_TO_WIN := 5
 
 signal phase_changed(phase: MatchPhase)
 
@@ -17,6 +21,7 @@ var phase := MatchPhase.SELECTING
 
 var _players: Array[Unit] = []
 var _ready_players: Array[Unit] = []
+var _round_wins := {}
 
 
 func _ready() -> void:
@@ -66,12 +71,17 @@ func _collect_players() -> Array[Unit]:
 
 
 func _on_loadout_complete(controller: int, picks: Array[Ability]) -> void:
-	if phase != MatchPhase.SELECTING:
+	if phase != MatchPhase.SELECTING and phase != MatchPhase.ROUND_OVER:
 		return
 	var player := player_for(controller)
 	if player == null:
 		return
 	player.apply_loadout(picks)
+	if phase == MatchPhase.ROUND_OVER:
+		# The loser's card is in; the next round opens on the next frame so the accept
+		# press can't leak into anything else.
+		_resume_after_round.call_deferred()
+		return
 	_mark_ready(player)
 	if phase == MatchPhase.SELECTING and _next_draft_panel() != null:
 		# Deferred: the accept press that just ended this player's draft must not be
@@ -115,12 +125,59 @@ func _mark_ready(player: Unit) -> void:
 func _on_player_died(player_number: int) -> void:
 	if phase != MatchPhase.RUNNING:
 		return
-	_set_phase(MatchPhase.GAME_OVER)
 	_lock_players()
-	if match_over != null:
-		var winner := player_for(1 - player_number)
-		if winner != null:
-			match_over.show_winner(winner.PLAYER_CONTROLLER)
+	var winner := player_for(1 - player_number)
+	if winner == null:
+		_set_phase(MatchPhase.GAME_OVER)
+		return
+	_round_wins[winner.PLAYER_CONTROLLER] = round_wins_for(winner.PLAYER_CONTROLLER) + 1
+	if round_wins_for(winner.PLAYER_CONTROLLER) >= ROUNDS_TO_WIN:
+		_set_phase(MatchPhase.GAME_OVER)
+		if match_over != null:
+			match_over.show_winner(
+				winner.PLAYER_CONTROLLER,
+				round_wins_for(winner.PLAYER_CONTROLLER),
+				round_wins_for(player_number)
+			)
+		return
+	_set_phase(MatchPhase.ROUND_OVER)
+	_begin_round_draft(player_for(player_number))
+
+
+## Round wins for one controller (0 when none yet).
+func round_wins_for(controller: int) -> int:
+	return _round_wins.get(controller, 0)
+
+
+## Between rounds the loser drafts one extra spell; the next round starts when it lands.
+## Drafts that could never complete (full pool, nothing left to offer) are skipped.
+func _begin_round_draft(loser: Unit) -> void:
+	var panel: SpellSelect = null
+	if loser != null:
+		panel = _panel_for(loser)
+	if panel == null or not panel.can_start_draft():
+		_resume_after_round.call_deferred()
+		return
+	_set_selection_visible(true)
+	panel.start_draft()
+
+
+## Starts the next round: everyone respawns at their spawn point, full health, unlocked.
+func _resume_after_round() -> void:
+	if phase != MatchPhase.ROUND_OVER:
+		return
+	_set_selection_visible(false)
+	for player in _players:
+		player.respawn()
+		player.is_match_ready = true
+	_set_phase(MatchPhase.RUNNING)
+
+
+func _panel_for(player: Unit) -> SpellSelect:
+	for panel in selection_panels():
+		if panel.player_controller == player.PLAYER_CONTROLLER:
+			return panel
+	return null
 
 
 func _start_with_default_loadout() -> void:

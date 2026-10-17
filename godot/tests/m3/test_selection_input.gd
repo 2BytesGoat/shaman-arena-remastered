@@ -87,6 +87,25 @@ func test_accept_without_offers_stays_open() -> void:
 	assert_int(panel.loadout.picks.size()).is_equal(0)
 
 
+func test_can_start_draft_is_false_when_the_catalogue_is_exhausted() -> void:
+	var panel := load("res://src/ui/spell_select.tscn").instantiate() as SpellSelect
+	add_child(panel)
+	auto_free(panel)
+	assert_bool(panel.can_start_draft()).is_true()
+	panel.catalogue.clear()
+	assert_bool(panel.can_start_draft()).is_false()
+
+
+func test_can_start_draft_is_false_when_the_pool_is_full() -> void:
+	var panel := load("res://src/ui/spell_select.tscn").instantiate() as SpellSelect
+	add_child(panel)
+	auto_free(panel)
+	for index in Loadout.MAX_SPELLS:
+		panel.loadout.pick(panel.catalogue[index])
+	assert_bool(panel.loadout.is_full()).is_true()
+	assert_bool(panel.can_start_draft()).is_false()
+
+
 func test_panel_stays_idle_until_start_draft() -> void:
 	var panel := load("res://src/ui/spell_select.tscn").instantiate() as SpellSelect
 	add_child(panel)

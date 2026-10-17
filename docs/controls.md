@@ -32,9 +32,9 @@ always trails the stick.
 
 - Hold duration has **no charge effect** — it is purely aiming/channel time.
 - One physical button maps to one pool slot; a player holds up to 6 spells.
-- The pool is drafted on the pre-match draft screen (below).
+- The pool is drafted on the spell draft screen (below).
 
-## Spell draft (pre-match)
+## Spell draft (match start + rounds)
 
 - Players draft **one after the other on a single screen**: player 1's panel first, then
   player 2's. The header names the active drafter; the other panel is hidden and ignores
@@ -44,8 +44,12 @@ always trails the stick.
 - Stick drives the focus cursor across the cards (left/right only); accept **commits the
   focused card** to the player's pool. There is no un-pick and no re-roll.
 - A committed pick readies that player; when all players are ready the match starts and
-  the selection layer closes. A match therefore starts with **1 spell per player** —
-  later deaths draft more cards (rounds work, not wired yet).
+  the selection layer closes. A match starts with **1 spell per player**.
+- When a round ends (a player dies), the **loser drafts one more spell** the same way —
+  5 fresh offers, their pool excluded — and the next round starts as soon as it is
+  committed. Pools grow by one card per loss (6-spell cap; a full pool skips the draft).
+- Between rounds both players respawn at their starting spots with full health; spell
+  pools are kept.
 - Gameplay is frozen while a draft is up: units ignore movement and cast input, and only
   the current drafter's panel accepts input, so nobody can act behind the card screen.
 - The strip under the cards shows the 6 pool slots filling up as drafts land.
@@ -54,8 +58,11 @@ always trails the stick.
 
 1. Spell draft: player 1 commits a card, then player 2 (one panel at a time, stick-driven
    focus per player); all players ready → match starts with their drafted spell
-2. Match runs until elimination → match-over banner (placeholder until M5 replaces it with
-   the real win screen) → accept/button restarts
+2. A death ends the round: the survivor scores it and the loser drafts one more card
+   (same panel flow, gameplay stays frozen for everyone)
+3. Committed card → both players respawn at their spawn points, full health, next round
+4. First to 5 round wins → match-over banner ("PLAYER X WINS x-y") → accept/button
+   restarts from the draft
 
 ## HUD (non-interactive on cabinet)
 

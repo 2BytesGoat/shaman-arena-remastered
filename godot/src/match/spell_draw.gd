@@ -24,6 +24,11 @@ static func draw_offers(
 	return offers
 
 
+## True when a draft would have at least one committable card.
+static func has_offers(catalogue: Array[Ability], excluded: Array[Ability]) -> bool:
+	return not _candidates(catalogue, excluded).is_empty()
+
+
 static func _candidates(catalogue: Array[Ability], excluded: Array[Ability]) -> Array[Ability]:
 	var candidates: Array[Ability] = []
 	for ability in catalogue:

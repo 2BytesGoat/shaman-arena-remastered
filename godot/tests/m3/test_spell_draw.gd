@@ -59,6 +59,16 @@ func test_zero_count_draws_nothing() -> void:
 	assert_array(offers).is_empty()
 
 
+func test_has_offers_matches_whether_any_candidate_remains() -> void:
+	var catalogue := _catalogue()
+	assert_bool(SpellDraw.has_offers(catalogue, _no_exclusions())).is_true()
+	var almost_full: Array[Ability] = []
+	for index in catalogue.size() - 1:
+		almost_full.append(catalogue[index])
+	assert_bool(SpellDraw.has_offers(catalogue, almost_full)).is_true()
+	assert_bool(SpellDraw.has_offers(catalogue, catalogue)).is_false()
+
+
 func test_duplicate_catalogue_entries_never_repeat_an_offer() -> void:
 	var catalogue := _catalogue(["fireball", "smoke"])
 	catalogue.append(catalogue[0])

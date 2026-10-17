@@ -534,12 +534,12 @@ random hand, one committed choice, a pool that grows as matches play out.
   work lands.
 - `SpellSelect.start_draft()` is the re-entry point for the **per-death draft** ("loser
   drafts a card"): it re-rolls offers and takes the screen; the pick flow is unchanged.
-  Wiring it needs the rounds loop — deferred, because today the first death ends the match.
+  The rounds loop wiring landed in D-012.
 
 **Consequences.**
 
-- A match starts with 1 spell per player; with no rounds yet, per-death drafts can't fire,
-  so the demo match is 1 spell each, first death ends it.
+- A match starts with 1 spell per player; per-death drafts and the first-to-5 round loop
+  are D-012.
 - `MatchManager` now drives the draft turns (one panel at a time, controller order) on top
   of the old ready-gate; the rounds milestone will reuse that turn machinery for the
   post-death draft.
@@ -549,3 +549,44 @@ random hand, one committed choice, a pool that grows as matches play out.
 **References.** `godot/src/match/spell_draw.gd`, `godot/src/ui/spell_select.gd`,
 `godot/src/match/match_manager.gd`, `godot/tests/m3/test_spell_draw.gd`,
 `godot/tests/m3/test_selection_input.gd`.
+
+## D-012 — Round loop: first to 5, the loser drafts a card
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** D-011 wired the start-of-match draft and kept the per-death draft hook
+(`SpellSelect.start_draft()`) parked behind the first-death-ends-match demo rule. The demo
+needs the rounds loop now: a death ends the round, the loser grows their pool, and the
+match continues until someone has taken 5 rounds.
+
+**Decision.**
+
+- A death in `RUNNING` ends the round: the survivor scores a round win. At
+  `MatchManager.ROUNDS_TO_WIN = 5` the match ends (`GAME_OVER`) and `MatchOver` shows
+  `PLAYER N WINS x-y`.
+- Otherwise the phase moves to `ROUND_OVER` and the **loser** drafts one committed card on
+  the shared screen (`SpellSelect.start_draft()`, D-011 pick flow unchanged). The survivor
+  gets no card and is locked out; all gameplay stays frozen (`_lock_players()`).
+- When the pick lands, the next round starts on the next frame: both players
+  `Unit.respawn()` at their captured `spawn_position` with `Health`/`MaxHealth` restored
+  (`InitializeAttributes` re-applied), idle state, pools kept. Cooldowns are not reset.
+- Drafts that could never complete are skipped and the round starts immediately:
+  `SpellSelect.can_start_draft()` (pool full or nothing left to offer) guarded through
+  `SpellDraw.has_offers()`.
+- Still 2 players; the survivor is `player_for(1 - player_number)`. No HUD score display
+  yet — the running score only shows on the match-over banner.
+
+**Consequences.**
+
+- A match lasts 5–9 rounds; a player loses at most 4 times before someone reaches 5, so
+  the 6-spell pool cap realistically only bites after rules changes (skip path still
+  tested).
+- `Unit` gains `spawn_position` + `respawn()`; `MatchManager` gains `ROUND_OVER`,
+  `ROUNDS_TO_WIN` and `round_wins_for()`.
+- Restart (accept on the banner) reloads the scene, so the score resets with it.
+
+**References.** `godot/src/match/match_manager.gd`, `godot/src/player/player.gd`,
+`godot/src/ui/match_over.gd`, `godot/src/ui/spell_select.gd`,
+`godot/src/match/spell_draw.gd`, `godot/tests/m3/test_match_manager.gd`,
+`godot/tests/m3/test_main_scene.gd`.

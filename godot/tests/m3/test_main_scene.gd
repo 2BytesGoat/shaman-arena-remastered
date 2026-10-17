@@ -135,20 +135,102 @@ func test_players_get_local_controllers_from_the_scene() -> void:
 		assert_object(unit.controller.get_parent()).is_same(unit)
 
 
-func test_death_shows_match_over_for_the_winner() -> void:
+func test_round_death_sends_the_loser_to_draft_then_respawns_both() -> void:
 	var main: Node = await _started_main()
 	var manager := main.get_node("MatchManager") as MatchManager
-	manager.player_for(0).take_hit(manager.player_for(1), 100.0, 0.0, Vector2.RIGHT)
+	var panels := manager.selection_panels()
+	var first := manager.player_for(0)
+	var second := manager.player_for(1)
+	second.global_position += Vector2(60.0, -25.0)
+	second.take_hit(first, 3.0, 0.0, Vector2.RIGHT)
+	first.global_position += Vector2(-40.0, 30.0)
+	first.take_hit(second, 100.0, 0.0, Vector2.RIGHT)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_int(manager.round_wins_for(1)).is_equal(1)
+	assert_bool(second.is_match_ready).is_false()
+	assert_bool((main.get_node("SelectionLayer") as CanvasLayer).visible).is_true()
+	assert_bool(panels[0].visible).is_true()
+	assert_bool(panels[1].visible).is_false()
+	assert_int(panels[0].offers.size()).is_equal(SpellDraw.OFFER_COUNT)
+	for offer in panels[0].offers:
+		assert_bool(first.ability_slots.has(offer)).is_false()
+	_pick_one(panels[0])
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_bool(first.player_dead).is_false()
+	assert_bool(second.player_dead).is_false()
+	assert_bool(first.global_position.is_equal_approx(first.spawn_position)).is_true()
+	assert_bool(second.global_position.is_equal_approx(second.spawn_position)).is_true()
+	assert_float(
+		first.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
+	).is_equal(10.0)
+	assert_float(
+		second.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
+	).is_equal(10.0)
+	assert_int(first.ability_slots.size()).is_equal(2)
+	assert_bool(first.is_match_ready).is_true()
+	assert_bool(second.is_match_ready).is_true()
+	assert_bool((main.get_node("SelectionLayer") as CanvasLayer).visible).is_false()
+	assert_bool(panels[0].visible).is_false()
+	# Fresh-round damage accumulates from full health, not from the corpse value.
+	second.take_hit(first, 4.0, 0.0, Vector2.RIGHT)
+	assert_float(
+		second.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
+	).is_equal(6.0)
+
+
+func test_round_death_of_player_two_sends_player_two_to_draft() -> void:
+	var main: Node = await _started_main()
+	var manager := main.get_node("MatchManager") as MatchManager
+	var panels := manager.selection_panels()
+	manager.player_for(1).take_hit(manager.player_for(0), 100.0, 0.0, Vector2.RIGHT)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_int(manager.round_wins_for(0)).is_equal(1)
+	assert_bool(panels[0].visible).is_false()
+	assert_bool(panels[1].visible).is_true()
+	assert_int(panels[1].offers.size()).is_equal(SpellDraw.OFFER_COUNT)
+	_pick_one(panels[1])
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_int(manager.player_for(1).ability_slots.size()).is_equal(2)
+
+
+func test_match_over_after_five_round_wins() -> void:
+	var main: Node = await _started_main()
+	var manager := main.get_node("MatchManager") as MatchManager
+	var panels := manager.selection_panels()
+	var loser := manager.player_for(0)
+	var winner := manager.player_for(1)
+	for _round in MatchManager.ROUNDS_TO_WIN - 1:
+		loser.take_hit(winner, 100.0, 0.0, Vector2.RIGHT)
+		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+		_pick_one(panels[0])
+		await get_tree().process_frame
+		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	loser.take_hit(winner, 100.0, 0.0, Vector2.RIGHT)
 	var overlay := main.get_node("MatchOverLayer") as MatchOver
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
+	assert_int(manager.round_wins_for(1)).is_equal(MatchManager.ROUNDS_TO_WIN)
+	assert_int(manager.round_wins_for(0)).is_equal(0)
 	assert_bool(overlay.visible).is_true()
-	assert_str(overlay.message_label.text).is_equal("PLAYER 2 WINS")
-	assert_bool(manager.player_for(1).is_match_ready).is_false()
+	assert_str(overlay.message_label.text).is_equal("PLAYER 2 WINS 5-0")
+	assert_bool(loser.is_match_ready).is_false()
+	assert_int(loser.ability_slots.size()).is_equal(1 + MatchManager.ROUNDS_TO_WIN - 1)
 
 
-func test_death_of_player_two_shows_player_one_as_winner() -> void:
+func test_full_pool_skips_the_round_draft() -> void:
 	var main: Node = await _started_main()
 	var manager := main.get_node("MatchManager") as MatchManager
-	manager.player_for(1).take_hit(manager.player_for(0), 100.0, 0.0, Vector2.RIGHT)
-	var overlay := main.get_node("MatchOverLayer") as MatchOver
-	assert_str(overlay.message_label.text).is_equal("PLAYER 1 WINS")
+	var panels := manager.selection_panels()
+	var loser := manager.player_for(0)
+	for index in Loadout.MAX_SPELLS:
+		panels[0].loadout.pick(panels[0].catalogue[index])
+	assert_bool(panels[0].loadout.is_full()).is_true()
+	loser.apply_loadout(panels[0].loadout.picks)
+	loser.take_hit(manager.player_for(1), 100.0, 0.0, Vector2.RIGHT)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_bool(panels[0].visible).is_false()
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_int(loser.ability_slots.size()).is_equal(Loadout.MAX_SPELLS)

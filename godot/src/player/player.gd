@@ -38,6 +38,7 @@ var hit_locked := false
 var player_dead := false
 var is_match_ready := false
 var facing_scale := 1.0
+var spawn_position := Vector2.ZERO
 
 var ability_slots: Array[Ability] = []
 var _last_move_direction := Vector2.RIGHT
@@ -49,6 +50,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	spawn_position = global_position
 	ability_slots = ability_container.get_initial_abilities()
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
@@ -182,6 +184,21 @@ func apply_loadout(picks: Array[Ability]) -> void:
 		ability_slots.append(ability)
 	ability_handler.rebuild(ability_slots)
 	loadout_applied.emit()
+
+
+## Puts the unit back into play for the next round: at its spawn point, full health, idle.
+## The spell pool and ability cooldowns are left alone.
+func respawn() -> void:
+	player_dead = false
+	hit_locked = false
+	aiming = false
+	aiming_slot = -1
+	release_cast_requested = false
+	velocity = Vector2.ZERO
+	move_direction = Vector2.ZERO
+	global_position = spawn_position
+	attribute_container.apply_buff(InitializeAttributes.new(max_health))
+	state_machine.transition_to(AnimationSlots.IDLE)
 
 
 func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: Vector2) -> void:

@@ -73,25 +73,45 @@ func test_repeated_loadout_completion_is_counted_once() -> void:
 	assert_int(manager._ready_players.size()).is_equal(2)
 
 
-func test_death_ends_match_and_locks_survivor() -> void:
+func test_round_death_locks_players_and_resumes_with_respawns() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
 	manager._on_loadout_complete(0, _picks(["fireball"]))
 	manager._on_loadout_complete(1, _picks(["smoke"]))
+	first.global_position += Vector2(40.0, -20.0)
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
-	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_int(manager.round_wins_for(1)).is_equal(1)
 	assert_bool(first.player_dead).is_true()
 	assert_bool(second.is_match_ready).is_false()
+	# No panel exists here, so the round draft is skipped and the round resumes next frame.
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_bool(first.player_dead).is_false()
+	assert_bool(first.is_match_ready).is_true()
+	assert_bool(second.is_match_ready).is_true()
+	assert_bool(first.global_position.is_equal_approx(first.spawn_position)).is_true()
+	assert_float(
+		first.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
+	).is_equal(10.0)
 
 
-func test_no_transition_out_of_game_over() -> void:
+func test_five_round_wins_end_the_match() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
 	manager._on_loadout_complete(0, _picks(["fireball"]))
 	manager._on_loadout_complete(1, _picks(["smoke"]))
+	for _round in MatchManager.ROUNDS_TO_WIN - 1:
+		first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+		await get_tree().process_frame
+		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
+	assert_int(manager.round_wins_for(1)).is_equal(MatchManager.ROUNDS_TO_WIN)
+	assert_bool(first.is_match_ready).is_false()
 	manager._on_loadout_complete(1, _picks(["teleport"]))
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
 

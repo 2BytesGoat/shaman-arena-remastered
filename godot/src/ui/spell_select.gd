@@ -55,6 +55,12 @@ func start_draft() -> void:
 	_update_visuals()
 
 
+## False when a draft could never complete — the pool is full or the catalogue has nothing
+## left to offer ("NO SPELLS AVAILABLE"). The round flow skips those drafts.
+func can_start_draft() -> bool:
+	return not loadout.is_full() and SpellDraw.has_offers(catalogue, loadout.picks)
+
+
 static func move_focus(index: int, step: int, count: int) -> int:
 	if count <= 0:
 		return 0
