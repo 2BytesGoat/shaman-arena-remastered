@@ -30,6 +30,7 @@ func _ready() -> void:
 	else:
 		_lock_players()
 		_set_selection_visible(true)
+		_begin_next_draft()
 
 
 func player_for(controller: int) -> Unit:
@@ -72,6 +73,34 @@ func _on_loadout_complete(controller: int, picks: Array[Ability]) -> void:
 		return
 	player.apply_loadout(picks)
 	_mark_ready(player)
+	if phase == MatchPhase.SELECTING and _next_draft_panel() != null:
+		# Deferred: the accept press that just ended this player's draft must not be
+		# readable by the next player's panel in the same frame.
+		_begin_next_draft.call_deferred()
+
+
+## The next player due to draft, in controller order, or null when everyone is ready.
+func _next_draft_panel() -> SpellSelect:
+	var panels := selection_panels()
+	panels.sort_custom(
+		func(a: SpellSelect, b: SpellSelect) -> bool:
+			return a.player_controller < b.player_controller
+	)
+	for panel in panels:
+		var player := player_for(panel.player_controller)
+		if player != null and not _ready_players.has(player):
+			return panel
+	return null
+
+
+## Drafts run one at a time on the shared screen: the next player rolls their offers and
+## takes the screen while the others stay hidden. A draft also implies locked controls —
+## nobody can act in the arena while cards are up.
+func _begin_next_draft() -> void:
+	_lock_players()
+	var panel := _next_draft_panel()
+	if panel != null:
+		panel.start_draft()
 
 
 func _mark_ready(player: Unit) -> void:

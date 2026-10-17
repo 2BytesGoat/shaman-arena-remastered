@@ -36,20 +36,24 @@ always trails the stick.
 
 ## Spell draft (pre-match)
 
-- Both players draft at the same time on one screen (one panel per player, stacked).
-- Each panel offers **5 random spells** as a card row — never a duplicate, and never a
-  spell the player already owns (Rounds-style, D-011).
+- Players draft **one after the other on a single screen**: player 1's panel first, then
+  player 2's. The header names the active drafter; the other panel is hidden and ignores
+  input.
+- The active panel offers **5 random spells** as a card row — never a duplicate, and never
+  a spell the player already owns (Rounds-style, D-011).
 - Stick drives the focus cursor across the cards (left/right only); accept **commits the
   focused card** to the player's pool. There is no un-pick and no re-roll.
 - A committed pick readies that player; when all players are ready the match starts and
-  the panel locks. A match therefore starts with **1 spell per player** — later deaths
-  draft more cards (rounds work, not wired yet).
+  the selection layer closes. A match therefore starts with **1 spell per player** —
+  later deaths draft more cards (rounds work, not wired yet).
+- Gameplay is frozen while a draft is up: units ignore movement and cast input, and only
+  the current drafter's panel accepts input, so nobody can act behind the card screen.
 - The strip under the cards shows the 6 pool slots filling up as drafts land.
 
 ## Match flow
 
-1. Spell draft: both players commit one card each (stick-driven focus, per player);
-   all players ready → match starts with their drafted spell
+1. Spell draft: player 1 commits a card, then player 2 (one panel at a time, stick-driven
+   focus per player); all players ready → match starts with their drafted spell
 2. Match runs until elimination → match-over banner (placeholder until M5 replaces it with
    the real win screen) → accept/button restarts
 
@@ -91,9 +95,9 @@ always trails the stick.
 - Any input buffering for cast during windup (deferred, v1 ignores)
 - Pressing a *different* spell during a cast delay starts aiming it while the in-flight cast
   still lands (pre-existing; parked, revisit with M4)
-- Dev single-keyboard: both players' UI accept share `Enter` (cancel `Esc`), so a keyboard
-  accept commits a pick on both panels at once — pads are the supported way to draft for
-  two players on one machine
+- Dev single-keyboard: both players' UI accept share `Enter` (cancel `Esc`); drafting is
+  sequential, so one keyboard can drive both turns — pads are the supported way for two
+  players on one machine
 - Reserved item buttons: the `player_N_consumable_0/1` actions still exist but have no
   gameplay until the item work lands (D-011)
 - Player 3+ expansion (bindings already use per-player prefixes; layers support player_0..3)

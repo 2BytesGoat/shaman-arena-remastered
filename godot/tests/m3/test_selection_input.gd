@@ -6,6 +6,7 @@ func _make_panel(controller := 0) -> SpellSelect:
 	panel.player_controller = controller
 	add_child(panel)
 	auto_free(panel)
+	panel.start_draft()
 	return panel
 
 
@@ -60,7 +61,7 @@ func test_accept_commits_the_focused_card_once() -> void:
 	)
 	panel.move_focus_by(1)
 	panel.handle_accept()
-	assert_bool(panel._locked).is_true()
+	assert_bool(panel._drafting).is_false()
 	assert_bool(panel.visible).is_false()
 	assert_int(panel.loadout.picks.size()).is_equal(1)
 	assert_object(panel.loadout.picks[0]).is_same(panel.offers[1])
@@ -77,16 +78,30 @@ func test_accept_without_offers_stays_open() -> void:
 	panel.catalogue.clear()
 	add_child(panel)
 	auto_free(panel)
-	await get_tree().process_frame
+	panel.start_draft()
 	assert_bool(panel.offers.is_empty()).is_true()
 	assert_str(panel.hint_label.text).is_equal("NO SPELLS AVAILABLE")
 	panel.handle_accept()
-	assert_bool(panel._locked).is_false()
+	assert_bool(panel._drafting).is_true()
 	assert_bool(panel.visible).is_true()
 	assert_int(panel.loadout.picks.size()).is_equal(0)
 
 
-func test_panel_color_follows_player() -> void:
+func test_panel_stays_idle_until_start_draft() -> void:
+	var panel := load("res://src/ui/spell_select.tscn").instantiate() as SpellSelect
+	add_child(panel)
+	auto_free(panel)
+	await get_tree().process_frame
+	assert_bool(panel._drafting).is_false()
+	assert_bool(panel.visible).is_false()
+	assert_bool(panel.offers.is_empty()).is_true()
+	panel.start_draft()
+	assert_bool(panel._drafting).is_true()
+	assert_bool(panel.visible).is_true()
+	assert_int(panel.offers.size()).is_equal(SpellDraw.OFFER_COUNT)
+
+
+func test_panel_title_follows_player() -> void:
 	var panel: SpellSelect = _make_panel(1)
 	await get_tree().process_frame
-	assert_str(panel.title_label.text).is_equal("PLAYER 2")
+	assert_str(panel.title_label.text).is_equal("PLAYER 2 IS DRAFTING")

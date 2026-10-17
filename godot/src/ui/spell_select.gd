@@ -16,20 +16,20 @@ var offers: Array[Ability] = []
 
 var _card_buttons: Array[SpellSelectButton] = []
 var _slot_icons: Array[TextureRect] = []
-var _locked := false
+var _drafting := false
 var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	title_label.text = "PLAYER %d" % (player_controller + 1)
+	title_label.text = "PLAYER %d IS DRAFTING" % (player_controller + 1)
 	title_label.add_theme_color_override("font_color", _player_color())
 	_rng.randomize()
 	_build_slots()
-	start_draft()
+	visible = false
 
 
 func _process(_delta: float) -> void:
-	if _locked or not visible:
+	if not _drafting:
 		return
 	if Input.is_action_just_pressed(action("ui_left")):
 		move_focus_by(-1)
@@ -43,12 +43,13 @@ func action(suffix: String) -> StringName:
 	return StringName("player_%d_%s" % [player_controller, suffix])
 
 
-## Rolls a fresh hand of offers and re-opens the panel. Called at match start and —
-## once the rounds work lands — after every death that drafts another card.
+## Rolls a fresh hand of offers and takes over the screen. The panel starts idle and
+## hidden; `MatchManager` calls this on the player's turn — player 1 first, then player 2
+## at match start, and (once the rounds work lands) after every death that drafts again.
 func start_draft() -> void:
 	offers = SpellDraw.draw_offers(catalogue, SpellDraw.OFFER_COUNT, loadout.picks, _rng)
 	focus_index = 0
-	_locked = false
+	_drafting = true
 	visible = true
 	_build_cards()
 	_update_visuals()
@@ -66,7 +67,7 @@ func move_focus_by(step: int) -> void:
 
 
 func handle_accept() -> void:
-	if _locked or offers.is_empty():
+	if not _drafting or offers.is_empty():
 		return
 	if not loadout.pick(offers[focus_index]):
 		return
@@ -75,7 +76,7 @@ func handle_accept() -> void:
 
 
 func _complete() -> void:
-	_locked = true
+	_drafting = false
 	loadout_complete.emit(player_controller, loadout.picks.duplicate())
 	visible = false
 
@@ -108,7 +109,7 @@ func _build_slots() -> void:
 
 func _update_visuals() -> void:
 	for index in _card_buttons.size():
-		_card_buttons[index].set_focused(index == focus_index and not _locked)
+		_card_buttons[index].set_focused(index == focus_index and _drafting)
 	for index in _slot_icons.size():
 		var texture: Texture2D = null
 		if index < loadout.picks.size() and loadout.picks[index] is BaseAbility:

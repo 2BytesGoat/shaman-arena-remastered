@@ -518,8 +518,14 @@ random hand, one committed choice, a pool that grows as matches play out.
   that goes into the pool. No un-pick, no re-roll (Rounds-style); cancel has no binding.
 - Offers never repeat within a hand and never include a spell the player already owns
   (`SpellDraw`, RNG injected so seeded tests are deterministic).
-- Both players draft simultaneously on their own panel; the pools are independent — the
-  same spell can be offered to (and taken by) both.
+- Players draft **sequentially on one shared screen** — player 1's panel first, then
+  player 2's; `MatchManager` starts each turn via `SpellSelect.start_draft()` while the
+  other panels stay hidden and ignore input. The pools are independent — the same spell
+  can be offered to (and taken by) both.
+- The turn hand-off happens on the next frame (`call_deferred`), so the shared dev accept
+  press that ends one draft can't be consumed by the next player's panel in the same
+  frame. Gameplay stays locked for the whole draft sequence, and each panel only accepts
+  input while it is the active drafter.
 - The pool cap stays `Loadout.MAX_SPELLS = 6`. The HUD renders one button per owned spell
   and grows with the pool; the draft screen shows the 6 pool slots filling up.
 - Consumable/item slots are **removed for now**: no HUD placeholders, no reserved slots in
@@ -527,15 +533,16 @@ random hand, one committed choice, a pool that grows as matches play out.
   `player_N_consumable_0/1` input actions stay in `project.godot` (inert) until the item
   work lands.
 - `SpellSelect.start_draft()` is the re-entry point for the **per-death draft** ("loser
-  drafts a card"): it re-rolls offers and re-opens the panel; the pick flow is unchanged.
+  drafts a card"): it re-rolls offers and takes the screen; the pick flow is unchanged.
   Wiring it needs the rounds loop — deferred, because today the first death ends the match.
 
 **Consequences.**
 
 - A match starts with 1 spell per player; with no rounds yet, per-death drafts can't fire,
   so the demo match is 1 spell each, first death ends it.
-- `MatchManager` is unchanged — it still ready-gates on `loadout_complete`; the rounds
-  milestone will add the post-death draft phase it was built for.
+- `MatchManager` now drives the draft turns (one panel at a time, controller order) on top
+  of the old ready-gate; the rounds milestone will reuse that turn machinery for the
+  post-death draft.
 - D-006's "auto-ready at 6 picks" and the 6 + 2 slot limit are superseded at draft time;
   the pool itself keeps the 6-spell cap.
 

@@ -13,6 +13,7 @@ func _started_main() -> Node:
 	var manager := main.get_node("MatchManager") as MatchManager
 	for panel in manager.selection_panels():
 		_pick_one(panel)
+		await get_tree().process_frame
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	return main
 
@@ -33,12 +34,91 @@ func test_picking_both_players_starts_the_match() -> void:
 	_pick_one(panels[0])
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.SELECTING)
 	assert_int(first.ability_slots.size()).is_equal(1)
+	await get_tree().process_frame
 	_pick_one(panels[1])
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	assert_bool(first.is_match_ready).is_true()
 	assert_bool(second.is_match_ready).is_true()
 	assert_int(second.ability_slots.size()).is_equal(1)
 	assert_bool((main.get_node("SelectionLayer") as CanvasLayer).visible).is_false()
+
+
+func test_players_draft_one_after_the_other() -> void:
+	var main: Node = (load("res://main.tscn") as PackedScene).instantiate()
+	add_child(main)
+	auto_free(main)
+	await get_tree().process_frame
+	var manager := main.get_node("MatchManager") as MatchManager
+	var panels := manager.selection_panels()
+	assert_bool(panels[0].visible).is_true()
+	assert_int(panels[0].offers.size()).is_equal(SpellDraw.OFFER_COUNT)
+	assert_bool(panels[1].visible).is_false()
+	assert_bool(panels[1].offers.is_empty()).is_true()
+	_pick_one(panels[0])
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.SELECTING)
+	assert_bool(panels[0].visible).is_false()
+	# The next turn only opens on the next frame, so no input can leak across panels.
+	assert_bool(panels[1].visible).is_false()
+	await get_tree().process_frame
+	assert_bool(panels[1].visible).is_true()
+	assert_int(panels[1].offers.size()).is_equal(SpellDraw.OFFER_COUNT)
+	_pick_one(panels[1])
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+
+
+func test_shared_accept_only_drafts_the_active_player() -> void:
+	var main: Node = (load("res://main.tscn") as PackedScene).instantiate()
+	add_child(main)
+	auto_free(main)
+	await get_tree().process_frame
+	var manager := main.get_node("MatchManager") as MatchManager
+	var panels := manager.selection_panels()
+	# The dev keyboard shares Enter between both accept actions; one physical press must
+	# still only draft for the player whose turn it is.
+	Input.action_press("player_0_ui_accept")
+	Input.action_press("player_1_ui_accept")
+	await get_tree().process_frame
+	Input.action_release("player_0_ui_accept")
+	Input.action_release("player_1_ui_accept")
+	assert_int(manager.player_for(0).ability_slots.size()).is_equal(1)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.SELECTING)
+	assert_bool(panels[1].visible).is_true()
+	assert_bool(panels[1].loadout.picks.is_empty()).is_true()
+
+
+func test_inactive_player_cannot_draft_out_of_turn() -> void:
+	var main: Node = (load("res://main.tscn") as PackedScene).instantiate()
+	add_child(main)
+	auto_free(main)
+	await get_tree().process_frame
+	var manager := main.get_node("MatchManager") as MatchManager
+	var panels := manager.selection_panels()
+	# Player 2 mashes accept while player 1 is still choosing: nothing may happen.
+	Input.action_press("player_1_ui_accept")
+	await get_tree().process_frame
+	Input.action_release("player_1_ui_accept")
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.SELECTING)
+	assert_bool(panels[0].visible).is_true()
+	assert_bool(panels[0].loadout.picks.is_empty()).is_true()
+	assert_bool(panels[1].visible).is_false()
+	assert_bool(panels[1].loadout.picks.is_empty()).is_true()
+	assert_int(manager.player_for(1).ability_slots.size()).is_equal(0)
+
+
+func test_gameplay_controls_are_frozen_while_drafting() -> void:
+	var main: Node = (load("res://main.tscn") as PackedScene).instantiate()
+	add_child(main)
+	auto_free(main)
+	await get_tree().process_frame
+	var manager := main.get_node("MatchManager") as MatchManager
+	var first := manager.player_for(0)
+	assert_bool(first.is_match_ready).is_false()
+	var start := first.global_position
+	Input.action_press("player_0_left")
+	for _frame in 3:
+		await get_tree().physics_frame
+	Input.action_release("player_0_left")
+	assert_bool(first.global_position.is_equal_approx(start)).is_true()
 
 
 func test_players_get_local_controllers_from_the_scene() -> void:
