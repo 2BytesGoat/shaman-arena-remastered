@@ -302,7 +302,8 @@ future rounds/gold can extend without rework.
 
 ## D-007 — Physics layer contract (2D)
 
-- **Status:** accepted (M3, documentation of the M1/Phase-0 wiring)
+- **Status:** accepted (M3, documentation of the M1/Phase-0 wiring); layer 6 updated in
+  M5 (D-019)
 - **Date:** 2026-10-14
 
 **Context.** Layer names were ported POC-verbatim in Phase 0, but the actual masks on the
@@ -320,15 +321,16 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 | 1 | `player_0` | **All players and their Hurtboxes** (every controller, today) |
 | 2–4 | `player_1..3` | Reserved — named, but nothing assigns them yet (see caveat) |
 | 5 | `projectile` | Spell areas (concrete projectiles) and Effect areas |
-| 6 | `lava` | Reserved for M5 |
+| 6 | `lava` | Arena magma tiles (the arena `TileMapLayer`'s physics body, mask 0); the players' `Hurtbox` masks it for the burn (M5/D-019) |
 | 7 | `Environment` | `AniviaWall` area + its `StaticBody2D`; future environment areas |
 
-**Scene masks (verified 2026-10-14)**
+**Scene masks (verified 2026-10-14; lava row updated 2026-10-17, D-019)**
 
 | Scene | Layer | Mask | Wires `area_entered`? | Why |
 |---|---|---|---|---|
 | Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
-| Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers (unless the spell opts into self-hits, D-018) |
+| Arena magma tiles | 32 | 0 | — | walkable burn zone; detected through the hurtbox mask (D-019) |
+| Hurtbox | 1 | 32 = lava | — | detects the arena magma body for the burn (M5/D-019); spell hits stay attacker-side, self-hits filtered by `SourceFilter` (D-018) |
 | Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
 | Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited ExpiryTimer is unwired) |
 | Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via ExpiryTimer |
@@ -824,3 +826,60 @@ whoever stood at the landing point.
 `godot/src/abilities/effects/impact/teleport_effect.tscn`,
 `godot/tests/m1/test_hit_area.gd`, `godot/tests/m1/test_spell_scene.gd`,
 POC `scenes/spells/teleport.gd`, POC `scenes/effects/teleport_effect.tscn`.
+
+## D-019 — Arena shrink, lava burn & match camera
+
+- **Status:** accepted (demo iteration; M5 slice)
+- **Date:** 2026-10-17
+
+**Context.** The port had no arena at all: players moved on an empty background, layer 6
+(`lava`) was reserved (D-007) and the POC's `tilemap_arena.gd` was still unported. The demo
+wanted the jam arena back — visible, shrinking and lethal — before the rest of M5 (title
+scene, flow closure).
+
+**Decision.**
+
+- Port `tilemap_arena.gd` as `src/match/arena.gd` (`Arena extends TileMapLayer`) +
+  `arena.tscn`, a child of `main.tscn` at the play-area centre and first in draw order.
+  Same 16 px tiles and 3 s/tile shrink as the POC, same cell rules: floor inside the
+  circle, then a one-tile warning band, then animated magma (`MagmaTileAnimation.png`,
+  2 frames @ 0.5 s). The node stays in group `Lava`.
+- The POC repainted its whole 300×300 grid on load and on every shrink. The port paints the
+  magma field once (out to the starting circle + 64 tiles, past any camera view), repaints
+  only the changed ring per shrink, and `reset()` repaints only the starting circle.
+- Lava remains a walkable damage zone — no walls, POC parity. Detection is the POC-style
+  physics one: the player `Hurtbox` masks layer 6 (0 → 32, D-007 updated) and counts magma
+  bodies; `Unit.update_lava_burn()` applies `HealthDamage` once per second
+  (`LAVA_DAMAGE_PER_TICK` 25 ≈ 4 s from full health; the POC ratio would be 50). The burn
+  never enters `Hit`, never knocks back and never aborts casts — POC parity. Lethal burns
+  route through the attribute signal, so the health bar and the round flow need no special
+  casing.
+- `MatchManager` drives the arena: entering `RUNNING` resets the circle and starts the
+  shrink timer; leaving `RUNNING` stops it. Every round starts on a full circle, and the
+  shrink pauses for drafts, the KO beat and the game-over banner.
+- The M5 match camera is pulled forward: `MatchCamera extends Camera2D`
+  (`src/match/match_camera.gd`) ports the POC's midpoint follow + zoom-to-fit (0.7 safe
+  margin, base zoom 2, floor 0.5×). One deliberate deviation: the POC only ever zoomed out;
+  the port also zooms back in when the players regroup.
+
+**Consequences.**
+
+- Lava deaths feed the existing KO beat → draft → round flow (D-012/D-014) for free; the
+  win-screen/title closure stays open for the rest of M5.
+- Tuning knobs: `Arena.start_radius` (50), `edge_thickness` (1), `shrink_interval` (3 s),
+  `Unit.LAVA_DAMAGE_PER_TICK` (25) and `LAVA_TICK_INTERVAL` (1 s); the camera exports are
+  `safe_margin_ratio`, `follow_weight`, `zoom_weight`, `min_zoom_ratio`.
+- The camera zoom clamp keeps the view from zooming past 0.5× the scene's initial zoom;
+  the framing math is static and unit-tested.
+- The magma field paint is bounded (`Arena.FIELD_MARGIN`), so a far-launched player could in
+  theory outrun the painted magma and see the background — not reachable in practice with
+  the current knockbacks and the 0.5× zoom floor.
+
+**Not doing.** Fall/elimination beyond the burn, arena walls, camera drag margins,
+per-round arena presets, lava audio.
+
+**References.** `godot/main.tscn`, `godot/src/match/arena.gd`, `godot/src/match/arena.tscn`,
+`godot/src/match/match_camera.gd`, `godot/src/match/match_manager.gd`,
+`godot/src/player/player.gd`, `godot/assets/terrain/arena_tileset.tres`,
+`godot/tests/m5/test_arena.gd`, `godot/tests/m5/test_match_camera.gd`,
+`godot/tests/m5/test_lava_burn.gd`, POC `tilemap_arena.gd`, POC `main.gd`.

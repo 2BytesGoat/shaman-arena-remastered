@@ -170,13 +170,16 @@ versa. **Verify (manual):** each spell slot populated by a selection run (8 slot
 
 ## M5 — Arena shrink → `v0.5.0`
 
-- [ ] Port `tilemap_arena.gd`: circular map mask, shrink timer, redraw only removed ring,
+> Demo-branch slice landed early (2026-10-17, D-019): arena, lava burn and match camera are
+> in; the version bump waits for the milestone to close.
+
+- [x] Port `tilemap_arena.gd`: circular map mask, shrink timer, redraw only removed ring,
       edge tiles → animated lava (MagmaTileAnimation assets)
-- [ ] Lava group → `Unit` DoT: a timed debuff ticking `HealthDamage` while standing on
-      lava (see `docs/spells.md`; replaces POC `dot` float)
+- [x] Lava group → `Unit` burn: a `HealthDamage` tick while standing on lava
+      (see `docs/spells.md`; replaces POC `dot` float)
 - [ ] Match flow closure: lava death / eliminations → win screen ("Player X took a big L"),
       restart button, menu/title scene port
-- [ ] Dynamic match camera: midpoint follow + zoom-to-fit with safe margins
+- [x] Dynamic match camera: midpoint follow + zoom-to-fit with safe margins
 
 **Tests:** circle mask math (inside/edge/outside radius), ring-redraw deltas, DoT tick
 applies as attribute buff. **Verify (manual):** survive to shrink phase; lava DoT ticks;

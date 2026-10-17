@@ -14,6 +14,9 @@ signal phase_changed(phase: MatchPhase)
 
 @export var selection_layer: CanvasLayer
 @export var match_over: MatchOver
+## Arena (M5/D-019): reset and restart its shrink every time the match enters RUNNING;
+## stop it whenever the match leaves RUNNING (drafts, KO beat, game over).
+@export var arena: Arena
 @export var skip_selection := false
 @export var default_loadout: Array[Ability] = []
 @export var character_class: CharacterClass
@@ -243,6 +246,12 @@ func _set_phase(value: MatchPhase) -> void:
 	if phase == value:
 		return
 	phase = value
+	if arena != null:
+		if phase == MatchPhase.RUNNING:
+			arena.reset()
+			arena.start_shrink()
+		else:
+			arena.stop_shrink()
 	phase_changed.emit(phase)
 
 
