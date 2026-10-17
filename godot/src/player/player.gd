@@ -107,6 +107,9 @@ func request_cast(slot: int) -> void:
 		return
 	if ability_container.is_ability_cooldown_active(ability):
 		return
+	if ability is BaseAbility and (ability as BaseAbility).CAST_MODE == BaseAbility.CastMode.INSTANT:
+		try_cast(ability, facing_direction())
+		return
 	state_machine.transition_to(AnimationSlots.AIM, {"slot": slot, "ability": ability})
 
 

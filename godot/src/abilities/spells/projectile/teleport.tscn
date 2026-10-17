@@ -1,9 +1,8 @@
 [gd_scene format=3 uid="uid://ctxi17gackdq6"]
 
-[ext_resource type="PackedScene" uid="uid://bn4627jhgsbhs" path="res://src/abilities/spells/spell_scene.tscn" id="1_etu1k"]
-[ext_resource type="Script" path="res://src/abilities/spells/teleport.gd" id="2_6nbr6"]
-[ext_resource type="Texture2D" uid="uid://cj4chor2bfacy" path="res://assets/UI/icons/114.png" id="3_dkksn"]
-[ext_resource type="PackedScene" uid="uid://dv2x1pif3o6kr" path="res://src/abilities/effects/teleport_effect.tscn" id="3_glrv3"]
+[ext_resource type="PackedScene" uid="uid://bn4627jhgsbhs" path="res://src/abilities/spell_scene.tscn" id="1_etu1k"]
+[ext_resource type="Script" uid="uid://bb16to366q5d7" path="res://src/abilities/spells/projectile/teleport.gd" id="2_6nbr6"]
+[ext_resource type="PackedScene" uid="uid://dv2x1pif3o6kr" path="res://src/abilities/effects/impact/teleport_effect.tscn" id="3_glrv3"]
 [ext_resource type="Texture2D" uid="uid://cao5deslsp4fd" path="res://assets/spells/Fireball.webp" id="3_s6xv8"]
 
 [sub_resource type="Curve" id="Curve_s6xv8"]
@@ -45,10 +44,8 @@ animations = [{
 [node name="Teleport" unique_id=1366827963 instance=ExtResource("1_etu1k")]
 script = ExtResource("2_6nbr6")
 MAX_SPEED = 600.0
-KNOCKBACK = 0.0
-DAMAGE = 0.0
-on_hit_effect = ExtResource("3_glrv3")
 velocity_curve = SubResource("Curve_s6xv8")
+on_hit_effect = ExtResource("3_glrv3")
 
 [node name="Sprite2D" parent="." index="0" unique_id=64191743]
 material = SubResource("CanvasItemMaterial_glrv3")
@@ -56,7 +53,7 @@ scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_4cjwf")
 speed_scale = 1.5
 
-[node name="Timer" parent="." index="2" unique_id=260913630]
+[node name="ExpiryTimer" parent="." index="2" unique_id=260913630]
 wait_time = 0.2
 
-[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
+[connection signal="timeout" from="ExpiryTimer" to="." method="_on_expiry_timer_timeout"]

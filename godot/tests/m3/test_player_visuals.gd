@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 func _make_unit(controller := 0) -> Unit:
 	var scene: PackedScene = load("res://src/player/player.tscn")
@@ -68,7 +70,7 @@ func test_palette_applies_player_colors() -> void:
 func test_play_defers_locomotion_but_not_oneshots_while_casting() -> void:
 	var unit := _make_unit()
 	await get_tree().process_frame
-	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
+	var smoke: BaseAbility = load(AbilityPaths.path("smoke"))
 	var picks: Array[Ability] = [smoke]
 	unit.apply_loadout(picks)
 	unit.ability_container.try_activate(smoke)
@@ -88,7 +90,7 @@ func test_play_defers_locomotion_but_not_oneshots_while_casting() -> void:
 func test_aim_pose_defers_to_an_active_cast_and_returns_on_abort() -> void:
 	var unit := _make_unit()
 	await get_tree().process_frame
-	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
+	var smoke: BaseAbility = load(AbilityPaths.path("smoke"))
 	var picks: Array[Ability] = [smoke]
 	unit.apply_loadout(picks)
 	unit.try_cast(smoke, Vector2.RIGHT)

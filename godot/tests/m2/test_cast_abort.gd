@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 class FakeAbility extends BaseAbility:
 	var cast_called := false
@@ -22,7 +24,7 @@ func _make_unit(at := Vector2(100.0, 0.0)) -> Unit:
 func _picks(names: Array) -> Array[Ability]:
 	var picks: Array[Ability] = []
 	for name in names:
-		picks.append(load("res://src/resources/abilities/%s_ability.tres" % name))
+		picks.append(load(AbilityPaths.path(name)))
 	return picks
 
 
@@ -62,8 +64,8 @@ func test_try_abort_inactive_ability_returns_false() -> void:
 
 
 func test_interruptibility_flags() -> void:
-	var fireball: BaseAbility = load("res://src/resources/abilities/fireball_ability.tres")
-	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
+	var fireball: BaseAbility = load(AbilityPaths.path("fireball"))
+	var smoke: BaseAbility = load(AbilityPaths.path("smoke"))
 	assert_bool(CastHandler.is_cast_interruptible(fireball)).is_true()
 	assert_bool(CastHandler.is_cast_interruptible(smoke)).is_false()
 	assert_bool(CastHandler.is_cast_interruptible(BaseAbility.new())).is_true()

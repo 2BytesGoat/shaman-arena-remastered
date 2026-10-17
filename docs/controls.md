@@ -9,15 +9,15 @@ Desktop keyboard/gamepad bindings exist for development; the arcade panel overri
 | --- | --- |
 | Free (no spell button held) | Movement (accel/decel with friction); the aim indicator also keeps following the stick, so a held cast starts already aligned |
 | Spell button held (AIMED spell) | **Aim** — shaman locks position, velocity zeroed; stick drives `cast_direction`; aim sprite follows with turn-smoothing |
-| Spell button held (INSTANT spell, held) | Same aim mode (re-aim before release) |
+| Spell button pressed (INSTANT spell) | **No aim phase** — the spell already fired on press; holding/releasing does nothing |
 | While on cooldown | Spell button ignored (GGAS `cooldown_active` blocks activation) |
 
 Deadzone handling: stick input below deadzone → keep **last nonzero direction**
 (never snap aim to zero when returning the stick to center).
 
-Cast direction is refreshed every frame while alive: a released cast keeps steering with the
-stick through its cast delay (deliberate — windup jukes), and the aim indicator always trails
-the stick.
+Cast direction is refreshed every frame while alive: a released aimed cast keeps steering
+with the stick through its cast delay (deliberate — windup jukes), and the aim indicator
+always trails the stick.
 
 ## Spell buttons (max 6 spells + 2 consumables per player)
 
@@ -26,9 +26,9 @@ the stick.
 | Press + hold on AIMED spell | Enter aim mode; stick steers aim; HUD button shows spell highlighted |
 | Release (after hold) | Cast using current `cast_direction`; GGAS duration (cast delay) plays out; cooldown starts |
 | Press + release < ~150ms (tap) on AIMED spell | Still counts as a cast — uses current facing direction |
-| Press + release < ~150ms (tap) on INSTANT spell | Instant cast using **current facing** (e.g., Blink) |
+| Press on INSTANT spell | Fires immediately using **current facing** (Blink; Smoke ignores direction); no aim, release does nothing |
 | Press on CONSUMABLE slot | Use item (reserved — content later; consumable uses revoke/consume on activation) |
-| Press the same spell during its cast delay | **Aborts the cast** — free, no cooldown; press again to aim anew (D-004) |
+| Press the same spell during its cast delay | **Aborts the cast** — free, no cooldown; press again to cast anew (D-004) |
 | Taking a hit during a cast delay | Aborts the cast — unless the spell is **Uninterruptible** (Smoke); death always aborts |
 
 - Hold duration has **no charge effect** — it is purely aiming/channel time.
@@ -44,7 +44,7 @@ the stick.
   when all players are ready the match starts and the panel locks.
 - Loadout is exactly 6 spells (slots 0–5) + 2 reserved consumable slots (6–7, empty for
   now — see M4).
-- **Uninterruptible** spells (Smoke) ignore hits and re-presses once released; only death
+- **Uninterruptible** spells (Smoke) ignore hits and re-presses once cast; only death
   stops them (D-004). The stick never cancels a cast — it only steers.
 - Mashing a spell button therefore aborts your own cast (double-tap = cancel) — accepted
   trade-off for the free re-press abort.

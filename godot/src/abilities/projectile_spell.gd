@@ -5,9 +5,9 @@ class_name ProjectileSpell extends SpellScene
 
 
 func sample_time() -> float:
-	if timer == null or timer.wait_time <= 0.0:
+	if expiry_timer == null or expiry_timer.wait_time <= 0.0:
 		return 0.0
-	return clampf(1.0 - timer.time_left / timer.wait_time, 0.0, 1.0)
+	return clampf(1.0 - expiry_timer.time_left / expiry_timer.wait_time, 0.0, 1.0)
 
 
 func speed_at(time: float) -> float:

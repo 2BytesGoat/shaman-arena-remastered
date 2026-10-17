@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 class FakeAbility extends BaseAbility:
 	pass
@@ -60,7 +62,7 @@ func test_speed_scale_guards_instant_casts_and_empty_clips() -> void:
 
 
 func test_smoke_ability_requests_cast_smoke_clip() -> void:
-	var smoke: BaseAbility = load("res://src/resources/abilities/smoke_ability.tres")
+	var smoke: BaseAbility = load(AbilityPaths.path("smoke"))
 	assert_str(String(smoke.CAST_ANIMATION)).is_equal("CastSmoke")
 
 

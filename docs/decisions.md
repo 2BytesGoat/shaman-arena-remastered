@@ -38,8 +38,8 @@ attacker-side.
 - Verified by an A/B headless probe (identical damage/knockback/lifetime traces before and
   after, modulo 1 physics frame).
 
-**References.** `godot/src/abilities/hit_area.gd`,
-`godot/src/abilities/spells/spell_scene.gd`, `godot/src/abilities/effects/effect.gd`,
+**References.** `godot/src/common/hit_area.gd`,
+`godot/src/abilities/spell_scene.gd`, `godot/src/abilities/effects/effect.gd`,
 `godot/src/player/player.gd`.
 
 ## D-002 — Spell naming & structure vocabulary (WC3/LoL model)
@@ -77,8 +77,20 @@ is in `spells.md`.
 **Tradeoff.** WC3 calls negative statuses "Buffs" too; we follow LoL's Buff/Debuff split
 because it reads unambiguously to newcomers, which is the stated naming priority.
 
-**References.** `docs/spells.md`, `godot/src/abilities/spells/projectile_spell.gd`,
+**References.** `docs/spells.md`, `godot/src/abilities/projectile_spell.gd`,
 `godot/src/attributes/health_damage.gd`.
+
+**Addendum (2026-10-17, folder grouping).** Spells are filed one folder per Delivery value under
+`src/abilities/spells/` — `projectile/`, `field/`, `deployable/`, `self/` — while the archetype
+base classes stay at `src/abilities/` root (`spell_scene.gd`, `projectile_spell.gd`). Folders are
+created on the **first** member; the second-member rule still governs only the base class.
+Effect scenes mirror the shape: base `effect.gd`/`effect.tscn` at the `effects/` root, impacts in
+`effects/impact/`, telegraphs in `effects/telegraph/`; ability resources mirror the spell tree
+under `src/resources/abilities/<delivery>/`; `hit_area.gd` moved to `src/common/`
+(next to `source_filter.gd`), and `ability_handler.gd` to `src/player/components/`.
+Delivery value **`Wall` → `Deployable`**: "wall" named one shape of the family, which is really
+"things you place down" (wall, turret, box, ward). AniviaWall's own name and class are unchanged;
+its future archetype base is `DeployableSpell`.
 
 ## D-003 — Basic attack: per-shaman ability, loadout-picked, empowerable
 
@@ -316,9 +328,9 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 | Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
 | Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers |
 | Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
-| Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited Timer is unwired) |
-| Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via Timer |
-| MeteorIncoming telegraph | 16 | 95 | **no** | contact values exist but are inert (D-001 correction); Timer spawns the strike |
+| Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited ExpiryTimer is unwired) |
+| Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via ExpiryTimer |
+| MeteorIncoming telegraph | 16 | 95 | **no** | contact values exist but are inert (D-001 correction); ExpiryTimer spawns the strike |
 | MeteorExplosion / ExplosionEffect | 16 | 1 | yes (inherited from `effect.tscn`) | 15 dmg / KB 250 and 5 / KB 175 |
 | AniviaWall area | 64 | 31 = 1–4 + 16 | yes | despawns when any spell touches it |
 | AniviaWall StaticBody | 64 | 15 | — | blocks player movement |
@@ -339,7 +351,7 @@ layer 1 — friend fire is on by design and `SourceFilter` handles self-immunity
 renumbering the POC layers.
 
 **References.** `godot/project.godot`, `godot/tests/phase0/test_layer_contract.gd`,
-`godot/src/abilities/spells/*.tscn`, `godot/src/abilities/effects/*.tscn`,
+`godot/src/abilities/spells/*/*.tscn`, `godot/src/abilities/effects/`,
 `godot/src/player/player.tscn`.
 
 ## D-008 — Player presentation components own their nodes (M3)
@@ -456,3 +468,37 @@ controller classes before their milestone; input buffering (still parked in `con
 `godot/src/player/controllers/local_player_controller.gd`,
 `godot/src/player/states/aim_state.gd`, `godot/src/player/components/cast_handler.gd`,
 `godot/tests/m3/test_player_controller.gd`.
+
+## D-010 — Instant spells cast on press (no Aim phase)
+
+- **Status:** accepted
+- **Date:** 2026-10-17
+
+**Context.** `CAST_MODE` (Instant/Aimed) was declared on every ability but never read — all
+spells, Blink and Smoke included, went through the same press/hold/release Aim flow, even
+though Smoke is self-centered and Blink only needs the facing direction. Wiring the INSTANT
+tap-cast was parked on the M4 list; it landed early.
+
+**Decision.**
+
+- `Unit.request_cast` branches on `CAST_MODE`: an `Instant` ability casts immediately on
+  press (`try_cast(ability, facing_direction())`) and never enters `AimState`; `Aimed`
+  abilities keep the press/hold/release flow. Controllers are unchanged — they still send
+  the same intents (D-009).
+- Blink and Smoke are `Instant` (Blink already was; Smoke is re-classified in its `.tres`).
+- `CAST_DELAY` is untouched: Smoke keeps its 1.2 s `CastSmoke` windup (Uninterruptible,
+  D-004) — the field still lands at the end of the GGAS duration. The ~150 ms tap threshold
+  remains for aimed casts (tap → facing, hold → stick).
+
+**Consequences.**
+
+- Instant spells fire on button-down; holding/releasing does nothing, so Blink always casts
+  toward the current facing.
+- No Aim enter means no instant position freeze for instant casts; with Smoke's windup the
+  movement input is dropped instead and the unit decelerates.
+- The aim-indicator / HUD-highlight phase only ever appears for aimed spells.
+
+**References.** `godot/src/player/player.gd`,
+`godot/src/resources/abilities/self/blink_ability.tres`,
+`godot/src/resources/abilities/field/smoke_ability.tres`,
+`godot/src/player/states/aim_state.gd`, `godot/tests/m3/test_player_controller.gd`.

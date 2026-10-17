@@ -11,7 +11,7 @@
 [ext_resource type="Script" uid="uid://b820hk1d8w8w1" path="res://src/player/states/aim_state.gd" id="9_aim"]
 [ext_resource type="Script" uid="uid://cagrb1lgpn58f" path="res://src/player/states/hit_state.gd" id="11_hit"]
 [ext_resource type="Script" uid="uid://6v76ohqdafed" path="res://src/player/states/dead_state.gd" id="12_dead"]
-[ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/abilities/ability_handler.gd" id="13_handler"]
+[ext_resource type="Script" uid="uid://bf0kwespkcs6x" path="res://src/player/components/ability_handler.gd" id="13_handler"]
 [ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
 [ext_resource type="Script" uid="uid://6r2x7rh1ymnm" path="res://src/player/components/cast_handler.gd" id="15_castctrl"]
 [ext_resource type="Script" uid="uid://dbwvnierlgiau" path="res://src/player/components/player_visuals.gd" id="16_visuals"]
