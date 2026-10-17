@@ -40,6 +40,9 @@ var is_match_ready := false
 var facing_scale := 1.0
 var spawn_position := Vector2.ZERO
 
+## Assigned by `MatchManager`; the draft pool is seeded from its basic spells (D-013).
+var character_class: CharacterClass
+
 var ability_slots: Array[Ability] = []
 var _last_move_direction := Vector2.RIGHT
 var _applied_controller_type := -1

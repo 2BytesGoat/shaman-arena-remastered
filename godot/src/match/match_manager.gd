@@ -16,6 +16,14 @@ signal phase_changed(phase: MatchPhase)
 @export var match_over: MatchOver
 @export var skip_selection := false
 @export var default_loadout: Array[Ability] = []
+@export var character_class: CharacterClass
+## KO beat (D-014): real seconds of world slow motion after a death, before the loser's
+## draft or the winner banner opens. 0 disables the beat (flow tests, fast dev checks).
+@export var death_slowmo_duration := 1.0
+## Engine time scale while the KO beat runs (1 = normal speed).
+@export var death_slowmo_scale := 0.5
+## Whether the match-ending death also plays the beat before the winner banner.
+@export var death_slowmo_on_match_point := true
 
 var phase := MatchPhase.SELECTING
 
@@ -30,12 +38,23 @@ func _ready() -> void:
 		player.player_died.connect(_on_player_died)
 	for panel in selection_panels():
 		panel.loadout_complete.connect(_on_loadout_complete)
+	_assign_character_classes()
 	if skip_selection:
 		_start_with_default_loadout()
 	else:
 		_lock_players()
 		_set_selection_visible(true)
 		_begin_next_draft()
+
+
+## Every seat plays the match's `character_class` for now: the class seeds each draft pool
+## with its basic spells and is stored on the unit for future stats/passives. A class-select
+## screen later only changes this function (D-013).
+func _assign_character_classes() -> void:
+	for player in _players:
+		player.character_class = character_class
+	for panel in selection_panels():
+		panel.set_class(character_class)
 
 
 func player_for(controller: int) -> Unit:
@@ -131,8 +150,12 @@ func _on_player_died(player_number: int) -> void:
 		_set_phase(MatchPhase.GAME_OVER)
 		return
 	_round_wins[winner.PLAYER_CONTROLLER] = round_wins_for(winner.PLAYER_CONTROLLER) + 1
-	if round_wins_for(winner.PLAYER_CONTROLLER) >= ROUNDS_TO_WIN:
-		_set_phase(MatchPhase.GAME_OVER)
+	var match_point := round_wins_for(winner.PLAYER_CONTROLLER) >= ROUNDS_TO_WIN
+	_set_phase(MatchPhase.GAME_OVER if match_point else MatchPhase.ROUND_OVER)
+	# The KO beat holds the draft/banner back until the death clip has played out (D-014).
+	if death_slowmo_duration > 0.0 and (not match_point or death_slowmo_on_match_point):
+		await _play_death_beat(player_for(player_number))
+	if match_point:
 		if match_over != null:
 			match_over.show_winner(
 				winner.PLAYER_CONTROLLER,
@@ -140,8 +163,19 @@ func _on_player_died(player_number: int) -> void:
 				round_wins_for(player_number)
 			)
 		return
-	_set_phase(MatchPhase.ROUND_OVER)
 	_begin_round_draft(player_for(player_number))
+
+
+## The KO beat (D-014): the world drops into slow motion around the death, then time
+## returns to normal and the rest of the loser's `Dead` clip plays out. Only after that do
+## the loser's draft — or the winner banner — take the screen.
+func _play_death_beat(loser: Unit) -> void:
+	Engine.time_scale = death_slowmo_scale
+	# Unscaled timer: the beat is real seconds while the world crawls.
+	await get_tree().create_timer(death_slowmo_duration, true, false, true).timeout
+	Engine.time_scale = 1.0
+	if loser != null and loser.animation_player.is_playing():
+		await loser.animation_player.animation_finished
 
 
 ## Round wins for one controller (0 when none yet).
@@ -210,3 +244,8 @@ func _set_phase(value: MatchPhase) -> void:
 		return
 	phase = value
 	phase_changed.emit(phase)
+
+
+func _exit_tree() -> void:
+	# Safety: a freed or reloaded manager must never leave a session stuck in slow motion.
+	Engine.time_scale = 1.0

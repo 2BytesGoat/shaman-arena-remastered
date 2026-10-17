@@ -14,8 +14,11 @@ func _make_unit(controller: int) -> Unit:
 	var scene: PackedScene = load("res://src/player/player.tscn")
 	var unit := scene.instantiate() as Unit
 	unit.PLAYER_CONTROLLER = controller
-	unit.set_physics_process(false)
 	add_child(unit)
+	# Disable *after* entering the tree: an earlier call is overridden when the script's
+	# `_physics_process` is wired up on `add_child`, and the units would then shove each
+	# other out of the shared spawn point with `move_and_slide` depenetration.
+	unit.set_physics_process(false)
 	auto_free(unit)
 	return unit
 
@@ -24,9 +27,18 @@ func _make_manager(skip_selection := false, default_loadout: Array[Ability] = []
 	var manager := MatchManager.new()
 	manager.skip_selection = skip_selection
 	manager.default_loadout = default_loadout
+	# Flow tests skip the KO beat; the dedicated beat tests re-arm it explicitly.
+	manager.death_slowmo_duration = 0.0
 	add_child(manager)
 	auto_free(manager)
 	return manager
+
+
+## Polls in real time (safe while the death beat has the world in slow motion).
+func _await_phase(manager: MatchManager, phase: int, timeout := 2.0) -> void:
+	var deadline := Time.get_ticks_msec() + int(timeout * 1000.0)
+	while manager.phase != phase and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
 
 
 func test_match_starts_selecting_and_locked() -> void:
@@ -95,6 +107,45 @@ func test_round_death_locks_players_and_resumes_with_respawns() -> void:
 	assert_float(
 		first.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
 	).is_equal(10.0)
+
+
+func test_death_beat_slows_time_and_waits_for_the_death_clip() -> void:
+	var first := _make_unit(0)
+	var second := _make_unit(1)
+	var manager := _make_manager()
+	manager.death_slowmo_duration = 0.15
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
+	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	# The round is decided immediately; the beat holds the resume back.
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
+	assert_float(Engine.get_time_scale()).is_equal(0.25)
+	assert_bool(first.player_dead).is_true()
+	# Slow motion ends with the window, but the round only resumes once the death clip has
+	# finished (its tail plays at normal speed).
+	await _await_phase(manager, MatchManager.MatchPhase.RUNNING)
+	assert_float(Engine.get_time_scale()).is_equal(1.0)
+	assert_bool(first.player_dead).is_false()
+	assert_bool(first.is_match_ready).is_true()
+	assert_bool(second.is_match_ready).is_true()
+
+
+func test_match_point_can_skip_the_death_beat() -> void:
+	var first := _make_unit(0)
+	var second := _make_unit(1)
+	var manager := _make_manager()
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["smoke"]))
+	for _round in MatchManager.ROUNDS_TO_WIN - 1:
+		first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+		await _await_phase(manager, MatchManager.MatchPhase.RUNNING)
+	# Arm the beat but keep it off the match point: the final death must not slow down.
+	manager.death_slowmo_duration = 0.15
+	manager.death_slowmo_on_match_point = false
+	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
+	assert_float(Engine.get_time_scale()).is_equal(1.0)
+	assert_bool(second.is_match_ready).is_false()
 
 
 func test_five_round_wins_end_the_match() -> void:

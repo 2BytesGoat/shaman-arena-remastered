@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CharacterClass" load_steps=4 format=3]
+
+[ext_resource type="Script" uid="uid://crtp4noojr7oe" path="res://src/classes/character_class.gd" id="1_class"]
+[ext_resource type="Ability" path="res://src/resources/abilities/projectile/fireball_ability.tres" id="2_fireball"]
+[ext_resource type="Ability" uid="uid://dwucn35oeqx4v" path="res://src/resources/abilities/field/smoke_ability.tres" id="3_smoke"]
+
+[resource]
+script = ExtResource("1_class")
+display_name = "Wizard"
+basic_spells = Array[Ability]([ExtResource("2_fireball"), ExtResource("3_smoke")])

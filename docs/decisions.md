@@ -579,9 +579,9 @@ match continues until someone has taken 5 rounds.
 
 **Consequences.**
 
-- A match lasts 5–9 rounds; a player loses at most 4 times before someone reaches 5, so
-  the 6-spell pool cap realistically only bites after rules changes (skip path still
-  tested).
+- A match lasts 5–9 rounds; a player loses at most 4 times before someone reaches 5. The
+  6-spell cap was future-proofing at the time; class basics (D-013) now fill the pool in
+  normal play, so the skip path is load-bearing.
 - `Unit` gains `spawn_position` + `respawn()`; `MatchManager` gains `ROUND_OVER`,
   `ROUNDS_TO_WIN` and `round_wins_for()`.
 - Restart (accept on the banner) reloads the scene, so the score resets with it.
@@ -590,3 +590,82 @@ match continues until someone has taken 5 rounds.
 `godot/src/ui/match_over.gd`, `godot/src/ui/spell_select.gd`,
 `godot/src/match/spell_draw.gd`, `godot/tests/m3/test_match_manager.gd`,
 `godot/tests/m3/test_main_scene.gd`.
+
+## D-013 — Character classes and basic spells
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** D-011/D-012 left the draft as the only way spells enter a pool, so every match
+began with a single card. The demo now gets its first **character class**: the Wizard, whose
+Fireball and Smoke are basic spells — always owned, never drafted.
+
+**Decision.**
+
+- A class is a `CharacterClass` resource: `display_name` + `basic_spells`. First class:
+  `wizard.tres` = Wizard, `[Fireball, Smoke]`.
+- `MatchManager.character_class` (set in `main.tscn`) is pushed to every unit
+  (`Unit.character_class`, kept for future stats/passives) and every draft panel
+  (`SpellSelect.set_class()`, which seeds the pool through `Loadout.from_class()`).
+- Seeding makes the basics ordinary owned spells: `SpellDraw` already excludes the pool, so
+  no hand (match start or per-death) can offer them, and the first committed pick applies
+  basics + pick together. Gameplay stays locked until then, so no seat ever plays a
+  spell-less round.
+- The pool cap stays **6 total including basics** (`Loadout.MAX_SPELLS`): a Wizard's kit is
+  2 basics + up to 4 drafted cards, so once the pool is full later loss-drafts skip — the
+  D-012 skip path is normal endgame behavior now. No new input bindings; the retired 7th
+  dev slot stays retired.
+- Both seats are the Wizard for now and there is no class-select UI;
+  `_assign_character_classes()` is the single place a future roster choice would change.
+
+**Consequences.**
+
+- With the 7-spell catalogue the match-start hand is all 5 non-basic spells (randomness
+  returns as the catalogue grows).
+- A first-to-5 loser fills the pool after their 3rd loss-draft (2 basics + start pick + 3
+  cards); the 4th loss-draft is skipped and the 5th loss ends the match.
+- `skip_selection`'s `default_loadout` is unchanged: a pure dev override, basics not merged.
+
+**References.** `godot/src/classes/character_class.gd`,
+`godot/src/resources/classes/wizard.tres`, `godot/src/match/loadout.gd`,
+`godot/src/ui/spell_select.gd`, `godot/src/match/match_manager.gd`,
+`godot/tests/m3/test_character_class.gd`, `godot/tests/m3/test_main_scene.gd`.
+
+## D-014 — Death beat: KO slow motion, then the draft
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** The round loop (D-012) opened the loser's draft on the exact frame of the
+fatal hit, so the selection screen covered the death animation and the KO never read as a
+moment. The demo wants a beat: the world slows, the death plays out, and only then does the
+draft take the screen.
+
+**Decision.**
+
+- A death plays a **KO beat** before the loser's draft (or the winner banner): the world
+  drops into slow motion, then time returns to normal and the rest of the loser's `Dead`
+  clip plays out. The selection screen opens only once the clip has finished.
+- `MatchManager` owns the beat with three exports: `death_slowmo_duration` (real seconds at
+  the slowed scale, default 1.0), `death_slowmo_scale` (default 0.25), and
+  `death_slowmo_on_match_point` (default on). `death_slowmo_duration = 0` disables the whole
+  beat — the flow tests and fast dev iterations use this.
+- The slow-motion window uses an unscaled `SceneTreeTimer`; `Engine.time_scale` slows
+  animations, spells and cooldowns globally while it runs. With the stock 0.5s `Dead` clip
+  the result is ~1s of slow motion (the 36→37 frame flip lands at the end), then the clip's
+  tail at normal speed: ~1.25s from hit to draft.
+- `_on_player_died` still resolves the round synchronously (score and phase `ROUND_OVER` /
+  `GAME_OVER`), then awaits the beat before showing the selection layer/panel or calling
+  `MatchOver.show_winner()`. Players stay locked through the beat, so nobody acts during it.
+- `_exit_tree()` forces `Engine.time_scale = 1.0` so a freed or reloaded manager can never
+  leave a session stuck in slow motion.
+
+**Consequences.**
+
+- Every death costs ~1.25s (stock clip) before the draft; the phase flips immediately for
+  code, but the room sees the KO first.
+- `skip_selection` deaths also get the beat in the editor; set `death_slowmo_duration = 0`
+  on the manager for instant testing.
+
+**References.** `godot/src/match/match_manager.gd`, `godot/src/player/player.gd`,
+`godot/tests/m3/test_match_manager.gd`, `godot/tests/m3/test_main_scene.gd`.

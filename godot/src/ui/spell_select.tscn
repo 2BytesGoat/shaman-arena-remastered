@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene format=3 uid="uid://cnjfxnjyox6m2"]
 
 [ext_resource type="Script" uid="uid://bxjjlielvgwug" path="res://src/ui/spell_select.gd" id="1_select"]
 [ext_resource type="PackedScene" path="res://src/ui/spell_select_button.tscn" id="2_button"]
@@ -6,11 +6,15 @@
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/fireball_ability.tres" id="4_fireball"]
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/boomerang_ability.tres" id="5_boomerang"]
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/meteor_ability.tres" id="6_meteor"]
-[ext_resource type="Ability" path="res://src/resources/abilities/field/smoke_ability.tres" id="7_smoke"]
+[ext_resource type="Ability" uid="uid://dwucn35oeqx4v" path="res://src/resources/abilities/field/smoke_ability.tres" id="7_smoke"]
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/teleport_ability.tres" id="8_teleport"]
 [ext_resource type="Ability" path="res://src/resources/abilities/deployable/anivia_wall_ability.tres" id="9_wall"]
 
-[node name="SpellSelect" type="MarginContainer" node_paths=PackedStringArray("title_label", "cards", "slots_container", "hint_label")]
+[node name="SpellSelect" type="MarginContainer" unique_id=2140094991 node_paths=PackedStringArray("title_label", "cards", "slots_container", "hint_label")]
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 12
 script = ExtResource("1_select")
 catalogue = Array[Ability]([ExtResource("4_fireball"), ExtResource("5_boomerang"), ExtResource("6_meteor"), ExtResource("7_smoke"), ExtResource("8_teleport"), ExtResource("3_blink"), ExtResource("9_wall")])
 title_label = NodePath("VBox/Title")
@@ -18,33 +22,31 @@ cards = NodePath("VBox/Cards")
 slots_container = NodePath("VBox/Slots")
 hint_label = NodePath("VBox/Hint")
 spell_button_scene = ExtResource("2_button")
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 12
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1817341142]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="VBox"]
+[node name="Title" type="Label" parent="VBox" unique_id=322673930]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "PLAYER 1"
 horizontal_alignment = 1
 
-[node name="Cards" type="HBoxContainer" parent="VBox"]
+[node name="Cards" type="HBoxContainer" parent="VBox" unique_id=859112133]
 layout_mode = 2
 size_flags_vertical = 6
-alignment = 1
 theme_override_constants/separation = 12
-
-[node name="Slots" type="HBoxContainer" parent="VBox"]
-layout_mode = 2
 alignment = 1
-theme_override_constants/separation = 6
 
-[node name="Hint" type="Label" parent="VBox"]
+[node name="Slots" type="HBoxContainer" parent="VBox" unique_id=559260453]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Hint" type="Label" parent="VBox" unique_id=1148287772]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 text = "CHOOSE A SPELL"

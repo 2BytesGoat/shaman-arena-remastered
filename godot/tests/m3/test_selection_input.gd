@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const AbilityPaths := preload("res://tests/support/ability_paths.gd")
+
 
 func _make_panel(controller := 0) -> SpellSelect:
 	var panel := load("res://src/ui/spell_select.tscn").instantiate() as SpellSelect
@@ -104,6 +106,45 @@ func test_can_start_draft_is_false_when_the_pool_is_full() -> void:
 		panel.loadout.pick(panel.catalogue[index])
 	assert_bool(panel.loadout.is_full()).is_true()
 	assert_bool(panel.can_start_draft()).is_false()
+
+
+func _wizard_panel(controller := 0) -> SpellSelect:
+	var panel := load("res://src/ui/spell_select.tscn").instantiate() as SpellSelect
+	panel.player_controller = controller
+	add_child(panel)
+	auto_free(panel)
+	panel.set_class(load("res://src/resources/classes/wizard.tres") as CharacterClass)
+	return panel
+
+
+func test_set_class_seeds_the_basics_and_no_hand_offers_them() -> void:
+	var panel: SpellSelect = _wizard_panel()
+	await get_tree().process_frame
+	var fireball: Ability = load(AbilityPaths.path("fireball"))
+	var smoke: Ability = load(AbilityPaths.path("smoke"))
+	assert_array(panel.loadout.picks).contains_exactly([fireball, smoke])
+	panel.start_draft()
+	assert_int(panel.offers.size()).is_equal(SpellDraw.OFFER_COUNT)
+	assert_bool(panel.offers.has(fireball)).is_false()
+	assert_bool(panel.offers.has(smoke)).is_false()
+	assert_object(panel._slot_icons[0].texture).is_not_null()
+	assert_object(panel._slot_icons[1].texture).is_not_null()
+
+
+func test_committed_pick_extends_the_seeded_pool() -> void:
+	var panel: SpellSelect = _wizard_panel()
+	await get_tree().process_frame
+	var completed: Array = []
+	panel.loadout_complete.connect(
+		func(_controller: int, picks: Array[Ability]) -> void: completed.append(picks)
+	)
+	panel.start_draft()
+	panel.handle_accept()
+	assert_int(panel.loadout.picks.size()).is_equal(3)
+	assert_int(completed.size()).is_equal(1)
+	assert_int((completed[0] as Array[Ability]).size()).is_equal(3)
+	assert_bool(panel.loadout.has(load(AbilityPaths.path("fireball")))).is_true()
+	assert_bool(panel.loadout.has(load(AbilityPaths.path("smoke")))).is_true()
 
 
 func test_panel_stays_idle_until_start_draft() -> void:

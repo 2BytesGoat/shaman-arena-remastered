@@ -31,8 +31,9 @@ always trails the stick.
 | Taking a hit during a cast delay | Aborts the cast — unless the spell is **Uninterruptible** (Smoke); death always aborts |
 
 - Hold duration has **no charge effect** — it is purely aiming/channel time.
-- One physical button maps to one pool slot; a player holds up to 6 spells.
-- The pool is drafted on the spell draft screen (below).
+- One physical button maps to one pool slot; a player holds up to 6 spells (class basics
+  included).
+- The pool starts from the class basics and is drafted on the spell draft screen (below).
 
 ## Spell draft (match start + rounds)
 
@@ -43,26 +44,36 @@ always trails the stick.
   a spell the player already owns (Rounds-style, D-011).
 - Stick drives the focus cursor across the cards (left/right only); accept **commits the
   focused card** to the player's pool. There is no un-pick and no re-roll.
+- Both seats play the **Wizard**: Fireball and Smoke are basic spells seeded into the pool
+  before the first draft, so no hand — match start or per-death — ever offers them (D-013).
+  The match-start hand is the 5 spells left in the catalogue.
 - A committed pick readies that player; when all players are ready the match starts and
-  the selection layer closes. A match starts with **1 spell per player**.
-- When a round ends (a player dies), the **loser drafts one more spell** the same way —
-  5 fresh offers, their pool excluded — and the next round starts as soon as it is
-  committed. Pools grow by one card per loss (6-spell cap; a full pool skips the draft).
+  the selection layer closes. A match starts with **3 spells per player** (2 basics + 1
+  drafted).
+- When a round ends (a player dies), the **KO plays out first**: the world drops into slow
+  motion for a moment and the loser's death clip finishes before the selection screen
+  appears (D-014). Then the **loser drafts one more spell** the same way — fresh offers,
+  their whole pool excluded — and the next round starts as soon as it is committed. The
+  pool caps at 6 spells including the basics, so once it is full later loss-drafts are
+  skipped and the round just resumes.
 - Between rounds both players respawn at their starting spots with full health; spell
   pools are kept.
 - Gameplay is frozen while a draft is up: units ignore movement and cast input, and only
   the current drafter's panel accepts input, so nobody can act behind the card screen.
-- The strip under the cards shows the 6 pool slots filling up as drafts land.
+- The strip under the cards shows the 6 pool slots: the basics already in place, then the
+  drafted cards filling the rest.
 
 ## Match flow
 
 1. Spell draft: player 1 commits a card, then player 2 (one panel at a time, stick-driven
-   focus per player); all players ready → match starts with their drafted spell
-2. A death ends the round: the survivor scores it and the loser drafts one more card
-   (same panel flow, gameplay stays frozen for everyone)
+   focus per player); all players ready → match starts with the class basics plus their
+   drafted spell
+2. A death ends the round: the survivor scores it, the KO plays in slow motion while the
+   death clip finishes, then the loser drafts one more card (same panel flow, gameplay
+   stays frozen for everyone)
 3. Committed card → both players respawn at their spawn points, full health, next round
-4. First to 5 round wins → match-over banner ("PLAYER X WINS x-y") → accept/button
-   restarts from the draft
+4. First to 5 round wins → the final KO plays the same slow-motion beat → match-over
+   banner ("PLAYER X WINS x-y") → accept/button restarts from the draft
 
 ## HUD (non-interactive on cabinet)
 
@@ -93,8 +104,8 @@ always trails the stick.
 - `player_1` keyboard bindings are **throwaway** — the owner rarely controls player 2, so no
   parity or maintenance promise for them (owner decision, 2026-10-14).
 - The M1 7th dev slot (`7` / `M`) is retired: a player's pool holds up to 6 spells, filled
-  by the pre-match draft. `MatchManager.skip_selection` (main scene) applies a dev default
-  loadout for fast editor testing.
+  by the class basics plus draft picks. `MatchManager.skip_selection` (main scene) applies
+  a dev default loadout for fast editor testing.
 
 ## Open items
 

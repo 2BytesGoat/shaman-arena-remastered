@@ -1,8 +1,18 @@
 class_name Loadout extends RefCounted
 
+## Total spells a player can hold — class basics plus drafted cards (D-013).
 const MAX_SPELLS := 6
 
 var picks: Array[Ability] = []
+
+
+## A pool pre-seeded with a class's basic spells; empty for a null class. Copies the array,
+## so picking never mutates the class resource.
+static func from_class(character_class: CharacterClass) -> Loadout:
+	var loadout := Loadout.new()
+	if character_class != null:
+		loadout.picks.assign(character_class.basic_spells)
+	return loadout
 
 
 func has(ability: Ability) -> bool:
