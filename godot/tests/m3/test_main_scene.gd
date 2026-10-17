@@ -210,10 +210,10 @@ func test_round_death_sends_the_loser_to_draft_then_respawns_both() -> void:
 	assert_bool(second.global_position.is_equal_approx(second.spawn_position)).is_true()
 	assert_float(
 		first.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
-	).is_equal(10.0)
+	).is_equal(100.0)
 	assert_float(
 		second.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
-	).is_equal(10.0)
+	).is_equal(100.0)
 	assert_int(first.ability_slots.size()).is_equal(4)
 	assert_bool(first.is_match_ready).is_true()
 	assert_bool(second.is_match_ready).is_true()
@@ -223,7 +223,7 @@ func test_round_death_sends_the_loser_to_draft_then_respawns_both() -> void:
 	second.take_hit(first, 4.0, 0.0, Vector2.RIGHT)
 	assert_float(
 		second.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
-	).is_equal(6.0)
+	).is_equal(96.0)
 
 
 func test_round_death_of_player_two_sends_player_two_to_draft() -> void:

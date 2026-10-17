@@ -19,6 +19,9 @@ enum CastMode {
 @export var SPELL_SCENE: PackedScene
 @export var UNINTERRUPTIBLE: bool = false
 @export var CAST_ANIMATION: StringName = &""
+## Whether this spell's impacts can hit the unit that cast it (D-018). Carried to every impact
+## scene it spawns; the default keeps `SourceFilter`'s self-immunity.
+@export var HITS_SELF: bool = false
 
 
 static func default_cast_animation(type: SpellType) -> StringName:
@@ -57,6 +60,9 @@ func cast(unit: Unit, direction: Vector2) -> void:
 	if SPELL_SCENE == null:
 		return
 	var spell := Utils.instantiate_object_in_scene(SPELL_SCENE, unit.spell_spawn_position()) as SpellScene
+	if spell == null:
+		return
+	spell.hits_self = HITS_SELF
 	spell.cast(unit, direction)
 
 

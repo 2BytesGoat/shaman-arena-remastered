@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://b0jk2wy8itldm" path="res://src/ui/ability_button.tscn" id="14_button"]
 [ext_resource type="Script" uid="uid://6r2x7rh1ymnm" path="res://src/player/components/cast_handler.gd" id="15_castctrl"]
 [ext_resource type="Script" uid="uid://dbwvnierlgiau" path="res://src/player/components/player_visuals.gd" id="16_visuals"]
+[ext_resource type="Script" uid="uid://boafkddfex0gv" path="res://src/player/components/health_bar.gd" id="17_healthbar"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_palette"]
 resource_local_to_scene = true
@@ -237,6 +238,18 @@ collision_mask = 65
 script = ExtResource("1_player")
 attribute_container = NodePath("AttributeContainer")
 ability_container = NodePath("AbilityContainer")
+
+[node name="HealthBar" type="ProgressBar" parent="." unique_id=1742051280 node_paths=PackedStringArray("attribute_container")]
+modulate = Color(0, 1, 0, 1)
+custom_minimum_size = Vector2(64, 16)
+offset_left = -32.0
+offset_top = -48.0
+offset_right = 32.0
+offset_bottom = -32.0
+step = 1.0
+show_percentage = false
+script = ExtResource("17_healthbar")
+attribute_container = NodePath("../AttributeContainer")
 
 [node name="PlayerVisuals" type="Node2D" parent="." unique_id=2146141360 node_paths=PackedStringArray("unit")]
 use_parent_material = true

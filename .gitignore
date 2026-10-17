@@ -6,6 +6,8 @@ godot/reports/*
 godot/tests/reports/*
 !godot/tests/reports/.gdignore
 
+*builds*
+
 # Godot/Windows temp copies left beside locked GDExtension libraries (~name.dll, ~name~RF*.TMP)
 ~*
 

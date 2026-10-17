@@ -7,7 +7,7 @@ func cast(cast_source: Unit, _direction: Vector2) -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
-	HitArea.apply(self, area, source, DAMAGE, KNOCKBACK)
+	HitArea.apply(self, area, source, DAMAGE, KNOCKBACK, hits_self)
 
 
 func _on_sprite_2d_animation_finished() -> void:

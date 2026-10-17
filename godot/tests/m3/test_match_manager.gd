@@ -112,7 +112,7 @@ func test_round_death_locks_players_and_resumes_with_respawns() -> void:
 	assert_bool(first.global_position.is_equal_approx(first.spawn_position)).is_true()
 	assert_float(
 		first.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)
-	).is_equal(10.0)
+	).is_equal(100.0)
 
 
 func test_new_round_clears_spell_cooldowns() -> void:

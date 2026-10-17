@@ -14,3 +14,5 @@ macos.debug.arm64 = "macos/macos.framework/libgodot_gameplay_attributes.macos.te
 macos.release.arm64 = "macos/macos.framework/libgodot_gameplay_attributes.macos.template_release"
 android.debug.arm32 = "android/libgodot_gameplay_attributes.android.template_debug.arm32.so"
 android.debug.arm64 = "android/libgodot_gameplay_attributes.android.template_debug.arm64.so"
+web.wasm32.single.debug = "web/godot_gameplay_attributes.web.template_debug.wasm32.nothreads.wasm"
+web.wasm32.single.release = "web/godot_gameplay_attributes.web.template_release.wasm32.nothreads.wasm"

@@ -1,9 +1,9 @@
 class_name InitializeAttributes extends AttributeBuff
 
-@export var max_health: float = 10.0
+@export var max_health: float = 100.0
 
 
-func _init(_max_health: float = 10.0) -> void:
+func _init(_max_health: float = 100.0) -> void:
 	max_health = _max_health
 
 

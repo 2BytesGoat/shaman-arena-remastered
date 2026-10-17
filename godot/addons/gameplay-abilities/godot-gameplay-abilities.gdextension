@@ -23,3 +23,5 @@ android.debug.x86_64 = "android/libgodot-gameplay-abilities.android.template_deb
 android.release.x86_64 = "android/godot-gameplay-abilities.android.template_release.x86_64.so"
 android.debug.arm64 = "android/libgodot-gameplay-abilities.android.template_debug.arm64.so"
 android.release.arm64 = "android/godot-gameplay-abilities.android.template_release.arm64.so"
+web.wasm32.single.debug = "web/libgodot-gameplay-abilities.web.template_debug.wasm32.nothreads.wasm"
+web.wasm32.single.release = "web/libgodot-gameplay-abilities.web.template_release.wasm32.nothreads.wasm"

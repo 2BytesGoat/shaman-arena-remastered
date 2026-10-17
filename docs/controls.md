@@ -28,7 +28,7 @@ so the muzzle always matches the indicator; the stick only steers the flight dir
 | Release (after hold) | Cast using current `cast_direction`; GGAS duration (cast delay) plays out; cooldown starts |
 | Press + release < ~150ms (tap) on AIMED spell | Still counts as a cast — uses current facing direction |
 | Press on INSTANT spell | Fires immediately using **current facing** (Blink; Smoke ignores direction); no aim, release does nothing |
-| Press the same spell during its cast delay | **Aborts the cast** — free, no cooldown; press again to cast anew (D-004) |
+| Press the same spell during its cast delay | Ignored — the released cast commits and fires (D-016) |
 | Taking a hit during a cast delay | Aborts the cast — unless the spell is **Uninterruptible** (Smoke); death always aborts |
 
 - Hold duration has **no charge effect** — it is purely aiming/channel time.
@@ -93,7 +93,7 @@ so the muzzle always matches the indicator; the stick only steers the flight dir
 | Move | ↑ ↓ ← → | left stick | WASD | left stick |
 | Spells 0–5 | `1` `2` `3` `4` `5` `6` | A, B, X, Y, LB, RB | `U` `I` `O` `P` `L` `K` | A, B, X, Y, LB, RB |
 | Taunt | `Z` | dpad-down | `X` | dpad-down |
-| UI nav | WASD / dpad | dpad | arrows / dpad | dpad |
+| UI nav | WASD | dpad / left stick | arrows | dpad / left stick |
 | UI accept / cancel | `Enter` / `Esc` | A / B | `Enter` / `Esc` | A / B |
 
 - These exist only for editor testing; the arcade layout (single stick + 6 spell buttons +

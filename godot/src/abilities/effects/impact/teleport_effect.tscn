@@ -50,6 +50,9 @@ animations = [{
 }]
 
 [node name="ExplosionEffect" unique_id=1538342731 instance=ExtResource("1_1emba")]
+collision_layer = 0
+monitoring = false
+KNOCKBACK = 0.0
 
 [node name="CollisionShape2D" parent="." index="0" unique_id=770100362]
 

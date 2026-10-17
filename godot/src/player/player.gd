@@ -17,7 +17,7 @@ enum ControllerType { NONE, LOCAL }
 @export var PLAYER_CONTROLLER := 0
 @export var controller_type: ControllerType = ControllerType.NONE:
 	set = _on_controller_type_changed
-@export var max_health := 10.0
+@export var max_health := 100.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
@@ -106,8 +106,8 @@ func request_cast(slot: int) -> void:
 	if slot < 0 or slot >= mini(ability_slots.size(), MAX_SPELL_SLOTS):
 		return
 	var ability := ability_slots[slot]
+	# A released cast commits (D-016): a re-press during the cast delay is ignored.
 	if ability_container.is_ability_active(ability):
-		try_abort_cast(ability)
 		return
 	if ability_container.is_ability_cooldown_active(ability):
 		return

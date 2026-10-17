@@ -127,9 +127,9 @@ func test_lethal_hit_transitions_to_death_animation() -> void:
 
 func test_lethal_hit_during_hit_state_transitions_to_death_animation() -> void:
 	var unit: Unit = await _make_unit()
-	unit.take_hit(null, 1.0, 0.0, Vector2.RIGHT)
+	unit.take_hit(null, unit.max_health * 0.1, 0.0, Vector2.RIGHT)
 	assert_str(unit.state_machine.state.name).is_equal("Hit")
-	unit.take_hit(null, 9.0, 0.0, Vector2.RIGHT)
+	unit.take_hit(null, unit.max_health, 0.0, Vector2.RIGHT)
 	assert_bool(unit.player_dead).is_true()
 	assert_str(unit.state_machine.state.name).is_equal("Dead")
 	assert_str(String(unit.animation_player.current_animation)).is_equal("Dead")

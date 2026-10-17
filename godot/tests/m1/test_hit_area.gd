@@ -18,7 +18,7 @@ func test_apply_damages_unit_and_knocks_it_back() -> void:
 	add_child(attacker)
 	var hurtbox: Area2D = victim.get_node("Hurtbox")
 	HitArea.apply(attacker, hurtbox, null, 3.0, 50.0)
-	assert_float(victim.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(7.0)
+	assert_float(victim.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(97.0)
 	assert_float(victim.velocity.x).is_equal_approx(50.0, 0.1)
 	assert_float(victim.velocity.y).is_equal_approx(0.0, 0.1)
 	assert_bool(victim.hit_locked).is_true()
@@ -29,9 +29,23 @@ func test_apply_ignores_own_hurtbox() -> void:
 	var victim := _make_victim(Vector2(100.0, 0.0))
 	await get_tree().process_frame
 	var hurtbox: Area2D = victim.get_node("Hurtbox")
-	HitArea.apply(hurtbox, hurtbox, victim, 5.0, 100.0)
-	assert_float(victim.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(10.0)
+	assert_bool(HitArea.apply(hurtbox, hurtbox, victim, 5.0, 100.0)).is_false()
+	assert_float(victim.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(100.0)
 	assert_vector(victim.velocity).is_equal(Vector2.ZERO)
+
+
+func test_apply_can_opt_in_to_self_hits() -> void:
+	var victim := _make_victim(Vector2(100.0, 0.0))
+	await get_tree().process_frame
+	var attacker: Area2D = auto_free(Area2D.new())
+	add_child(attacker)
+	var hurtbox: Area2D = victim.get_node("Hurtbox")
+	# `hits_self` is how a spell that can hurt its caster (D-018) reaches its own hurtbox.
+	assert_bool(HitArea.apply(attacker, hurtbox, victim, 5.0, 100.0, true)).is_true()
+	assert_float(victim.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(95.0)
+	assert_float(victim.velocity.x).is_equal_approx(100.0, 0.1)
+	assert_bool(victim.hit_locked).is_true()
+	assert_str(victim.state_machine.state.name).is_equal("Hit")
 
 
 func test_apply_ignores_area_without_unit_parent() -> void:

@@ -7,6 +7,9 @@ class_name SpellScene extends Area2D
 
 var source: Unit
 var cast_direction := Vector2.ZERO
+## Set by the casting ability (`BaseAbility.HITS_SELF`); carried to every impact scene the spell
+## spawns, so a spell that can hurt its caster hurts through its whole chain (D-018).
+var hits_self := false
 
 @onready var expiry_timer: Timer = get_node_or_null("ExpiryTimer")
 
@@ -22,14 +25,14 @@ func _on_expiry_timer_timeout() -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
-	if SourceFilter.ignores(source, area):
-		return
-	HitArea.apply(self, area, source, DAMAGE, KNOCKBACK)
-	_on_hit()
+	if HitArea.apply(self, area, source, DAMAGE, KNOCKBACK, hits_self):
+		_on_hit()
 
 
 func _on_hit() -> void:
 	if on_hit_effect != null:
 		var effect := Utils.instantiate_object_in_scene(on_hit_effect, global_position) as Effect
-		effect.source = source
+		if effect != null:
+			effect.source = source
+			effect.hits_self = hits_self
 	queue_free()

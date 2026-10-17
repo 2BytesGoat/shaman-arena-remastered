@@ -39,8 +39,12 @@ Decisions behind this are recorded in [[decisions]] (D-002).
   or hinders. Duration and stacks are configuration, never part of the name.
 - **Crowd control (CC)** — a debuff that removes control (stun, root, silence…). Still
   named `...Debuff`.
-- **Uninterruptible** — a cast that cannot be aborted: hits and spell-button re-presses do
-  not stop it; only death does. `BaseAbility.UNINTERRUPTIBLE` (currently Smoke only, D-004).
+- **Uninterruptible** — a cast that hits cannot abort; only death stops it.
+  `BaseAbility.UNINTERRUPTIBLE` (currently Smoke only, D-004).
+- **Self-immunity** — by default an impact never hits the unit that cast it (`SourceFilter`,
+  D-001). A spell opts in with `BaseAbility.HITS_SELF`, and the flag is carried through its
+  whole impact chain (projectile, on-hit effect, meteor strike); Smoke and Teleport stay
+  immune (D-018).
 - **Animation slot** — a fixed clip name every character sheet provides (`Idle`,
   `CastOffensive`, …). Abilities select slots, never raw clips; character-flavor clips are
   opt-in via `CAST_ANIMATION` (full contract below, D-005).
@@ -170,7 +174,7 @@ Current spells:
 | Teleport | Aimed | Projectile | Self reposition | — |
 | Anivia Wall | Aimed | Deployable (wall) | Blocker (despawns on contact) | — |
 
-*Smoke is **Uninterruptible** — hits and re-presses cannot abort its cast (D-004). It is
+*Smoke is **Uninterruptible** — hits cannot abort its cast (D-004). It is
 also the money wizard's Attack ability (D-003).*
 
 *`CAST_MODE` is branched on in `Unit.request_cast`: `Instant` spells (Blink, Smoke) cast the

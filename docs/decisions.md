@@ -155,7 +155,8 @@ was never cast):
 - **Re-press** the same spell button during its cast delay → aborts. Uses
   `AbilityContainer.try_end` (probed: fires `ability_ended` without `cooldown_start`,
   leaves no cooldown, immediately re-activatable). Cancel-only — no auto re-aim, so a
-  quick release after the abort cannot chain into a tap-cast.
+  quick release after the abort cannot chain into a tap-cast. *(Superseded by D-016: the
+  re-press is ignored and the cast commits.)*
 - **Taking a hit** during the cast delay aborts it too — unless the spell is flagged
   `UNINTERRUPTIBLE` (Smoke), which ignores hits and re-presses; only death stops it.
 - **Death** aborts every pending cast (`_die`, flag ignored; `_on_spell_cooldown_start`
@@ -166,6 +167,7 @@ The stick never cancels; it only steers.
 **Consequences.**
 
 - Mashing a spell button aborts your own cast (double-tap = cancel) — accepted trade-off.
+  *(Reversed by D-016.)*
 - "Uninterruptible" joins the `spells.md` vocabulary; future spells must choose the flag
   deliberately.
 - Free aborts make feints cheap by design; commitment comes from letting the delay
@@ -326,12 +328,13 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 | Scene | Layer | Mask | Wires `area_entered`? | Why |
 |---|---|---|---|---|
 | Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
-| Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers |
+| Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers (unless the spell opts into self-hits, D-018) |
 | Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
 | Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited ExpiryTimer is unwired) |
 | Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via ExpiryTimer |
 | MeteorIncoming telegraph | 16 | 95 | **no** | contact values exist but are inert (D-001 correction); ExpiryTimer spawns the strike |
 | MeteorExplosion / ExplosionEffect | 16 | 1 | yes (inherited from `effect.tscn`) | 15 dmg / KB 250 and 5 / KB 175 |
+| Teleport effect | 0 | 0 | no | pure VFX (D-018): the POC's effect was inert and its `on_hit_effect` wiring dead; the port activated both, so the remaster disables monitoring/layer instead |
 | AniviaWall area | 64 | 31 = 1–4 + 16 | yes | despawns when any spell touches it |
 | AniviaWall StaticBody | 64 | 15 | — | blocks player movement |
 
@@ -345,6 +348,9 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
   support), effect masks must widen to 15 or effects will miss players 3/4.
 - Layer names live in `project.godot` (`layer_names/2d_physics/layer_N`) and are asserted
   by the contract test.
+- Self-immunity is the default but no longer absolute: an impact carries `hits_self` (set from
+  its ability's `HITS_SELF`) into `HitArea.apply`, which decides whether a self-contact is
+  valid (D-018).
 
 **Not doing.** Per-player collision layers for the current 2-player build (all players share
 layer 1 — friend fire is on by design and `SourceFilter` handles self-immunity);
@@ -703,3 +709,118 @@ next one — reading as "the spell can't be cast anymore" after a round.
 
 **References.** `godot/src/player/player.gd`, `godot/src/match/match_manager.gd`,
 `godot/tests/m3/test_match_manager.gd`.
+
+## D-016 — A released cast commits (re-press no longer cancels)
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** D-004 gave the re-press path a free abort: pressing the same spell button
+during its cast delay cancelled the cast ("double-tap = cancel"), accepted there as the
+cost of mashing the button. In the demo that reads as an accidental self-cancel — a
+released cast is meant to be a commitment the player cannot take back for free.
+
+**Decision.**
+
+- `Unit.request_cast` ignores the press while that ability is in-flight (GGAS duration
+  active): the cast plays out and fires as normal, and only then does the cooldown start.
+  The `try_abort_cast` call is removed from the re-press path.
+- The other two D-004 abort paths stand: a hit aborts an interruptible cast, and death
+  aborts every pending cast (flag ignored). `Unit.try_abort_cast` /
+  `CastHandler.abort_active_casts` remain for those aborts and for loadout swaps.
+- Pressing a *different* spell during a cast delay still starts aiming that spell while
+  the old cast lands (D-004's parked behavior, unchanged).
+
+**Consequences.**
+
+- Casts can no longer be feinted by re-pressing the button; commitment starts at release.
+- `UNINTERRUPTIBLE` (Smoke) keeps its meaning: hits still cannot stop it, only death can.
+
+**References.** `godot/src/player/player.gd`, `godot/tests/m3/test_player_controller.gd`,
+`docs/controls.md`.
+
+## D-017 — Character health bar (100 HP scale)
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** The POC had a `Stats/HealthBar` — a green 64×16 `ProgressBar` floating above
+each character — and the port dropped it in the M3 cleanup, so health became invisible. In
+the POC it barely mattered: health was 10 with 7–10 damage hits, so any hit emptied the pool
+(and the bar was mis-scaled anyway: `max_value` was never set, so it kept the engine default
+of 100 against 10 HP and only ever filled ~10%).
+
+**Decision.**
+
+- The bar returns with POC geometry and placement: a green `ProgressBar`, 64×16, at local
+  `(-32,-48)` — just above the sprite — as a child of the player root, world-space (follows
+  the unit; the M5 camera will scale it with the world), always visible, no smoothing.
+- It is a `HealthBar` component (`src/player/components/health_bar.gd`) that reads
+  `MaxHealth`/`Health` off the `AttributeContainer` on `attribute_changed`: hits, death,
+  `respawn()` and the future lava DoT all flow through it, and no `Unit` code touches the bar.
+  `max_value` comes from `MaxHealth`, so the POC's 100-vs-10 mismatch cannot repeat.
+- The bar sits outside `PlayerVisuals`/`Flippable`: facing flips can't mirror it and the
+  palette shader can't tint it.
+- The health scale moves 10 → 100 (`Unit.max_health`), POC damage values stay (Fireball 10,
+  Boomerang 7, explosion 5), so a KO takes ~10–14 hits and the bar drains in visible steps.
+
+**Consequences.**
+
+- Spells are no longer near-one-shots: rounds last longer, which is also the footing M5.5's
+  knockback accumulation needs.
+- The lava DoT (M5) and future heal/restore effects get a readable display for free.
+
+**Not doing.** Screen-space bars pinned to the HUD, damage-ghost/trailing fill, hide-at-full
+health, per-player palette tints.
+
+**References.** `godot/src/player/components/health_bar.gd`, `godot/src/player/player.tscn`,
+`godot/tests/m3/test_health_bar.gd`, POC `scenes/player/stats.gd`.
+
+## D-018 — Self-hits are opt-in per spell (Smoke and Teleport stay immune)
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** The POC made every spell self-immune victim-side (`if area.source == self: return`)
+and the port kept that as `SourceFilter` inside `HitArea.apply` — one gate for every caller
+(D-001, D-007). The demo wanted projectiles that can hit the character that casts them, so the
+gate was lifted; that turned self-hits on for *everything*: Smoke's field applied its 10 / KB 200
+to the caster, and Teleport's arrival effect (which inherited `Effect.KNOCKBACK = 100` and whose
+POC wiring was dead — the POC's `teleport.gd` never spawned it, and its scene was inert VFX) hit
+whoever stood at the landing point.
+
+**Decision.**
+
+- Self-immunity is the **default**; a spell opts in with `BaseAbility.HITS_SELF = true` (next to
+  `UNINTERRUPTIBLE`). Fireball, Boomerang and Meteor opt in — all five of their impacts self-hit;
+  Smoke, Teleport, Blink and AniviaWall stay immune at the default.
+- `HitArea.apply(attacker, target, source, damage, knockback, hits_self := false)` holds the
+  single gate again and returns `false` only when it rejected a self-contact. `SpellScene` uses
+  that result so its despawn/effect reaction is unchanged (walls and unit-less areas still consume
+  a projectile); Smoke keeps its hit-once-never-despawn override; `Effect` passes the flag too.
+- The flag is **carried through the impact chain** at three spawn sites: `BaseAbility.cast()`
+  (ability → spell), `SpellScene._on_hit()` (spell → on-hit effect), and
+  `MeteorIncoming._on_expiry_timer_timeout()` (telegraph → strike). A scene spawned directly
+  (tests, tools) defaults to immune.
+- The ability-level flag is deliberate: one switch per spell (the five opted-in impacts map to
+  three spells). A future "projectile hits me, its blast doesn't" needs a scene-level override.
+- Teleport's arrival effect becomes pure VFX with `monitoring = false`, `collision_layer = 0`,
+  `KNOCKBACK = 0` — the landing sprite stays, the accidental hitbox goes.
+
+**Consequences.**
+
+- Eating your own spell now applies damage, knockback and the `Hit` reaction, which aborts your
+  own interruptible windup (D-004). A returning Boomerang hits its caster unless they leave the
+  cast line; a self-caught Fireball explosion applies KB 175.
+- Putting the gate back in `HitArea.apply` means a subclass override can no longer silently lose
+  self-immunity (Smoke's override had relied on the gate living in `HitArea`).
+- `Utils.instantiate_object_in_scene` falls back to the tree root when there is no
+  `current_scene`, so spawns cannot crash during scene transitions and the chain is testable.
+
+**References.** `godot/src/common/hit_area.gd`, `godot/src/common/utils.gd`,
+`godot/src/abilities/base_ability.gd`, `godot/src/abilities/spell_scene.gd`,
+`godot/src/abilities/effects/effect.gd`,
+`godot/src/abilities/effects/telegraph/meteor_incoming.gd`,
+`godot/src/abilities/effects/impact/teleport_effect.tscn`,
+`godot/tests/m1/test_hit_area.gd`, `godot/tests/m1/test_spell_scene.gd`,
+POC `scenes/spells/teleport.gd`, POC `scenes/effects/teleport_effect.tscn`.

@@ -56,4 +56,3 @@ DAMAGE = 7.0
 [node name="ExplosionEffect" parent="." index="1" unique_id=174993004]
 material = SubResource("CanvasItemMaterial_y2kby")
 sprite_frames = SubResource("SpriteFrames_52shv")
-
