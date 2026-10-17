@@ -10,7 +10,6 @@ const MOVE_ACCELERATION := 345.0
 const MOVE_FRICTION := 690.0
 const SPELL_SPAWN_OFFSET := 360.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
-const CONSUMABLE_SLOTS := Loadout.CONSUMABLE_SLOTS
 
 enum ControllerType { NONE, LOCAL }
 

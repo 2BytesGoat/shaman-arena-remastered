@@ -2,99 +2,76 @@ class_name SpellSelect extends MarginContainer
 
 signal loadout_complete(player_controller: int, picks: Array[Ability])
 
-const GRID_COLUMNS := 4
-const TOTAL_SLOTS := Loadout.MAX_SPELLS + Loadout.CONSUMABLE_SLOTS
-
 @export var player_controller := 0
 @export var catalogue: Array[Ability] = []
 @export var title_label: Label
-@export var grid: GridContainer
+@export var cards: HBoxContainer
 @export var slots_container: HBoxContainer
 @export var hint_label: Label
 @export var spell_button_scene: PackedScene
 
 var loadout := Loadout.new()
 var focus_index := 0
+var offers: Array[Ability] = []
 
-var _buttons: Array[SpellSelectButton] = []
+var _card_buttons: Array[SpellSelectButton] = []
 var _slot_icons: Array[TextureRect] = []
 var _locked := false
+var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
 	title_label.text = "PLAYER %d" % (player_controller + 1)
 	title_label.add_theme_color_override("font_color", _player_color())
-	grid.columns = GRID_COLUMNS
-	_build_grid()
+	_rng.randomize()
 	_build_slots()
-	_update_visuals()
+	start_draft()
 
 
 func _process(_delta: float) -> void:
 	if _locked or not visible:
 		return
 	if Input.is_action_just_pressed(action("ui_left")):
-		move_focus_by(Vector2i.LEFT)
+		move_focus_by(-1)
 	elif Input.is_action_just_pressed(action("ui_right")):
-		move_focus_by(Vector2i.RIGHT)
-	elif Input.is_action_just_pressed(action("ui_up")):
-		move_focus_by(Vector2i.UP)
-	elif Input.is_action_just_pressed(action("ui_down")):
-		move_focus_by(Vector2i.DOWN)
+		move_focus_by(1)
 	elif Input.is_action_just_pressed(action("ui_accept")):
 		handle_accept()
-	elif Input.is_action_just_pressed(action("ui_cancel")):
-		handle_cancel()
 
 
 func action(suffix: String) -> StringName:
 	return StringName("player_%d_%s" % [player_controller, suffix])
 
 
-func set_locked(value: bool) -> void:
-	_locked = value
+## Rolls a fresh hand of offers and re-opens the panel. Called at match start and —
+## once the rounds work lands — after every death that drafts another card.
+func start_draft() -> void:
+	offers = SpellDraw.draw_offers(catalogue, SpellDraw.OFFER_COUNT, loadout.picks, _rng)
+	focus_index = 0
+	_locked = false
+	visible = true
+	_build_cards()
+	_update_visuals()
 
 
-static func move_focus(index: int, direction: Vector2i, columns: int, count: int) -> int:
+static func move_focus(index: int, step: int, count: int) -> int:
 	if count <= 0:
 		return 0
-	@warning_ignore("integer_division")
-	var row := index / columns
-	var column := index % columns
-	if direction.x != 0:
-		var target_index := index + direction.x
-		var target_column := column + direction.x
-		if target_column >= 0 and target_column < columns and target_index < count:
-			return target_index
-		return index
-	if direction.y == 0:
-		return index
-	var target_row := row + direction.y
-	var target := target_row * columns + column
-	if target_row >= 0 and target < count:
-		return target
-	return index
+	return clampi(index + step, 0, count - 1)
 
 
-func move_focus_by(direction: Vector2i) -> void:
-	focus_index = move_focus(focus_index, direction, GRID_COLUMNS, _buttons.size())
+func move_focus_by(step: int) -> void:
+	focus_index = move_focus(focus_index, step, _card_buttons.size())
 	_update_visuals()
 
 
 func handle_accept() -> void:
-	if _locked or _buttons.is_empty():
+	if _locked or offers.is_empty():
 		return
-	loadout.toggle(_buttons[focus_index].ability)
-	_update_visuals()
-	if loadout.is_full():
-		_complete()
-
-
-func handle_cancel() -> void:
-	if _locked or loadout.picks.is_empty():
+	if not loadout.pick(offers[focus_index]):
 		return
-	loadout.unpick(loadout.picks[-1])
 	_update_visuals()
+	_complete()
 
 
 func _complete() -> void:
@@ -103,20 +80,22 @@ func _complete() -> void:
 	visible = false
 
 
-func _build_grid() -> void:
-	for ability in catalogue:
+func _build_cards() -> void:
+	for child in cards.get_children():
+		cards.remove_child(child)
+		child.queue_free()
+	_card_buttons.clear()
+	for ability in offers:
 		var button := spell_button_scene.instantiate() as SpellSelectButton
-		grid.add_child(button)
+		cards.add_child(button)
 		button.setup(ability)
-		_buttons.append(button)
+		_card_buttons.append(button)
 
 
 func _build_slots() -> void:
-	for index in TOTAL_SLOTS:
+	for _index in Loadout.MAX_SPELLS:
 		var slot := Panel.new()
 		slot.custom_minimum_size = Vector2(48, 48)
-		if index >= Loadout.MAX_SPELLS:
-			slot.modulate = Color(1.0, 1.0, 1.0, 0.35)
 		var icon := TextureRect.new()
 		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -128,15 +107,14 @@ func _build_slots() -> void:
 
 
 func _update_visuals() -> void:
-	for index in _buttons.size():
-		_buttons[index].set_focused(index == focus_index and not _locked)
-		_buttons[index].set_picked(loadout.has(_buttons[index].ability))
+	for index in _card_buttons.size():
+		_card_buttons[index].set_focused(index == focus_index and not _locked)
 	for index in _slot_icons.size():
 		var texture: Texture2D = null
 		if index < loadout.picks.size() and loadout.picks[index] is BaseAbility:
 			texture = (loadout.picks[index] as BaseAbility).ICON
 		_slot_icons[index].texture = texture
-	hint_label.text = "PICK %d/%d" % [loadout.picks.size(), Loadout.MAX_SPELLS]
+	hint_label.text = "NO SPELLS AVAILABLE" if offers.is_empty() else "CHOOSE A SPELL"
 
 
 func _player_color() -> Color:

@@ -10,11 +10,11 @@
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/teleport_ability.tres" id="8_teleport"]
 [ext_resource type="Ability" path="res://src/resources/abilities/deployable/anivia_wall_ability.tres" id="9_wall"]
 
-[node name="SpellSelect" type="MarginContainer" node_paths=PackedStringArray("title_label", "grid", "slots_container", "hint_label")]
+[node name="SpellSelect" type="MarginContainer" node_paths=PackedStringArray("title_label", "cards", "slots_container", "hint_label")]
 script = ExtResource("1_select")
 catalogue = Array[Ability]([ExtResource("4_fireball"), ExtResource("5_boomerang"), ExtResource("6_meteor"), ExtResource("7_smoke"), ExtResource("8_teleport"), ExtResource("3_blink"), ExtResource("9_wall")])
 title_label = NodePath("VBox/Title")
-grid = NodePath("VBox/Grid")
+cards = NodePath("VBox/Cards")
 slots_container = NodePath("VBox/Slots")
 hint_label = NodePath("VBox/Hint")
 spell_button_scene = ExtResource("2_button")
@@ -33,19 +33,19 @@ theme_override_font_sizes/font_size = 18
 text = "PLAYER 1"
 horizontal_alignment = 1
 
-[node name="Grid" type="GridContainer" parent="VBox"]
+[node name="Cards" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 4
+size_flags_vertical = 6
+alignment = 1
+theme_override_constants/separation = 12
 
 [node name="Slots" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
+alignment = 1
 theme_override_constants/separation = 6
 
 [node name="Hint" type="Label" parent="VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
-text = "PICK 0/6"
+text = "CHOOSE A SPELL"
 horizontal_alignment = 1

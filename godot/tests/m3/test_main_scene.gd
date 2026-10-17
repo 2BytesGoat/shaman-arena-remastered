@@ -1,10 +1,8 @@
 extends GdUnitTestSuite
 
 
-func _pick_six(panel: SpellSelect) -> void:
-	for index in Loadout.MAX_SPELLS:
-		panel.focus_index = index
-		panel.handle_accept()
+func _pick_one(panel: SpellSelect) -> void:
+	panel.handle_accept()
 
 
 func _started_main() -> Node:
@@ -14,7 +12,7 @@ func _started_main() -> Node:
 	await get_tree().process_frame
 	var manager := main.get_node("MatchManager") as MatchManager
 	for panel in manager.selection_panels():
-		_pick_six(panel)
+		_pick_one(panel)
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	return main
 
@@ -32,14 +30,14 @@ func test_picking_both_players_starts_the_match() -> void:
 	var second := manager.player_for(1)
 	assert_object(first).is_not_null()
 	assert_object(second).is_not_null()
-	_pick_six(panels[0])
+	_pick_one(panels[0])
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.SELECTING)
-	assert_int(first.ability_slots.size()).is_equal(Loadout.MAX_SPELLS)
-	_pick_six(panels[1])
+	assert_int(first.ability_slots.size()).is_equal(1)
+	_pick_one(panels[1])
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	assert_bool(first.is_match_ready).is_true()
 	assert_bool(second.is_match_ready).is_true()
-	assert_int(second.ability_slots.size()).is_equal(Loadout.MAX_SPELLS)
+	assert_int(second.ability_slots.size()).is_equal(1)
 	assert_bool((main.get_node("SelectionLayer") as CanvasLayer).visible).is_false()
 
 

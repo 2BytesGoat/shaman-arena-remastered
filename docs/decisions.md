@@ -502,3 +502,43 @@ tap-cast was parked on the M4 list; it landed early.
 `godot/src/resources/abilities/self/blink_ability.tres`,
 `godot/src/resources/abilities/field/smoke_ability.tres`,
 `godot/src/player/states/aim_state.gd`, `godot/tests/m3/test_player_controller.gd`.
+
+## D-011 — Rounds-style spell draft (match start)
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** The M3 selection screen (D-006) showed the whole catalogue as a grid and
+auto-readied at 6 picks (POC parity). The demo wants the Rounds feel instead: a small
+random hand, one committed choice, a pool that grows as matches play out.
+
+**Decision.**
+
+- Match start = one draft per player: **5 random distinct offers**, one **committed** pick
+  that goes into the pool. No un-pick, no re-roll (Rounds-style); cancel has no binding.
+- Offers never repeat within a hand and never include a spell the player already owns
+  (`SpellDraw`, RNG injected so seeded tests are deterministic).
+- Both players draft simultaneously on their own panel; the pools are independent — the
+  same spell can be offered to (and taken by) both.
+- The pool cap stays `Loadout.MAX_SPELLS = 6`. The HUD renders one button per owned spell
+  and grows with the pool; the draft screen shows the 6 pool slots filling up.
+- Consumable/item slots are **removed for now**: no HUD placeholders, no reserved slots in
+  the draft strip, `CONSUMABLE_SLOTS` constants gone. The reserved
+  `player_N_consumable_0/1` input actions stay in `project.godot` (inert) until the item
+  work lands.
+- `SpellSelect.start_draft()` is the re-entry point for the **per-death draft** ("loser
+  drafts a card"): it re-rolls offers and re-opens the panel; the pick flow is unchanged.
+  Wiring it needs the rounds loop — deferred, because today the first death ends the match.
+
+**Consequences.**
+
+- A match starts with 1 spell per player; with no rounds yet, per-death drafts can't fire,
+  so the demo match is 1 spell each, first death ends it.
+- `MatchManager` is unchanged — it still ready-gates on `loadout_complete`; the rounds
+  milestone will add the post-death draft phase it was built for.
+- D-006's "auto-ready at 6 picks" and the 6 + 2 slot limit are superseded at draft time;
+  the pool itself keeps the 6-spell cap.
+
+**References.** `godot/src/match/spell_draw.gd`, `godot/src/ui/spell_select.gd`,
+`godot/src/match/match_manager.gd`, `godot/tests/m3/test_spell_draw.gd`,
+`godot/tests/m3/test_selection_input.gd`.

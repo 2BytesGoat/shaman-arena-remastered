@@ -24,10 +24,6 @@ func rebuild(abilities: Array[Ability]) -> void:
 		button_container.add_child(button)
 		button.setup(ability)
 		ability_buttons[ability] = button
-	for _index in Loadout.CONSUMABLE_SLOTS:
-		var button := ability_button_scene.instantiate() as AbilityButton
-		button_container.add_child(button)
-		button.setup_empty()
 
 
 func _on_ability_container_cooldown_start(ability: Ability) -> void:

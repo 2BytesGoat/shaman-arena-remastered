@@ -1,7 +1,6 @@
 class_name Loadout extends RefCounted
 
 const MAX_SPELLS := 6
-const CONSUMABLE_SLOTS := 2
 
 var picks: Array[Ability] = []
 
