@@ -104,7 +104,7 @@ Every character sheet ships a fixed set of `AnimationPlayer` clips — the **slo
 Abilities select slots, never raw clips, so a shaman without a given pose degrades to the
 generic slot instead of breaking. The slot names live in code as constants in
 `AnimationSlots` (`godot/src/common/animation_slots.gd`), pinned by
-`godot/tests/m2/test_animation_slots.gd`.
+`godot/tests/abilities/test_animation_slots.gd`.
 
 | Slot | Playback | Selected by | Money wizard |
 |---|---|---|---|

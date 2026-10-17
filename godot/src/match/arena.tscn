@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bcwucfl238ycs"]
+
+[ext_resource type="Script" uid="uid://b18m7atop0a5p" path="res://src/match/arena.gd" id="1_arena"]
+[ext_resource type="TileSet" uid="uid://bqkchjtxjyhda" path="res://src/resources/arena/arena_tileset.tres" id="2_tileset"]
+
+[node name="Arena" type="TileMapLayer" unique_id=600789410 groups=["Lava"]]
+tile_set = ExtResource("2_tileset")
+script = ExtResource("1_arena")
+physics_quadrant_size = 8

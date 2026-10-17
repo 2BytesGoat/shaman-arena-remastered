@@ -14,10 +14,13 @@ signal phase_changed(phase: MatchPhase)
 
 @export var selection_layer: CanvasLayer
 @export var match_over: MatchOver
+## Arena: reset and restart its shrink every time the match enters RUNNING;
+## stop it whenever the match leaves RUNNING (drafts, KO beat, game over).
+@export var arena: Arena
 @export var skip_selection := false
 @export var default_loadout: Array[Ability] = []
 @export var character_class: CharacterClass
-## KO beat (D-014): real seconds of world slow motion after a death, before the loser's
+## KO beat: real seconds of world slow motion after a death, before the loser's
 ## draft or the winner banner opens. 0 disables the beat (flow tests, fast dev checks).
 @export var death_slowmo_duration := 1.0
 ## Engine time scale while the KO beat runs (1 = normal speed).
@@ -49,7 +52,7 @@ func _ready() -> void:
 
 ## Every seat plays the match's `character_class` for now: the class seeds each draft pool
 ## with its basic spells and is stored on the unit for future stats/passives. A class-select
-## screen later only changes this function (D-013).
+## screen later only changes this function.
 func _assign_character_classes() -> void:
 	for player in _players:
 		player.character_class = character_class
@@ -152,7 +155,7 @@ func _on_player_died(player_number: int) -> void:
 	_round_wins[winner.PLAYER_CONTROLLER] = round_wins_for(winner.PLAYER_CONTROLLER) + 1
 	var match_point := round_wins_for(winner.PLAYER_CONTROLLER) >= ROUNDS_TO_WIN
 	_set_phase(MatchPhase.GAME_OVER if match_point else MatchPhase.ROUND_OVER)
-	# The KO beat holds the draft/banner back until the death clip has played out (D-014).
+	# The KO beat holds the draft/banner back until the death clip has played out.
 	if death_slowmo_duration > 0.0 and (not match_point or death_slowmo_on_match_point):
 		await _play_death_beat(player_for(player_number))
 	if match_point:
@@ -166,7 +169,7 @@ func _on_player_died(player_number: int) -> void:
 	_begin_round_draft(player_for(player_number))
 
 
-## The KO beat (D-014): the world drops into slow motion around the death, then time
+## The KO beat: the world drops into slow motion around the death, then time
 ## returns to normal and the rest of the loser's `Dead` clip plays out. Only after that do
 ## the loser's draft — or the winner banner — take the screen.
 func _play_death_beat(loser: Unit) -> void:
@@ -243,6 +246,12 @@ func _set_phase(value: MatchPhase) -> void:
 	if phase == value:
 		return
 	phase = value
+	if arena != null:
+		if phase == MatchPhase.RUNNING:
+			arena.reset()
+			arena.start_shrink()
+		else:
+			arena.stop_shrink()
 	phase_changed.emit(phase)
 
 

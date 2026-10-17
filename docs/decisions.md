@@ -178,7 +178,7 @@ it currently starts aiming the new spell while the old cast still lands); any co
 cost for aborts.
 
 **References.** `godot/src/player/player.gd`, `godot/src/abilities/base_ability.gd`,
-`godot/tests/m2/test_cast_abort.gd`.
+`godot/tests/player/test_cast_abort.gd`.
 
 ## D-005 — Character animation slots (abilities name slots, not clips)
 
@@ -241,7 +241,7 @@ changes — a state calling `play(&"Attack")` is the whole wiring.
 holder — the `AttributeNames` pattern, not the autoload): cast slots, `CAST_DEFERRED`, and
 the `REQUIRED` set. The death slot is canonically **`Dead`** — state node, clip, and
 constant agree, so `DeadState` keeps the uniform `play(self.name)` (this supersedes the
-table's original `Death` name). `godot/tests/m2/test_animation_slots.gd` pins the contract:
+table's original `Death` name). `godot/tests/abilities/test_animation_slots.gd` pins the contract:
 required slots exist on the wizard sheet, the deferred slots are implemented, the
 locomotion state nodes are named after their clips, and one-shot slots don't loop.
 
@@ -256,7 +256,7 @@ D-003's ability wiring. Prioritised in `docs/plan.md` (M4); nothing implemented 
 
 **References.** `docs/spells.md` (Character animation slots),
 `godot/src/common/animation_slots.gd`, `godot/src/abilities/base_ability.gd`,
-`godot/src/player/player.gd`, `godot/tests/m2/test_animation_slots.gd`.
+`godot/src/player/player.gd`, `godot/tests/abilities/test_animation_slots.gd`.
 
 ## D-006 — Match flow & loadout selection
 
@@ -302,7 +302,8 @@ future rounds/gold can extend without rework.
 
 ## D-007 — Physics layer contract (2D)
 
-- **Status:** accepted (M3, documentation of the M1/Phase-0 wiring)
+- **Status:** accepted (M3, documentation of the M1/Phase-0 wiring); layer 6 updated in
+  M5 (D-019)
 - **Date:** 2026-10-14
 
 **Context.** Layer names were ported POC-verbatim in Phase 0, but the actual masks on the
@@ -311,7 +312,7 @@ doesn't tell you why a mask says 95 — and M4 (more spells, consumables) plus M
 camera) will copy these numbers unless the intent is recorded.
 
 **Decision.** The mapping below is the contract. Changing any value means changing this
-entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
+entry and the pinning test `godot/tests/integration/test_layer_contract.gd`.
 
 **Layers**
 
@@ -320,15 +321,16 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 | 1 | `player_0` | **All players and their Hurtboxes** (every controller, today) |
 | 2–4 | `player_1..3` | Reserved — named, but nothing assigns them yet (see caveat) |
 | 5 | `projectile` | Spell areas (concrete projectiles) and Effect areas |
-| 6 | `lava` | Reserved for M5 |
+| 6 | `lava` | Arena hazard tiles (the arena `TileMapLayer`'s physics body, mask 0); the players' `Hurtbox` masks it for the burn (M5/D-019) |
 | 7 | `Environment` | `AniviaWall` area + its `StaticBody2D`; future environment areas |
 
-**Scene masks (verified 2026-10-14)**
+**Scene masks (verified 2026-10-14; lava row updated 2026-10-17, D-019)**
 
 | Scene | Layer | Mask | Wires `area_entered`? | Why |
 |---|---|---|---|---|
 | Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
-| Hurtbox | 1 | 0 | — | passive target; own hits filtered by `SourceFilter`, not layers (unless the spell opts into self-hits, D-018) |
+| Arena hazard tiles (liquid) | 32 | 0 | — | walkable burn zone; detected through the hurtbox mask (D-019) |
+| Hurtbox | 1 | 32 = lava | — | detects the arena hazard body for the burn (M5/D-019); spell hits stay attacker-side, self-hits filtered by `SourceFilter` (D-018) |
 | Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
 | Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited ExpiryTimer is unwired) |
 | Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via ExpiryTimer |
@@ -356,7 +358,7 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 layer 1 — friend fire is on by design and `SourceFilter` handles self-immunity);
 renumbering the POC layers.
 
-**References.** `godot/project.godot`, `godot/tests/phase0/test_layer_contract.gd`,
+**References.** `godot/project.godot`, `godot/tests/integration/test_layer_contract.gd`,
 `godot/src/abilities/spells/*/*.tscn`, `godot/src/abilities/effects/`,
 `godot/src/player/player.tscn`.
 
@@ -395,12 +397,12 @@ animation track paths later.
   for the generic `play`/`play_cast`/`reassert_animation` model.
 
 **Consequences.** Restructuring the sprite subtree means rewriting those track paths by hand
-in the `.tscn`; the resolution test `godot/tests/m3/test_player_visuals.gd` catches mistakes
+in the `.tscn`; the resolution test `godot/tests/player/test_player_visuals.gd` catches mistakes
 (wrong track paths silently no-op at runtime). The POC's `Flippable` node is kept as a nested
 node so sprite transforms stay unchanged.
 
 **References.** `godot/src/player/player.tscn`, `godot/src/player/components/player_visuals.gd`,
-`godot/src/player/components/cast_handler.gd`, `godot/tests/m3/test_player_visuals.gd`.
+`godot/src/player/components/cast_handler.gd`, `godot/tests/player/test_player_visuals.gd`.
 
 ## D-009 — Controllers own input, Unit owns intents (controller slot)
 
@@ -473,7 +475,7 @@ controller classes before their milestone; input buffering (still parked in `con
 `godot/src/player/controllers/player_controller.gd`,
 `godot/src/player/controllers/local_player_controller.gd`,
 `godot/src/player/states/aim_state.gd`, `godot/src/player/components/cast_handler.gd`,
-`godot/tests/m3/test_player_controller.gd`.
+`godot/tests/player/test_player_controller.gd`.
 
 ## D-010 — Instant spells cast on press (no Aim phase)
 
@@ -507,7 +509,7 @@ tap-cast was parked on the M4 list; it landed early.
 **References.** `godot/src/player/player.gd`,
 `godot/src/resources/abilities/self/blink_ability.tres`,
 `godot/src/resources/abilities/field/smoke_ability.tres`,
-`godot/src/player/states/aim_state.gd`, `godot/tests/m3/test_player_controller.gd`.
+`godot/src/player/states/aim_state.gd`, `godot/tests/player/test_player_controller.gd`.
 
 ## D-011 — Rounds-style spell draft (match start)
 
@@ -553,8 +555,8 @@ random hand, one committed choice, a pool that grows as matches play out.
   the pool itself keeps the 6-spell cap.
 
 **References.** `godot/src/match/spell_draw.gd`, `godot/src/ui/spell_select.gd`,
-`godot/src/match/match_manager.gd`, `godot/tests/m3/test_spell_draw.gd`,
-`godot/tests/m3/test_selection_input.gd`.
+`godot/src/match/match_manager.gd`, `godot/tests/match/test_spell_draw.gd`,
+`godot/tests/ui/test_selection_input.gd`.
 
 ## D-012 — Round loop: first to 5, the loser drafts a card
 
@@ -595,8 +597,8 @@ match continues until someone has taken 5 rounds.
 
 **References.** `godot/src/match/match_manager.gd`, `godot/src/player/player.gd`,
 `godot/src/ui/match_over.gd`, `godot/src/ui/spell_select.gd`,
-`godot/src/match/spell_draw.gd`, `godot/tests/m3/test_match_manager.gd`,
-`godot/tests/m3/test_main_scene.gd`.
+`godot/src/match/spell_draw.gd`, `godot/tests/match/test_match_manager.gd`,
+`godot/tests/integration/test_main_scene.gd`.
 
 ## D-013 — Character classes and basic spells
 
@@ -636,7 +638,7 @@ Fireball and Smoke are basic spells — always owned, never drafted.
 **References.** `godot/src/classes/character_class.gd`,
 `godot/src/resources/classes/wizard.tres`, `godot/src/match/loadout.gd`,
 `godot/src/ui/spell_select.gd`, `godot/src/match/match_manager.gd`,
-`godot/tests/m3/test_character_class.gd`, `godot/tests/m3/test_main_scene.gd`.
+`godot/tests/classes/test_character_class.gd`, `godot/tests/integration/test_main_scene.gd`.
 
 ## D-014 — Death beat: KO slow motion, then the draft
 
@@ -675,7 +677,7 @@ draft take the screen.
   on the manager for instant testing.
 
 **References.** `godot/src/match/match_manager.gd`, `godot/src/player/player.gd`,
-`godot/tests/m3/test_match_manager.gd`, `godot/tests/m3/test_main_scene.gd`.
+`godot/tests/match/test_match_manager.gd`, `godot/tests/integration/test_main_scene.gd`.
 
 ## D-015 — Round start clears spell cooldowns
 
@@ -708,7 +710,7 @@ next one — reading as "the spell can't be cast anymore" after a round.
 - D-012's "cooldowns are not reset" bullet is superseded.
 
 **References.** `godot/src/player/player.gd`, `godot/src/match/match_manager.gd`,
-`godot/tests/m3/test_match_manager.gd`.
+`godot/tests/match/test_match_manager.gd`.
 
 ## D-016 — A released cast commits (re-press no longer cancels)
 
@@ -736,7 +738,7 @@ released cast is meant to be a commitment the player cannot take back for free.
 - Casts can no longer be feinted by re-pressing the button; commitment starts at release.
 - `UNINTERRUPTIBLE` (Smoke) keeps its meaning: hits still cannot stop it, only death can.
 
-**References.** `godot/src/player/player.gd`, `godot/tests/m3/test_player_controller.gd`,
+**References.** `godot/src/player/player.gd`, `godot/tests/player/test_player_controller.gd`,
 `docs/controls.md`.
 
 ## D-017 — Character health bar (100 HP scale)
@@ -774,7 +776,7 @@ of 100 against 10 HP and only ever filled ~10%).
 health, per-player palette tints.
 
 **References.** `godot/src/player/components/health_bar.gd`, `godot/src/player/player.tscn`,
-`godot/tests/m3/test_health_bar.gd`, POC `scenes/player/stats.gd`.
+`godot/tests/player/test_health_bar.gd`, POC `scenes/player/stats.gd`.
 
 ## D-018 — Self-hits are opt-in per spell (Smoke and Teleport stay immune)
 
@@ -822,5 +824,127 @@ whoever stood at the landing point.
 `godot/src/abilities/effects/effect.gd`,
 `godot/src/abilities/effects/telegraph/meteor_incoming.gd`,
 `godot/src/abilities/effects/impact/teleport_effect.tscn`,
-`godot/tests/m1/test_hit_area.gd`, `godot/tests/m1/test_spell_scene.gd`,
+`godot/tests/common/test_hit_area.gd`, `godot/tests/abilities/test_spell_scene.gd`,
 POC `scenes/spells/teleport.gd`, POC `scenes/effects/teleport_effect.tscn`.
+
+## D-019 — Arena shrink, lava burn & match camera
+
+- **Status:** accepted (demo iteration; M5 slice)
+- **Date:** 2026-10-17
+
+**Context.** The port had no arena at all: players moved on an empty background, layer 6
+(`lava`) was reserved (D-007) and the POC's `tilemap_arena.gd` was still unported. The demo
+wanted the jam arena back — visible, shrinking and lethal — before the rest of M5 (title
+scene, flow closure).
+
+**Decision.**
+
+- Port `tilemap_arena.gd` as `src/match/arena.gd` (`Arena extends TileMapLayer`) +
+  `arena.tscn`, a child of `main.tscn` at the play-area centre and first in draw order.
+  Same 16 px tiles and 3 s/tile shrink as the POC, same cell rules: floor inside the
+  circle, then a one-tile warning band, then animated magma (`MagmaTileAnimation.png`,
+  2 frames @ 0.5 s). The node stays in group `Lava`.
+- The POC repainted its whole 300×300 grid on load and on every shrink. The port paints the
+  magma field once (out to the starting circle + 64 tiles, past any camera view), repaints
+  only the changed ring per shrink, and `reset()` repaints only the starting circle.
+- Lava remains a walkable damage zone — no walls, POC parity. Detection is the POC-style
+  physics one: the player `Hurtbox` masks layer 6 (0 → 32, D-007 updated) and counts magma
+  bodies; `Unit.update_lava_burn()` applies `HealthDamage` once per second
+  (`LAVA_DAMAGE_PER_TICK` 25 ≈ 4 s from full health; the POC ratio would be 50). The burn
+  never enters `Hit`, never knocks back and never aborts casts — POC parity. Lethal burns
+  route through the attribute signal, so the health bar and the round flow need no special
+  casing.
+- `MatchManager` drives the arena: entering `RUNNING` resets the circle and starts the
+  shrink timer; leaving `RUNNING` stops it. Every round starts on a full circle, and the
+  shrink pauses for drafts, the KO beat and the game-over banner.
+- The M5 match camera is pulled forward: `MatchCamera extends Camera2D`
+  (`src/match/match_camera.gd`) ports the POC's midpoint follow + zoom-to-fit (0.7 safe
+  margin, base zoom 2, floor 0.5×). One deliberate deviation: the POC only ever zoomed out;
+  the port also zooms back in when the players regroup.
+
+**Consequences.**
+
+- Lava deaths feed the existing KO beat → draft → round flow (D-012/D-014) for free; the
+  win-screen/title closure stays open for the rest of M5.
+- Tuning knobs: `Arena.start_radius` (50), `edge_thickness` (1), `shrink_interval` (3 s),
+  `Unit.LAVA_DAMAGE_PER_TICK` (25) and `LAVA_TICK_INTERVAL` (1 s); the camera exports are
+  `safe_margin_ratio`, `follow_weight`, `zoom_weight`, `min_zoom_ratio`.
+- The camera zoom clamp keeps the view from zooming past 0.5× the scene's initial zoom;
+  the framing math is static and unit-tested.
+- The magma field paint is bounded (`Arena.FIELD_MARGIN`), so a far-launched player could in
+  theory outrun the painted magma and see the background — not reachable in practice with
+  the current knockbacks and the 0.5× zoom floor.
+
+**Not doing.** Fall/elimination beyond the burn, arena walls, camera drag margins,
+per-round arena presets, lava audio.
+
+**Addendum (2026-10-17, isometric tile set).** The arena art moved to an isometric tile set
+(`terrain_tile_069` floor blocks, `water_tile_104` liquid), superseding the bullets above in
+three places:
+
+- **Same rules, new cells.** `src/resources/arena/arena_tileset.tres` is a 32×16 isometric
+  `TileSet` now: source 0 = terrain (floor; the warning band is an *untinted alternative* of
+  the floor tile, so a variant or tint can land without code changes), source 2 = liquid. The
+  liquid's three frames play at 0.25 s each (`animation_speed` 2.0, a 0.75 s loop) with a
+  random start phase per painted cell, so the field does not pulse in sync. The liquid tiles
+  keep the arena's single physics layer (`collision_layer` 32, mask 0) and give up the old
+  16 px square for the tile's top-face diamond `(-16,0)(0,-8)(16,0)(0,8)`. Group `Lava`, layer
+  6 and `Unit`'s burn are unchanged — only art and polygon shape moved.
+- **Iso ellipse.** This tile set's cell grid is *staggered* (`map_to_local`: rows 8 px apart,
+  cells 32 px apart, odd rows offset half a cell sideways), not the diagonal `(x - y, x + y)`
+  grid, so `Arena.cell_center` mirrors the engine mapping, `Arena.shape_dist_sq` measures in px²
+  of the play area's shape space and feeds `classify`, and `Arena.shape_extent` bounds the
+  repaint rectangle. The play area is the **ellipse twice as wide (x) as it is tall** — the
+  isometric look of the floor diamonds — so the metric weighs the vertical offset 4×
+  (`dx² + 4·dy²`, consts `SHAPE_ASPECT`/`SHAPE_SQUASH_SQ`) and a `radius` is always the ellipse's
+  *horizontal* semi-axis (800 → a 1600 × 800 px arena, half the old screen circle's area; the
+  field is 53 703 → 27 027 cells). A screen-space circle read as a tall oval against the diamond
+  art. The tests pin `cell_center` against `map_to_local` so a tile set or layout change cannot
+  silently distort the mask.
+- **Sizes in px.** `start_radius` 800 (the POC's 50 × 16 px) is the play ellipse's *horizontal*
+  semi-axis now, so the arena is 1600 × 800 px — half the POC screen circle's area, vertical
+  reach halved; `edge_thickness` 16 and `shrink_step` 16 px per tick at the same 3 s interval
+  keep the pacing. The radius unit is pixels, not tiles.
+- **Frame-budgeted ring.** The arcade web build (single-threaded WASM on a Tegra) staggered
+  ~0.5 s on every shrink step: the repaint walked the play area's bounding rectangle (~5 460
+  `set_cell` calls at r=800 for the ~304 cells that actually change), and — because
+  `y_sort_enabled` is what keeps the isometric tile overlaps right — the engine groups cells
+  into one canvas item per *row*, so one dirty cell rebuilds that row's whole canvas item. The
+  ring now runs on the distance annulus that changes (`Arena.repaint_rows`) and drains
+  `shrink_rows_per_frame` (12) rows per frame, so it catches up over ~0.3 s and no frame pays
+  for the whole map (mechanics and numbers: `docs/tilemap-performance.md`). `reset()` still
+  paints in one go: it runs between rounds (no burn waiting
+  on it) and repaints exactly the state the old code painted at `_ready`. The layer's
+  `physics_quadrant_size` is 8 — a dirty physics quadrant re-merges all of its cells' polygons,
+  so 8 balances that per-tick bill against the field's shape count (4 is the next step if a
+  cabinet run asks for it).
+- **Mask tried, dropped.** A fragment mask (`assets/shaders/arena_mask.gdshader`, parked and
+  unreferenced) once cut the tiles to the exact ellipse, so the edge was a smooth oval instead of
+  whole diamonds. It worked, but the cut slices the water art — a dark fringe with diamond
+  scallops along the shore — which read worse than the tiles' own edge. So the boundary stays
+  tile-stepped: the burn and the art agree exactly, and the play area is purely the metric above.
+  The shader is the hook if a smooth overlay boundary is ever wanted (see "Next if…" below).
+- `main.tscn`'s leftover hand-painted `TileMapLayer` (a test patch from the art work) is
+  gone: the arena paints its own cells, and `_paint_field` covers the circle plus
+  `FIELD_MARGIN` (1024 px) for the whole camera range.
+- Still cosmetic: movement, spells and the camera stay screen-axis; the diamonds are floor
+  art, not a 2:1 world remap.
+
+**Open tuning.** The liquid's surface sits ~5 px lower than the land's top face in the source
+art (may read as a sunken shoreline — per-source `texture_origin` is the knob), and the
+untinted warning band currently draws exactly like the floor.
+
+**Next if the cabinet still stutters.** The boundary itself is still tile work. Drawing the
+floor plus band over a static liquid field — one masked polygon or shader quad whose radius is
+a uniform — would take the live shrink out of the tile map entirely (and it sits above the
+y-sorted layer, so the tile order stays untouched). Trimming the far field (`FIELD_MARGIN`,
+never visible at the camera's zoom floor) or drawing it as a repeating backdrop is the
+load-time side of the same problem.
+
+**References.** `godot/main.tscn`, `godot/src/match/arena.gd`, `godot/src/match/arena.tscn`,
+`godot/src/match/match_camera.gd`, `godot/src/match/match_manager.gd`,
+`godot/src/player/player.gd`, `godot/src/resources/arena/arena_tileset.tres`,
+`godot/tests/match/test_arena.gd`, `godot/tests/match/test_match_camera.gd`,
+`godot/tests/player/test_lava_burn.gd`, `docs/tilemap-performance.md` (how the tile repaint was made
+cheap, with the engine mechanics), parked `godot/assets/shaders/arena_mask.gdshader`,
+POC `tilemap_arena.gd`, POC `main.gd`.

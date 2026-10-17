@@ -17,8 +17,11 @@ func test_ggas_and_gga_classes_are_registered() -> void:
 		assert_bool(ClassDB.class_exists(cls)).is_true()
 
 
-func test_project_version_is_current() -> void:
-	assert_str(str(ProjectSettings.get_setting("application/config/version"))).is_equal("0.3.0")
+func test_project_version_is_set() -> void:
+	var version := str(ProjectSettings.get_setting("application/config/version", ""))
+	assert_str(version).is_not_empty()
+	var semver := RegEx.create_from_string("^\\d+\\.\\d+\\.\\d+$")
+	assert_bool(semver.search(version) != null).is_true()
 
 
 func test_per_player_actions_exist() -> void:

@@ -1,0 +1,34 @@
+[gd_resource type="TileSet" format=3 uid="uid://bqkchjtxjyhda"]
+
+[ext_resource type="Texture2D" uid="uid://0j63f0a2dtfq" path="res://assets/terrain/terrain_tile_069.png" id="1_terrain"]
+[ext_resource type="Texture2D" uid="uid://dfu1a01cforrq" path="res://assets/terrain/water_tile_104.png" id="2_water"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_terrain"]
+texture = ExtResource("1_terrain")
+texture_region_size = Vector2i(32, 64)
+0:0/next_alternative_id = 2
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, 12)
+0:0/1 = 1
+0:0/1/texture_origin = Vector2i(0, 12)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
+texture = ExtResource("2_water")
+texture_region_size = Vector2i(32, 64)
+0:0/animation_columns = 3
+0:0/animation_speed = 2.0
+0:0/animation_mode = 1
+0:0/animation_frame_0/duration = 0.5
+0:0/animation_frame_1/duration = 0.5
+0:0/animation_frame_2/duration = 0.5
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, 12)
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, 0, 0, -8, 16, 0, 0, 8)
+
+[resource]
+tile_shape = 1
+tile_size = Vector2i(32, 16)
+physics_layer_0/collision_layer = 32
+physics_layer_0/collision_mask = 0
+sources/0 = SubResource("TileSetAtlasSource_terrain")
+sources/2 = SubResource("TileSetAtlasSource_water")

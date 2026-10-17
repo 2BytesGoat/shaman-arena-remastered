@@ -40,7 +40,7 @@ func test_apply_can_opt_in_to_self_hits() -> void:
 	var attacker: Area2D = auto_free(Area2D.new())
 	add_child(attacker)
 	var hurtbox: Area2D = victim.get_node("Hurtbox")
-	# `hits_self` is how a spell that can hurt its caster (D-018) reaches its own hurtbox.
+	# `hits_self` is how a spell that can hurt its caster reaches its own hurtbox.
 	assert_bool(HitArea.apply(attacker, hurtbox, victim, 5.0, 100.0, true)).is_true()
 	assert_float(victim.attribute_container.get_attribute_value_by_name(AttributeNames.HEALTH)).is_equal(95.0)
 	assert_float(victim.velocity.x).is_equal_approx(100.0, 0.1)

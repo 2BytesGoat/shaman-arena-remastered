@@ -8,7 +8,7 @@ class_name SpellScene extends Area2D
 var source: Unit
 var cast_direction := Vector2.ZERO
 ## Set by the casting ability (`BaseAbility.HITS_SELF`); carried to every impact scene the spell
-## spawns, so a spell that can hurt its caster hurts through its whole chain (D-018).
+## spawns, so a spell that can hurt its caster hurts through its whole chain.
 var hits_self := false
 
 @onready var expiry_timer: Timer = get_node_or_null("ExpiryTimer")

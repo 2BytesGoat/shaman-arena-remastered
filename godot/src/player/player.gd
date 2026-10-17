@@ -9,6 +9,10 @@ const MOVE_MAX_SPEED := 140.0
 const MOVE_ACCELERATION := 345.0
 const MOVE_FRICTION := 690.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
+## Lava burn: one `HealthDamage` tick per second while the hurtbox overlaps magma. Flat damage
+## (`dot` float): no hit state, no cast abort, no knockback.
+const LAVA_TICK_INTERVAL := 1.0
+const LAVA_DAMAGE_PER_TICK := 25.0
 
 enum ControllerType { NONE, LOCAL }
 
@@ -38,13 +42,16 @@ var player_dead := false
 var is_match_ready := false
 var facing_scale := 1.0
 var spawn_position := Vector2.ZERO
+## Magma tiles currently overlapping the hurtbox; the burn ticks while this is above zero.
+var lava_contacts := 0
 
-## Assigned by `MatchManager`; the draft pool is seeded from its basic spells (D-013).
+## Assigned by `MatchManager`; the draft pool is seeded from its basic spells.
 var character_class: CharacterClass
 
 var ability_slots: Array[Ability] = []
 var _last_move_direction := Vector2.RIGHT
 var _applied_controller_type := -1
+var _lava_burn_elapsed := 0.0
 
 
 func _enter_tree() -> void:
@@ -56,6 +63,9 @@ func _ready() -> void:
 	ability_slots = ability_container.get_initial_abilities()
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	attribute_container.attribute_changed.connect(_on_attribute_changed)
+	var hurtbox := $Hurtbox as Area2D
+	hurtbox.body_entered.connect(_on_hurtbox_body_entered)
+	hurtbox.body_exited.connect(_on_hurtbox_body_exited)
 	ability_container.cooldown_start.connect(cast_handler.on_spell_cooldown_start)
 	visuals.apply_palette()
 	visuals.layout_hud()
@@ -69,6 +79,7 @@ func _physics_process(delta: float) -> void:
 	_apply_movement(delta)
 	_update_facing()
 	visuals.update_aim_sprite(delta)
+	update_lava_burn(delta)
 
 
 ## Where spells leave the unit: the aim icon's drawn world position (offset included).
@@ -106,7 +117,7 @@ func request_cast(slot: int) -> void:
 	if slot < 0 or slot >= mini(ability_slots.size(), MAX_SPELL_SLOTS):
 		return
 	var ability := ability_slots[slot]
-	# A released cast commits (D-016): a re-press during the cast delay is ignored.
+	# A released cast commits: a re-press during the cast delay is ignored.
 	if ability_container.is_ability_active(ability):
 		return
 	if ability_container.is_ability_cooldown_active(ability):
@@ -189,7 +200,7 @@ func apply_loadout(picks: Array[Ability]) -> void:
 	loadout_applied.emit()
 
 
-## Clears running cooldowns so a fresh round starts with every spell ready (D-015). GGAS has
+## Clears running cooldowns so a fresh round starts with every spell ready. GGAS has
 ## no direct reset API: `revoke` clears the cooldown/duration timers and emits `cooldown_end`
 ## (which stops the HUD fill), and `grant` makes the ability castable again. Only cooling
 ## abilities are touched, so an in-flight cast (duration active) is never silently cancelled.
@@ -201,7 +212,7 @@ func reset_ability_cooldowns() -> void:
 
 
 ## Puts the unit back into play for the next round: at its spawn point, full health, idle,
-## every spell off cooldown. The spell pool is left alone.
+## every spell off cooldown, no lingering lava burn. The spell pool is left alone.
 func respawn() -> void:
 	player_dead = false
 	hit_locked = false
@@ -210,6 +221,8 @@ func respawn() -> void:
 	release_cast_requested = false
 	velocity = Vector2.ZERO
 	move_direction = Vector2.ZERO
+	lava_contacts = 0
+	_lava_burn_elapsed = 0.0
 	global_position = spawn_position
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
 	reset_ability_cooldowns()
@@ -229,6 +242,40 @@ func take_hit(_source: Unit, damage: float, knockback: float, impact_direction: 
 	velocity += impact_direction * knockback
 	hit_locked = true
 	state_machine.transition_to(AnimationSlots.HIT)
+
+
+## Lava burn: while alive and the hurtbox overlaps magma, one `HealthDamage`
+## every `LAVA_TICK_INTERVAL` seconds. Public so the cadence is unit-testable without
+## physics.
+func update_lava_burn(delta: float) -> void:
+	if player_dead:
+		return
+	if lava_contacts <= 0:
+		_lava_burn_elapsed = 0.0
+		return
+	_lava_burn_elapsed += delta
+	var ticks := lava_ticks_due(_lava_burn_elapsed, LAVA_TICK_INTERVAL)
+	if ticks <= 0:
+		return
+	_lava_burn_elapsed -= float(ticks) * LAVA_TICK_INTERVAL
+	attribute_container.apply_buff(HealthDamage.new(LAVA_DAMAGE_PER_TICK * float(ticks)))
+
+
+## Whole burn ticks owed for `elapsed` seconds of contact (pure: no scene needed).
+static func lava_ticks_due(elapsed: float, interval: float) -> int:
+	if interval <= 0.0:
+		return 0
+	return floori(elapsed / interval)
+
+
+func _on_hurtbox_body_entered(body: Node2D) -> void:
+	if body.is_in_group("Lava"):
+		lava_contacts += 1
+
+
+func _on_hurtbox_body_exited(body: Node2D) -> void:
+	if body.is_in_group("Lava"):
+		lava_contacts = maxi(lava_contacts - 1, 0)
 
 
 static func is_lethal(attribute_name: String, new_value: float) -> bool:

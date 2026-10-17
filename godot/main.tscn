@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://blew3m0ysy1j4" path="res://src/player/player.tscn" id="1_player"]
 [ext_resource type="Shader" uid="uid://b3eedso637lpg" path="res://assets/shaders/player_palette.gdshader" id="2_dg77c"]
 [ext_resource type="Script" uid="uid://d2vugbf7qk8lu" path="res://src/match/match_manager.gd" id="2_manager"]
-[ext_resource type="PackedScene" uid="uid://cnjfxnjyox6m2" path="res://src/ui/spell_select.tscn" id="3_select"]
+[ext_resource type="PackedScene" path="res://src/ui/spell_select.tscn" id="3_select"]
 [ext_resource type="Ability" path="res://src/resources/abilities/self/blink_ability.tres" id="4_blink"]
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/fireball_ability.tres" id="5_fireball"]
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/boomerang_ability.tres" id="6_boomerang"]
@@ -12,13 +12,8 @@
 [ext_resource type="Ability" path="res://src/resources/abilities/projectile/teleport_ability.tres" id="9_teleport"]
 [ext_resource type="Script" uid="uid://bmse5wk2g4778" path="res://src/ui/match_over.gd" id="10_match_over"]
 [ext_resource type="Resource" path="res://src/resources/classes/wizard.tres" id="11_wizard"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ycdy4"]
-resource_local_to_scene = true
-shader = ExtResource("2_dg77c")
-shader_parameter/from_colors = PackedColorArray(0.9843137, 0.23921569, 0.21176471, 1, 0.7607843, 0.19607843, 0.1764706, 1, 0.2, 0.09411765, 0.09019608, 1, 0, 0, 0, 0, 0, 0, 0, 0)
-shader_parameter/to_colors = PackedColorArray(0.8784314, 0.011764706, 0.003921569, 1, 0.54509807, 0, 0.007843138, 1, 0.003921569, 0.003921569, 0.003921569, 1, 0, 0, 0, 0, 0, 0, 0, 0)
-shader_parameter/tolerance = 0.01
+[ext_resource type="PackedScene" uid="uid://bcwucfl238ycs" path="res://src/match/arena.tscn" id="12_arena"]
+[ext_resource type="Script" uid="uid://biwa8i1ooilju" path="res://src/match/match_camera.gd" id="13_camera"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w48qg"]
 resource_local_to_scene = true
@@ -27,16 +22,35 @@ shader_parameter/from_colors = PackedColorArray(0.9843137, 0.23921569, 0.2117647
 shader_parameter/to_colors = PackedColorArray(0.8784314, 0.011764706, 0.003921569, 1, 0.54509807, 0, 0.007843138, 1, 0.003921569, 0.003921569, 0.003921569, 1, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/tolerance = 0.01
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vivmo"]
+resource_local_to_scene = true
+shader = ExtResource("2_dg77c")
+shader_parameter/from_colors = PackedColorArray(0.9843137, 0.23921569, 0.21176471, 1, 0.7607843, 0.19607843, 0.1764706, 1, 0.2, 0.09411765, 0.09019608, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/to_colors = PackedColorArray(0.8784314, 0.011764706, 0.003921569, 1, 0.54509807, 0, 0.007843138, 1, 0.003921569, 0.003921569, 0.003921569, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/tolerance = 0.01
+
 [node name="Main" type="Node" unique_id=1676124959]
 
+[node name="Arena" parent="." unique_id=870629006 instance=ExtResource("12_arena")]
+y_sort_enabled = true
+position = Vector2(576, 324)
+navigation_enabled = false
+
+[node name="MatchCamera" type="Camera2D" parent="." unique_id=1271477860]
+position = Vector2(576, 324)
+zoom = Vector2(2, 2)
+position_smoothing_enabled = true
+position_smoothing_speed = 3.0
+script = ExtResource("13_camera")
+
 [node name="Player" parent="." unique_id=101039518 instance=ExtResource("1_player")]
-material = SubResource("ShaderMaterial_ycdy4")
-position = Vector2(500, 292)
+material = SubResource("ShaderMaterial_w48qg")
+position = Vector2(350, 300)
 controller_type = 1
 
 [node name="Player2" parent="." unique_id=208701586 instance=ExtResource("1_player")]
-material = SubResource("ShaderMaterial_w48qg")
-position = Vector2(652, 292)
+material = SubResource("ShaderMaterial_vivmo")
+position = Vector2(800, 300)
 PLAYER_CONTROLLER = 1
 controller_type = 1
 
@@ -88,9 +102,10 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "RESTART"
 
-[node name="MatchManager" type="Node" parent="." unique_id=1824277192 node_paths=PackedStringArray("selection_layer", "match_over")]
+[node name="MatchManager" type="Node" parent="." unique_id=1824277192 node_paths=PackedStringArray("selection_layer", "match_over", "arena")]
 script = ExtResource("2_manager")
 selection_layer = NodePath("../SelectionLayer")
 match_over = NodePath("../MatchOverLayer")
+arena = NodePath("../Arena")
 default_loadout = Array[Ability]([ExtResource("4_blink"), ExtResource("5_fireball"), ExtResource("6_boomerang"), ExtResource("7_meteor"), ExtResource("8_smoke"), ExtResource("9_teleport")])
 character_class = ExtResource("11_wizard")
