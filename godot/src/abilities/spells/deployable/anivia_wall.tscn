@@ -1,18 +1,11 @@
 [gd_scene format=3 uid="uid://balqudfjryl06"]
 
 [ext_resource type="PackedScene" uid="uid://bn4627jhgsbhs" path="res://src/abilities/spell_scene.tscn" id="1_nbc8x"]
-[ext_resource type="Texture2D" uid="uid://drcyustd2cw01" path="res://assets/terrain/floorTileset.webp" id="2_bpvym"]
 [ext_resource type="Script" uid="uid://bjwq0isqffa27" path="res://src/abilities/spells/deployable/anivia_wall.gd" id="2_vapmf"]
+[ext_resource type="Texture2D" uid="uid://cab5c61uctemx" path="res://assets/spells/wall thingy.png" id="3_h4a4y"]
+[ext_resource type="Texture2D" uid="uid://ktshf8t4vg2d" path="res://assets/player/large_shadow.png" id="3_wecaj"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_k5edl"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_bpvym"]
-atlas = ExtResource("2_bpvym")
-region = Rect2(128, 0, 16, 16)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_vapmf"]
-atlas = ExtResource("2_bpvym")
-region = Rect2(112, 0, 16, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vapmf"]
 size = Vector2(32, 32)
@@ -26,40 +19,28 @@ collision_mask = 31
 script = ExtResource("2_vapmf")
 
 [node name="Sprite2D" parent="." index="0" unique_id=64191743]
+visible = false
 scale = Vector2(1, 1)
 sprite_frames = SubResource("SpriteFrames_k5edl")
 
-[node name="Sprite2D 00" type="Sprite2D" parent="." index="1" unique_id=820314763]
-texture_filter = 1
-texture_repeat = 2
-position = Vector2(-8, 8)
-texture = SubResource("AtlasTexture_bpvym")
+[node name="LargeShadow" type="Sprite2D" parent="." index="1" unique_id=1168854055]
+position = Vector2(2, 13)
+scale = Vector2(2.125, 1)
+texture = ExtResource("3_wecaj")
 
-[node name="Sprite2D 10" type="Sprite2D" parent="." index="2" unique_id=1269265802]
-texture_filter = 1
-texture_repeat = 2
-position = Vector2(-8, -8)
-texture = SubResource("AtlasTexture_vapmf")
+[node name="WallThingy" type="Sprite2D" parent="." index="2" unique_id=1618393024]
+position = Vector2(0, -19)
+texture = ExtResource("3_h4a4y")
 
-[node name="Sprite2D 12" type="Sprite2D" parent="." index="3" unique_id=324020929]
-texture_filter = 1
-texture_repeat = 2
-position = Vector2(8, -8)
-texture = SubResource("AtlasTexture_vapmf")
-
-[node name="Sprite2D 01" type="Sprite2D" parent="." index="4" unique_id=1039946306]
-texture_filter = 1
-texture_repeat = 2
-position = Vector2(8, 8)
-texture = SubResource("AtlasTexture_bpvym")
-
-[node name="CollisionShape2D" parent="." index="5" unique_id=1914504540]
+[node name="CollisionShape2D" parent="." index="3" unique_id=1914504540]
+position = Vector2(2, -3)
 shape = SubResource("RectangleShape2D_vapmf")
 
-[node name="ExpiryTimer" parent="." index="6" unique_id=260913630]
+[node name="ExpiryTimer" parent="." index="4" unique_id=260913630]
 wait_time = 4.0
 
-[node name="StaticBody2D-Wall" type="StaticBody2D" parent="." index="7" unique_id=1376303459]
+[node name="StaticBody2D-Wall" type="StaticBody2D" parent="." index="5" unique_id=1376303459]
+position = Vector2(2, -3)
 collision_layer = 64
 collision_mask = 15
 

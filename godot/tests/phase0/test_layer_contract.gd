@@ -101,13 +101,15 @@ func test_wall_blocks_bodies_and_despawns_on_spell_contact() -> void:
 	assert_int(body.collision_mask).is_equal(15)
 
 
-func test_arena_tileset_puts_magma_on_the_lava_layer() -> void:
-	var tileset: TileSet = load("res://assets/terrain/arena_tileset.tres")
+func test_arena_tileset_puts_the_liquid_on_the_lava_layer() -> void:
+	var tileset: TileSet = load("res://src/resources/arena/arena_tileset.tres")
 	assert_int(tileset.get_physics_layers_count()).is_equal(1)
 	assert_int(tileset.get_physics_layer_collision_layer(0)).is_equal(32)
 	assert_int(tileset.get_physics_layer_collision_mask(0)).is_equal(0)
-	var magma := tileset.get_source(Arena.LAVA_SOURCE) as TileSetAtlasSource
-	assert_object(magma).is_not_null()
-	assert_int(magma.get_tile_animation_frames_count(Arena.LAVA_ATLAS)).is_equal(2)
-	var tile := magma.get_tile_data(Arena.LAVA_ATLAS, 0)
+	assert_int(tileset.tile_shape).is_equal(TileSet.TILE_SHAPE_ISOMETRIC)
+	assert_vector(tileset.tile_size).is_equal(Vector2i(32, 16))
+	var liquid := tileset.get_source(Arena.LAVA_SOURCE) as TileSetAtlasSource
+	assert_object(liquid).is_not_null()
+	assert_int(liquid.get_tile_animation_frames_count(Arena.LAVA_ATLAS)).is_equal(3)
+	var tile := liquid.get_tile_data(Arena.LAVA_ATLAS, 0)
 	assert_int(tile.get_collision_polygons_count(0)).is_equal(1)

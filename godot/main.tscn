@@ -1,8 +1,6 @@
-[gd_scene format=4 uid="uid://ccjsp8utreawi"]
+[gd_scene format=3 uid="uid://ccjsp8utreawi"]
 
 [ext_resource type="PackedScene" uid="uid://blew3m0ysy1j4" path="res://src/player/player.tscn" id="1_player"]
-[ext_resource type="Texture2D" uid="uid://0j63f0a2dtfq" path="res://assets/terrain/terrain_tile_069.png" id="1_vivmo"]
-[ext_resource type="Texture2D" uid="uid://dfu1a01cforrq" path="res://assets/terrain/water_tile_104.png" id="2_2cqfq"]
 [ext_resource type="Shader" uid="uid://b3eedso637lpg" path="res://assets/shaders/player_palette.gdshader" id="2_dg77c"]
 [ext_resource type="Script" uid="uid://d2vugbf7qk8lu" path="res://src/match/match_manager.gd" id="2_manager"]
 [ext_resource type="PackedScene" path="res://src/ui/spell_select.tscn" id="3_select"]
@@ -17,32 +15,14 @@
 [ext_resource type="PackedScene" uid="uid://bcwucfl238ycs" path="res://src/match/arena.tscn" id="12_arena"]
 [ext_resource type="Script" uid="uid://biwa8i1ooilju" path="res://src/match/match_camera.gd" id="13_camera"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vivmo"]
-texture = ExtResource("1_vivmo")
-texture_region_size = Vector2i(32, 64)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, 12)
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yaehf"]
-texture = ExtResource("2_2cqfq")
-texture_region_size = Vector2i(32, 64)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, 12)
-
-[sub_resource type="TileSet" id="TileSet_2cqfq"]
-tile_shape = 1
-tile_size = Vector2i(32, 16)
-sources/0 = SubResource("TileSetAtlasSource_vivmo")
-sources/2 = SubResource("TileSetAtlasSource_yaehf")
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_yaehf"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w48qg"]
 resource_local_to_scene = true
 shader = ExtResource("2_dg77c")
 shader_parameter/from_colors = PackedColorArray(0.9843137, 0.23921569, 0.21176471, 1, 0.7607843, 0.19607843, 0.1764706, 1, 0.2, 0.09411765, 0.09019608, 1, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/to_colors = PackedColorArray(0.8784314, 0.011764706, 0.003921569, 1, 0.54509807, 0, 0.007843138, 1, 0.003921569, 0.003921569, 0.003921569, 1, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/tolerance = 0.01
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_074og"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vivmo"]
 resource_local_to_scene = true
 shader = ExtResource("2_dg77c")
 shader_parameter/from_colors = PackedColorArray(0.9843137, 0.23921569, 0.21176471, 1, 0.7607843, 0.19607843, 0.1764706, 1, 0.2, 0.09411765, 0.09019608, 1, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -51,12 +31,8 @@ shader_parameter/tolerance = 0.01
 
 [node name="Main" type="Node" unique_id=1676124959]
 
-[node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1520756174]
-y_sort_enabled = true
-tile_map_data = PackedByteArray("AAAPACgAAAAAAAAAAAAPACcAAAAAAAAAAAAPACkAAAAAAAAAAAAQACgAAAAAAAAAAAAQACkAAAAAAAAAAAAQACoAAAAAAAAAAAAQACcAAAAAAAAAAAARACgAAAAAAAAAAAAQACYAAAAAAAAAAAARACoAAAAAAAAAAAARACkAAAAAAAAAAAAQACsAAAAAAAAAAAAPACsAAAAAAAAAAAAQACwAAAAAAAAAAAAOACsAAAAAAAAAAAAPACoAAAAAAAAAAAAOACkAAAAAAAAAAAAPACwAAgAAAAAAAAAPAC0AAgAAAAAAAAAQAC4AAgAAAAAAAAAQAC0AAgAAAAAAAAARACwAAgAAAAAAAAARACsAAgAAAAAAAAASACoAAgAAAAAAAAAOACwAAgAAAAAAAAAOAC0AAgAAAAAAAAAPAC4AAgAAAAAAAAAPAC8AAgAAAAAAAAAQADAAAgAAAAAAAAAQAC8AAgAAAAAAAAARAC4AAgAAAAAAAAARAC0AAgAAAAAAAAASACwAAgAAAAAAAAASACsAAgAAAAAAAAA=")
-tile_set = SubResource("TileSet_2cqfq")
-
 [node name="Arena" parent="." unique_id=870629006 instance=ExtResource("12_arena")]
+y_sort_enabled = true
 position = Vector2(576, 324)
 navigation_enabled = false
 
@@ -68,12 +44,12 @@ position_smoothing_speed = 3.0
 script = ExtResource("13_camera")
 
 [node name="Player" parent="." unique_id=101039518 instance=ExtResource("1_player")]
-material = SubResource("ShaderMaterial_yaehf")
+material = SubResource("ShaderMaterial_w48qg")
 position = Vector2(350, 300)
 controller_type = 1
 
 [node name="Player2" parent="." unique_id=208701586 instance=ExtResource("1_player")]
-material = SubResource("ShaderMaterial_074og")
+material = SubResource("ShaderMaterial_vivmo")
 position = Vector2(800, 300)
 PLAYER_CONTROLLER = 1
 controller_type = 1

@@ -171,10 +171,11 @@ versa. **Verify (manual):** each spell slot populated by a selection run (8 slot
 ## M5 — Arena shrink → `v0.5.0`
 
 > Demo-branch slice landed early (2026-10-17, D-019): arena, lava burn and match camera are
-> in; the version bump waits for the milestone to close.
+> in; the arena art moved to the isometric tile set the same day (D-019 addendum); the
+> version bump waits for the milestone to close.
 
 - [x] Port `tilemap_arena.gd`: circular map mask, shrink timer, redraw only removed ring,
-      edge tiles → animated lava (MagmaTileAnimation assets)
+      edge tiles → animated liquid (isometric terrain/water tile set)
 - [x] Lava group → `Unit` burn: a `HealthDamage` tick while standing on lava
       (see `docs/spells.md`; replaces POC `dot` float)
 - [ ] Match flow closure: lava death / eliminations → win screen ("Player X took a big L"),

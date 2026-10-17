@@ -321,7 +321,7 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 | 1 | `player_0` | **All players and their Hurtboxes** (every controller, today) |
 | 2–4 | `player_1..3` | Reserved — named, but nothing assigns them yet (see caveat) |
 | 5 | `projectile` | Spell areas (concrete projectiles) and Effect areas |
-| 6 | `lava` | Arena magma tiles (the arena `TileMapLayer`'s physics body, mask 0); the players' `Hurtbox` masks it for the burn (M5/D-019) |
+| 6 | `lava` | Arena hazard tiles (the arena `TileMapLayer`'s physics body, mask 0); the players' `Hurtbox` masks it for the burn (M5/D-019) |
 | 7 | `Environment` | `AniviaWall` area + its `StaticBody2D`; future environment areas |
 
 **Scene masks (verified 2026-10-14; lava row updated 2026-10-17, D-019)**
@@ -329,8 +329,8 @@ entry and the pinning test `godot/tests/phase0/test_layer_contract.gd`.
 | Scene | Layer | Mask | Wires `area_entered`? | Why |
 |---|---|---|---|---|
 | Player body | 1 | 65 = 1 + 64 | — | collides with the other player's body and walls |
-| Arena magma tiles | 32 | 0 | — | walkable burn zone; detected through the hurtbox mask (D-019) |
-| Hurtbox | 1 | 32 = lava | — | detects the arena magma body for the burn (M5/D-019); spell hits stay attacker-side, self-hits filtered by `SourceFilter` (D-018) |
+| Arena hazard tiles (liquid) | 32 | 0 | — | walkable burn zone; detected through the hurtbox mask (D-019) |
+| Hurtbox | 1 | 32 = lava | — | detects the arena hazard body for the burn (M5/D-019); spell hits stay attacker-side, self-hits filtered by `SourceFilter` (D-018) |
 | Fireball / Boomerang | 16 | 95 = 1–4 + 16 + 64 | yes | players damage; any other area (wall, other spell) despawns + effect |
 | Smoke | 16 | 1 | yes | hits players on entry only; despawns on its sprite finish (inherited ExpiryTimer is unwired) |
 | Teleport / Meteor (cast) | 0 (base) | 15 (base) | no | values inherited from `spell_scene.tscn`; contact handling intentionally unwired — both resolve via ExpiryTimer |
@@ -878,8 +878,38 @@ scene, flow closure).
 **Not doing.** Fall/elimination beyond the burn, arena walls, camera drag margins,
 per-round arena presets, lava audio.
 
+**Addendum (2026-10-17, isometric tile set).** The arena art moved to an isometric tile set
+(`terrain_tile_069` floor blocks, `water_tile_104` liquid), superseding the bullets above in
+three places:
+
+- **Same rules, new cells.** `src/resources/arena/arena_tileset.tres` is a 32×16 isometric
+  `TileSet` now: source 0 = terrain (floor; the warning band is an *untinted alternative* of
+  the floor tile, so a variant or tint can land without code changes), source 2 = liquid. The
+  liquid tiles keep the arena's single physics layer (`collision_layer` 32, mask 0) and give
+  up the old 16 px square for the tile's top-face diamond `(-16,0)(0,-8)(16,0)(0,8)`. Group
+  `Lava`, layer 6 and `Unit`'s burn are unchanged — only art and polygon shape moved.
+- **Screen-space circle.** This tile set's cell grid is *staggered* (`map_to_local`: rows
+  8 px apart, cells 32 px apart, odd rows offset half a cell sideways), not the diagonal
+  `(x - y, x + y)` grid. The POC's cell-space `x² + y²` mask would therefore paint a tall
+  oval, so `Arena.cell_center` mirrors the engine mapping, `Arena.screen_dist_sq` measures in
+  px² and feeds the unchanged `classify`, and `Arena.circle_extent` bounds the repaint
+  rectangle. The play circle stays round on screen; the tests pin `cell_center` against
+  `map_to_local` so a tile set or layout change cannot silently distort it.
+- **Sizes in px.** `start_radius` 800 (the POC's 50 × 16 px — the same footprint on screen),
+  `edge_thickness` 16, `shrink_step` 16 px per tick at the same 3 s interval: pacing matches
+  the POC while the radius unit is now pixels.
+- `main.tscn`'s leftover hand-painted `TileMapLayer` (a test patch from the art work) is
+  gone: the arena paints its own cells, and `_paint_field` covers the circle plus
+  `FIELD_MARGIN` (1024 px) for the whole camera range.
+- Still cosmetic: movement, spells and the camera stay screen-axis; the diamonds are floor
+  art, not a 2:1 world remap.
+
+**Open tuning.** The liquid's surface sits ~5 px lower than the land's top face in the source
+art (may read as a sunken shoreline — per-source `texture_origin` is the knob), and the
+untinted warning band currently draws exactly like the floor.
+
 **References.** `godot/main.tscn`, `godot/src/match/arena.gd`, `godot/src/match/arena.tscn`,
 `godot/src/match/match_camera.gd`, `godot/src/match/match_manager.gd`,
-`godot/src/player/player.gd`, `godot/assets/terrain/arena_tileset.tres`,
+`godot/src/player/player.gd`, `godot/src/resources/arena/arena_tileset.tres`,
 `godot/tests/m5/test_arena.gd`, `godot/tests/m5/test_match_camera.gd`,
 `godot/tests/m5/test_lava_burn.gd`, POC `tilemap_arena.gd`, POC `main.gd`.
