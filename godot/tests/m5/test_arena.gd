@@ -3,7 +3,7 @@ extends GdUnitTestSuite
 const ARENA_SCENE := "res://src/match/arena.tscn"
 const TILESET := "res://src/resources/arena/arena_tileset.tres"
 
-## Fixture radius, in px: small radii keep the fixture cheap and the mask math is the same at
+## Fixture radius, in px: small radii keep the fixture cheap and the ellipse math is the same at
 ## any size. Row `y = -1` runs through the arena centre (its cells sit at `y = 0`) and steps 32 px
 ## per cell, so `RIM_CELL` sits exactly on the circle and `FLOOR_CELL` one step inside it.
 const START_RADIUS := 96
@@ -18,6 +18,72 @@ func _spawn_arena(start_radius := START_RADIUS) -> Arena:
 	add_child(arena)
 	auto_free(arena)
 	return arena
+
+
+## The kind the arena paints in one cell (`-1` for an empty one).
+func _cell_kind(arena: Arena, coords: Vector2i) -> int:
+	if arena.get_cell_source_id(coords) == Arena.LAVA_SOURCE:
+		return Arena.CellKind.LAVA
+	if arena.get_cell_source_id(coords) == Arena.FLOOR_SOURCE:
+		return (
+			Arena.CellKind.EDGE
+			if arena.get_cell_alternative_tile(coords) == Arena.EDGE_ALTERNATIVE
+			else Arena.CellKind.FLOOR
+		)
+	return -1
+
+
+## Asserts the whole play area is painted the way `classify` paints it for an ellipse with a
+## `radius` px horizontal semi-axis and `edge` px of warning band: the reference the incremental
+## repaint must match.
+func _assert_arena_matches(arena: Arena, radius: int, edge: int) -> void:
+	assert_int(arena.current_radius).is_equal(radius)
+	var extent := Arena.shape_extent(radius + edge)
+	var mismatches := {}
+	for y in range(-extent.y, extent.y + 1):
+		for x in range(-extent.x, extent.x + 1):
+			var coords := Vector2i(x, y)
+			var expected := Arena.classify(Arena.shape_dist_sq(coords), radius, edge)
+			var painted := _cell_kind(arena, coords)
+			if painted != expected:
+				mismatches[coords] = [painted, expected]
+	assert_dict(mismatches).override_failure_message(
+		"Arena cells do not match classify(radius %d, edge %d)" % [radius, edge]
+	).is_empty()
+
+
+## Asserts `Arena.repaint_rows` plans exactly the cells whose kind changes between two painted
+## play areas — the brute-force scan is the reference (one short leaves a stale tile behind, one
+## extra repaints cells that did not change).
+func _assert_plan_matches_brute_force(
+	from_radius: int, from_edge: int, to_radius: int, to_edge: int
+) -> void:
+	var outer := maxi(from_radius + from_edge, to_radius + to_edge)
+	var extent := Arena.shape_extent(outer)
+	var changed := {}
+	for y in range(-extent.y, extent.y + 1):
+		for x in range(-extent.x, extent.x + 1):
+			var coords := Vector2i(x, y)
+			var dist_sq := Arena.shape_dist_sq(coords)
+			var before := Arena.classify(dist_sq, from_radius, from_edge)
+			if Arena.classify(dist_sq, to_radius, to_edge) != before:
+				changed[coords] = true
+	var planned := {}
+	var total := 0
+	for cells: Array in Arena.repaint_rows(from_radius, from_edge, to_radius, to_edge):
+		total += cells.size()
+		for coords: Vector2i in cells:
+			planned[coords] = true
+	assert_int(total).is_equal(planned.size()) # No cell is planned twice.
+	var missing := []
+	for coords: Vector2i in changed:
+		if not planned.has(coords):
+			missing.append(coords)
+	assert_bool(missing.is_empty()).override_failure_message(
+		"%d changed cells missing from the repaint plan (%d, %d) -> (%d, %d)"
+		% [missing.size(), from_radius, from_edge, to_radius, to_edge]
+	).is_true()
+	assert_int(planned.size()).is_equal(changed.size())
 
 
 func test_classify_matches_the_poc_cell_rules() -> void:
@@ -48,23 +114,25 @@ func test_cell_center_matches_the_engine_iso_mapping() -> void:
 
 
 ## The metric feeds `classify`, so it is the squared distance of the cell centre from the arena
-## origin in px² — the origin is a cell-grid corner, not a cell centre, hence the 320 not 0.
-func test_screen_dist_sq_measures_from_the_arena_origin() -> void:
-	assert_int(Arena.screen_dist_sq(Vector2i(0, 0))).is_equal(320)
-	assert_int(Arena.screen_dist_sq(Vector2i(-1, 0))).is_equal(320)
-	assert_int(Arena.screen_dist_sq(Vector2i(0, -1))).is_equal(1024)
-	assert_int(Arena.screen_dist_sq(Vector2i(0, 1))).is_equal(1280)
-	assert_int(Arena.screen_dist_sq(Vector2i(1, -1))).is_equal(4096)
+## origin in px² of the play ellipse's shape space: the vertical offset weighs `SHAPE_SQUASH_SQ`
+## (4, the 2:1 ellipse), the origin is a cell-grid corner — hence the 512s, not 0.
+func test_shape_dist_sq_measures_from_the_arena_origin() -> void:
+	assert_int(Arena.SHAPE_SQUASH_SQ).is_equal(Arena.SHAPE_ASPECT * Arena.SHAPE_ASPECT)
+	assert_int(Arena.shape_dist_sq(Vector2i(0, 0))).is_equal(512)
+	assert_int(Arena.shape_dist_sq(Vector2i(-1, 0))).is_equal(512)
+	assert_int(Arena.shape_dist_sq(Vector2i(0, -1))).is_equal(1024)
+	assert_int(Arena.shape_dist_sq(Vector2i(0, 1))).is_equal(2048)
+	assert_int(Arena.shape_dist_sq(Vector2i(1, -1))).is_equal(4096)
 
 
-## `circle_extent` bounds the repaint loops: no cell inside the circle may sit outside it.
-func test_circle_extent_covers_every_cell_inside_the_circle() -> void:
+## `shape_extent` bounds the repaint loops: no cell inside the play ellipse may sit outside it.
+func test_shape_extent_covers_every_cell_inside_the_ellipse() -> void:
 	for radius: int in [96, 800]:
-		var extent := Arena.circle_extent(radius)
+		var extent := Arena.shape_extent(radius)
 		var reach := Vector2i.ZERO
 		for y in range(-extent.y - 1, extent.y + 2):
 			for x in range(-extent.x - 1, extent.x + 2):
-				if Arena.screen_dist_sq(Vector2i(x, y)) <= radius * radius:
+				if Arena.shape_dist_sq(Vector2i(x, y)) <= radius * radius:
 					reach.x = maxi(reach.x, absi(x))
 					reach.y = maxi(reach.y, absi(y))
 		assert_int(reach.x).is_less_equal(extent.x)
@@ -72,6 +140,30 @@ func test_circle_extent_covers_every_cell_inside_the_circle() -> void:
 		# The rectangle stays snug (a loose bound would only cost paint time).
 		assert_int(extent.x).is_less_equal(reach.x + 2)
 		assert_int(extent.y).is_less_equal(reach.y + 2)
+
+
+## The repaint plan is built from the distance annulus that changes, not from the ellipse's whole
+## bounding rectangle (D-019 addendum): it must contain every cell whose kind changes — a missed
+## cell would keep a stale tile — and nothing else.
+func test_repaint_plan_is_exactly_the_changed_ring() -> void:
+	_assert_plan_matches_brute_force(96, 0, 80, 16) # First step after reset: floor -> warning band.
+	_assert_plan_matches_brute_force(80, 16, 64, 16) # Steady state: band -> liquid, floor -> band.
+	_assert_plan_matches_brute_force(64, 16, 96, 0) # Reset regrow: liquid and band -> floor.
+	_assert_plan_matches_brute_force(96, 16, 96, 16) # No movement: nothing to repaint.
+	_assert_plan_matches_brute_force(800, 16, 784, 16) # The real fixture: one match step.
+
+
+## One shrink step at r=800 changes ~304 cells; the bounding rectangle the old repaint walked
+## holds 5 459. The plan has to stay close to the annulus, or the frame budget buys nothing.
+func test_repaint_plan_touches_only_the_ring() -> void:
+	var rectangle := Arena.shape_extent(800)
+	var rectangle_cells := (rectangle.x * 2 + 1) * (rectangle.y * 2 + 1)
+	var ring_cells := 0
+	for cells: Array in Arena.repaint_rows(800, 16, 784, 16):
+		ring_cells += cells.size()
+	assert_int(ring_cells).is_greater(200)
+	assert_int(ring_cells).is_less(600)
+	assert_int(rectangle_cells).is_greater(ring_cells * 10)
 
 
 func test_ready_paints_floor_inside_and_liquid_outside() -> void:
@@ -90,6 +182,7 @@ func test_shrink_repaints_only_the_removed_ring() -> void:
 	var arena := _spawn_arena()
 	await get_tree().process_frame
 	arena.shrink()
+	arena.flush_repaint() # The ring drains across frames; apply the rest of it now.
 	assert_int(arena.current_radius).is_equal(arena.start_radius - arena.shrink_step)
 	# The rim tile is now the warning band, in its own alternative of the floor tile.
 	assert_int(arena.get_cell_alternative_tile(RIM_CELL)).is_equal(Arena.EDGE_ALTERNATIVE)
@@ -100,8 +193,56 @@ func test_shrink_repaints_only_the_removed_ring() -> void:
 	assert_int(arena.get_cell_source_id(INNER_CELL)).is_equal(Arena.FLOOR_SOURCE)
 	# One more step burns the band the first step warned about, and the next ring warns.
 	arena.shrink()
+	arena.flush_repaint()
 	assert_int(arena.get_cell_source_id(RIM_CELL)).is_equal(Arena.LAVA_SOURCE)
 	assert_int(arena.get_cell_alternative_tile(FLOOR_CELL)).is_equal(Arena.EDGE_ALTERNATIVE)
+
+
+## On the arcade web build a whole ring in one frame staggered for ~0.5 s (the layer is y-sorted,
+## so each repainted row rebuilds that row's canvas item): the ring must drain over frames, and
+## the drained map must be exactly the map a synchronous repaint would have painted.
+func test_shrink_ring_drains_over_frames() -> void:
+	var arena := _spawn_arena()
+	await get_tree().process_frame
+	arena.shrink_rows_per_frame = 1
+	arena.shrink()
+	assert_bool(arena.is_repainting()).is_true()
+	var frames := 0
+	while arena.is_repainting() and frames < 100:
+		arena._process(0.0) # One frame's worth of the drain.
+		frames += 1
+	assert_bool(arena.is_repainting()).is_false()
+	assert_int(frames).is_greater(1)
+	_assert_arena_matches(arena, arena.start_radius - arena.shrink_step, arena.edge_thickness)
+
+
+## The drain is driven by the frame loop, not only by a test pumping it: `shrink()` re-arms
+## `_process`, and the ring lands on its own.
+func test_shrink_ring_drains_from_the_frame_loop() -> void:
+	var arena := _spawn_arena()
+	await get_tree().process_frame
+	arena.shrink_rows_per_frame = 100 # The fixture ring fits in a frame or two.
+	arena.shrink()
+	assert_bool(arena.is_repainting()).is_true()
+	var deadline := Time.get_ticks_msec() + 1000
+	while arena.is_repainting() and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	assert_bool(arena.is_repainting()).is_false()
+	_assert_arena_matches(arena, arena.start_radius - arena.shrink_step, arena.edge_thickness)
+
+
+## A reset (or the next shrink) landing mid-drain must not leave a half-painted circle behind:
+## both apply the rest of the pending ring first, then repaint from a known state.
+func test_reset_while_draining_restores_the_exact_circle() -> void:
+	var arena := _spawn_arena()
+	await get_tree().process_frame
+	arena.shrink_rows_per_frame = 1
+	arena.shrink()
+	arena.shrink()
+	assert_bool(arena.is_repainting()).is_true()
+	arena.reset()
+	assert_bool(arena.is_repainting()).is_false()
+	_assert_arena_matches(arena, arena.start_radius, 0)
 
 
 func test_reset_restores_the_starting_circle() -> void:

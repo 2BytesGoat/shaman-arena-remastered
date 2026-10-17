@@ -19,7 +19,9 @@ Spell naming & structure: see [`docs/spells.md`](spells.md). The vocabulary ther
 - Each milestone = feature branch → **one separate PR**. Nothing lands on `main` directly.
 - Every PR must include:
   - checklist ticks in this file for the milestone
-  - a **version bump**, visible in-game (see M0 `VersionLabel`):
+  - a **version bump**, visible in-game (see M0 `VersionLabel`): bump it in
+    **Project Settings → Application → Config → Version** (`config/version` in
+    `godot/project.godot`) —
     `M1 → v0.1.0`, `M2 → v0.2.0`, `M3 → v0.3.0`, `M4 → v0.4.0`, `M5 → v0.5.0`, `M5.5 → v0.5.1`
   - unit tests (gdUnit4) covering that milestone's new logic
   - the manual verification checklist below ticked off
@@ -60,8 +62,8 @@ rehearsed successfully on the official 4.7.2 binary, so the final-phase bump is 
 
 ### Docs, UI, tooling
 - [x] Write `docs/controls.md`
-- [x] `VersionLabel`: autoload (`scripts/ui/version_label.gd`, CanvasLayer 100, bottom-left)
-      reading `application/config/version` — currently `"0.0.1"`
+- [x] `VersionLabel`: autoload (`src/ui/version_label.gd`, CanvasLayer 100, bottom-left)
+      reading `application/config/version`
 - [x] Vendor gdUnit4 **v6.2.2** into `addons/gdUnit4/` + `tests/phase0` scaffold
       (extension load, version, input maps — 3 tests, all green on 4.7.2;
       note: CmdTool requires `--ignoreHeadlessMode` for headless runs)
@@ -175,7 +177,9 @@ versa. **Verify (manual):** each spell slot populated by a selection run (8 slot
 > version bump waits for the milestone to close.
 
 - [x] Port `tilemap_arena.gd`: circular map mask, shrink timer, redraw only removed ring,
-      edge tiles → animated liquid (isometric terrain/water tile set)
+      edge tiles → animated liquid (isometric terrain/water tile set; the ring drains across
+      frames so the arcade web build never repaints the row-sorted map in one go — D-019
+      addendum)
 - [x] Lava group → `Unit` burn: a `HealthDamage` tick while standing on lava
       (see `docs/spells.md`; replaces POC `dot` float)
 - [ ] Match flow closure: lava death / eliminations → win screen ("Player X took a big L"),

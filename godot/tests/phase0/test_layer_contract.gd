@@ -111,5 +111,14 @@ func test_arena_tileset_puts_the_liquid_on_the_lava_layer() -> void:
 	var liquid := tileset.get_source(Arena.LAVA_SOURCE) as TileSetAtlasSource
 	assert_object(liquid).is_not_null()
 	assert_int(liquid.get_tile_animation_frames_count(Arena.LAVA_ATLAS)).is_equal(3)
+	# The liquid must not pulse in sync (random start phase per cell) and must stay visibly
+	# animated: three 0.5 s frames at animation_speed 2.0 give a 0.75 s loop.
+	assert_int(liquid.get_tile_animation_mode(Arena.LAVA_ATLAS)).is_equal(
+		TileSetAtlasSource.TILE_ANIMATION_MODE_RANDOM_START_TIMES
+	)
+	assert_float(
+		liquid.get_tile_animation_total_duration(Arena.LAVA_ATLAS)
+		/ liquid.get_tile_animation_speed(Arena.LAVA_ATLAS)
+	).is_equal_approx(0.75, 0.001)
 	var tile := liquid.get_tile_data(Arena.LAVA_ATLAS, 0)
 	assert_int(tile.get_collision_polygons_count(0)).is_equal(1)

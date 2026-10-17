@@ -885,19 +885,44 @@ three places:
 - **Same rules, new cells.** `src/resources/arena/arena_tileset.tres` is a 32×16 isometric
   `TileSet` now: source 0 = terrain (floor; the warning band is an *untinted alternative* of
   the floor tile, so a variant or tint can land without code changes), source 2 = liquid. The
-  liquid tiles keep the arena's single physics layer (`collision_layer` 32, mask 0) and give
-  up the old 16 px square for the tile's top-face diamond `(-16,0)(0,-8)(16,0)(0,8)`. Group
-  `Lava`, layer 6 and `Unit`'s burn are unchanged — only art and polygon shape moved.
-- **Screen-space circle.** This tile set's cell grid is *staggered* (`map_to_local`: rows
-  8 px apart, cells 32 px apart, odd rows offset half a cell sideways), not the diagonal
-  `(x - y, x + y)` grid. The POC's cell-space `x² + y²` mask would therefore paint a tall
-  oval, so `Arena.cell_center` mirrors the engine mapping, `Arena.screen_dist_sq` measures in
-  px² and feeds the unchanged `classify`, and `Arena.circle_extent` bounds the repaint
-  rectangle. The play circle stays round on screen; the tests pin `cell_center` against
-  `map_to_local` so a tile set or layout change cannot silently distort it.
-- **Sizes in px.** `start_radius` 800 (the POC's 50 × 16 px — the same footprint on screen),
-  `edge_thickness` 16, `shrink_step` 16 px per tick at the same 3 s interval: pacing matches
-  the POC while the radius unit is now pixels.
+  liquid's three frames play at 0.25 s each (`animation_speed` 2.0, a 0.75 s loop) with a
+  random start phase per painted cell, so the field does not pulse in sync. The liquid tiles
+  keep the arena's single physics layer (`collision_layer` 32, mask 0) and give up the old
+  16 px square for the tile's top-face diamond `(-16,0)(0,-8)(16,0)(0,8)`. Group `Lava`, layer
+  6 and `Unit`'s burn are unchanged — only art and polygon shape moved.
+- **Iso ellipse.** This tile set's cell grid is *staggered* (`map_to_local`: rows 8 px apart,
+  cells 32 px apart, odd rows offset half a cell sideways), not the diagonal `(x - y, x + y)`
+  grid, so `Arena.cell_center` mirrors the engine mapping, `Arena.shape_dist_sq` measures in px²
+  of the play area's shape space and feeds `classify`, and `Arena.shape_extent` bounds the
+  repaint rectangle. The play area is the **ellipse twice as wide (x) as it is tall** — the
+  isometric look of the floor diamonds — so the metric weighs the vertical offset 4×
+  (`dx² + 4·dy²`, consts `SHAPE_ASPECT`/`SHAPE_SQUASH_SQ`) and a `radius` is always the ellipse's
+  *horizontal* semi-axis (800 → a 1600 × 800 px arena, half the old screen circle's area; the
+  field is 53 703 → 27 027 cells). A screen-space circle read as a tall oval against the diamond
+  art. The tests pin `cell_center` against `map_to_local` so a tile set or layout change cannot
+  silently distort the mask.
+- **Sizes in px.** `start_radius` 800 (the POC's 50 × 16 px) is the play ellipse's *horizontal*
+  semi-axis now, so the arena is 1600 × 800 px — half the POC screen circle's area, vertical
+  reach halved; `edge_thickness` 16 and `shrink_step` 16 px per tick at the same 3 s interval
+  keep the pacing. The radius unit is pixels, not tiles.
+- **Frame-budgeted ring.** The arcade web build (single-threaded WASM on a Tegra) staggered
+  ~0.5 s on every shrink step: the repaint walked the play area's bounding rectangle (~5 460
+  `set_cell` calls at r=800 for the ~304 cells that actually change), and — because
+  `y_sort_enabled` is what keeps the isometric tile overlaps right — the engine groups cells
+  into one canvas item per *row*, so one dirty cell rebuilds that row's whole canvas item. The
+  ring now runs on the distance annulus that changes (`Arena.repaint_rows`) and drains
+  `shrink_rows_per_frame` (12) rows per frame, so it catches up over ~0.3 s and no frame pays
+  for the whole map. `reset()` still paints in one go: it runs between rounds (no burn waiting
+  on it) and repaints exactly the state the old code painted at `_ready`. The layer's
+  `physics_quadrant_size` is 8 — a dirty physics quadrant re-merges all of its cells' polygons,
+  so 8 balances that per-tick bill against the field's shape count (4 is the next step if a
+  cabinet run asks for it).
+- **Mask tried, dropped.** A fragment mask (`assets/shaders/arena_mask.gdshader`, parked and
+  unreferenced) once cut the tiles to the exact ellipse, so the edge was a smooth oval instead of
+  whole diamonds. It worked, but the cut slices the water art — a dark fringe with diamond
+  scallops along the shore — which read worse than the tiles' own edge. So the boundary stays
+  tile-stepped: the burn and the art agree exactly, and the play area is purely the metric above.
+  The shader is the hook if a smooth overlay boundary is ever wanted (see "Next if…" below).
 - `main.tscn`'s leftover hand-painted `TileMapLayer` (a test patch from the art work) is
   gone: the arena paints its own cells, and `_paint_field` covers the circle plus
   `FIELD_MARGIN` (1024 px) for the whole camera range.
@@ -907,6 +932,13 @@ three places:
 **Open tuning.** The liquid's surface sits ~5 px lower than the land's top face in the source
 art (may read as a sunken shoreline — per-source `texture_origin` is the knob), and the
 untinted warning band currently draws exactly like the floor.
+
+**Next if the cabinet still stutters.** The boundary itself is still tile work. Drawing the
+floor plus band over a static liquid field — one masked polygon or shader quad whose radius is
+a uniform — would take the live shrink out of the tile map entirely (and it sits above the
+y-sorted layer, so the tile order stays untouched). Trimming the far field (`FIELD_MARGIN`,
+never visible at the camera's zoom floor) or drawing it as a repeating backdrop is the
+load-time side of the same problem.
 
 **References.** `godot/main.tscn`, `godot/src/match/arena.gd`, `godot/src/match/arena.tscn`,
 `godot/src/match/match_camera.gd`, `godot/src/match/match_manager.gd`,

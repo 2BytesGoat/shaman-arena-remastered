@@ -6,3 +6,4 @@
 [node name="Arena" type="TileMapLayer" unique_id=600789410 groups=["Lava"]]
 tile_set = ExtResource("2_tileset")
 script = ExtResource("1_arena")
+physics_quadrant_size = 8
