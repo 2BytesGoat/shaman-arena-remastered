@@ -56,3 +56,10 @@ func update_aim_sprite(delta: float) -> void:
 	aim_sprite.rotation += clampf(
 		difference, -AIM_TURN_SPEED * delta, AIM_TURN_SPEED * delta
 	)
+
+
+## World-space center of the aim icon, offset included: where spells leave the unit.
+func aim_icon_position() -> Vector2:
+	if aim_sprite == null:
+		return unit.global_position
+	return aim_sprite.to_global(aim_sprite.offset)

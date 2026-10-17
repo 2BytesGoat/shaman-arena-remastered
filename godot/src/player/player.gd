@@ -8,7 +8,6 @@ const PLAYERS_GROUP := &"players"
 const MOVE_MAX_SPEED := 140.0
 const MOVE_ACCELERATION := 345.0
 const MOVE_FRICTION := 690.0
-const SPELL_SPAWN_OFFSET := 360.0
 const MAX_SPELL_SLOTS := Loadout.MAX_SPELLS
 
 enum ControllerType { NONE, LOCAL }
@@ -72,8 +71,9 @@ func _physics_process(delta: float) -> void:
 	visuals.update_aim_sprite(delta)
 
 
-func spell_spawn_position(direction: Vector2) -> Vector2:
-	return global_position + direction * SPELL_SPAWN_OFFSET
+## Where spells leave the unit: the aim icon's drawn world position (offset included).
+func spell_spawn_position() -> Vector2:
+	return visuals.aim_icon_position()
 
 
 func facing_direction() -> Vector2:
@@ -189,8 +189,19 @@ func apply_loadout(picks: Array[Ability]) -> void:
 	loadout_applied.emit()
 
 
-## Puts the unit back into play for the next round: at its spawn point, full health, idle.
-## The spell pool and ability cooldowns are left alone.
+## Clears running cooldowns so a fresh round starts with every spell ready (D-015). GGAS has
+## no direct reset API: `revoke` clears the cooldown/duration timers and emits `cooldown_end`
+## (which stops the HUD fill), and `grant` makes the ability castable again. Only cooling
+## abilities are touched, so an in-flight cast (duration active) is never silently cancelled.
+func reset_ability_cooldowns() -> void:
+	for ability in ability_slots:
+		if ability_container.is_ability_cooldown_active(ability):
+			ability_container.try_revoke(ability)
+			ability_container.try_grant(ability)
+
+
+## Puts the unit back into play for the next round: at its spawn point, full health, idle,
+## every spell off cooldown. The spell pool is left alone.
 func respawn() -> void:
 	player_dead = false
 	hit_locked = false
@@ -201,6 +212,7 @@ func respawn() -> void:
 	move_direction = Vector2.ZERO
 	global_position = spawn_position
 	attribute_container.apply_buff(InitializeAttributes.new(max_health))
+	reset_ability_cooldowns()
 	state_machine.transition_to(AnimationSlots.IDLE)
 
 

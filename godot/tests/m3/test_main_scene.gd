@@ -2,6 +2,10 @@ extends GdUnitTestSuite
 
 const AbilityPaths := preload("res://tests/support/ability_paths.gd")
 
+## Test fixture: a short beat keeps the suite fast, and the beat tests still run when the
+## game's beat is disabled for development (`death_slowmo_duration = 0`).
+const BEAT_DURATION := 0.15
+
 
 func _pick_one(panel: SpellSelect) -> void:
 	panel.handle_accept()
@@ -244,8 +248,9 @@ func test_death_beat_delays_the_selection_screen_until_the_death_clip_ends() -> 
 	auto_free(main)
 	await get_tree().process_frame
 	var manager := main.get_node("MatchManager") as MatchManager
-	# Short beat keeps the test quick; production uses the scene defaults (D-014).
-	manager.death_slowmo_duration = 0.15
+	# Short fixture beat (see `BEAT_DURATION`); the scale assertions read the manager's own
+	# tuning, so retuning the exports never breaks this test.
+	manager.death_slowmo_duration = BEAT_DURATION
 	var panels := manager.selection_panels()
 	var layer := main.get_node("SelectionLayer") as CanvasLayer
 	_pick_one(panels[0])
@@ -255,12 +260,13 @@ func test_death_beat_delays_the_selection_screen_until_the_death_clip_ends() -> 
 	manager.player_for(0).take_hit(manager.player_for(1), 100.0, 0.0, Vector2.RIGHT)
 	# KO: the world slows down, but the selection screen must not cover the death.
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
-	assert_float(Engine.get_time_scale()).is_equal(0.25)
+	assert_float(Engine.get_time_scale()).is_equal_approx(manager.death_slowmo_scale, 0.0001)
 	assert_bool(layer.visible).is_false()
 	assert_bool(panels[0].visible).is_false()
 	assert_bool(panels[0]._drafting).is_false()
 	# The beat ends only when the death clip does; then the loser's hand is up.
-	await _await_true(func() -> bool: return panels[0]._drafting)
+	var panel_drafting := func() -> bool: return panels[0]._drafting
+	await _await_true(panel_drafting, manager.death_slowmo_duration + 2.0)
 	assert_float(Engine.get_time_scale()).is_equal(1.0)
 	assert_bool(layer.visible).is_true()
 	assert_bool(panels[0].visible).is_true()
@@ -280,7 +286,7 @@ func test_match_point_beat_delays_the_winner_banner() -> void:
 	var loser := manager.player_for(0)
 	var winner := manager.player_for(1)
 	# Four quick losses get us to match point (the beat is off in `_started_main`).
-	for _round in 4:
+	for _round in MatchManager.ROUNDS_TO_WIN - 1:
 		loser.take_hit(winner, 100.0, 0.0, Vector2.RIGHT)
 		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
 		if panels[0].can_start_draft():
@@ -289,13 +295,16 @@ func test_match_point_beat_delays_the_winner_banner() -> void:
 		assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
 	assert_int(manager.round_wins_for(1)).is_equal(MatchManager.ROUNDS_TO_WIN - 1)
 	var overlay := main.get_node("MatchOverLayer") as MatchOver
-	# Arm the beat for the final KO only.
-	manager.death_slowmo_duration = 0.15
+	# Arm the beat for the final KO only (short fixture). This test covers the
+	# beat-on-match-point branch; the scale assertions read the manager's own tuning.
+	manager.death_slowmo_duration = BEAT_DURATION
+	manager.death_slowmo_on_match_point = true
 	loser.take_hit(winner, 100.0, 0.0, Vector2.RIGHT)
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
 	assert_bool(overlay.visible).is_false()
-	assert_float(Engine.get_time_scale()).is_equal(0.25)
-	await _await_true(func() -> bool: return overlay.visible)
+	assert_float(Engine.get_time_scale()).is_equal_approx(manager.death_slowmo_scale, 0.0001)
+	var banner_visible := func() -> bool: return overlay.visible
+	await _await_true(banner_visible, manager.death_slowmo_duration + 2.0)
 	assert_float(Engine.get_time_scale()).is_equal(1.0)
 	assert_bool(overlay.visible).is_true()
 	assert_str(overlay.message_label.text).is_equal("PLAYER 2 WINS 5-0")

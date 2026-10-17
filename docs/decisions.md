@@ -570,7 +570,8 @@ match continues until someone has taken 5 rounds.
   gets no card and is locked out; all gameplay stays frozen (`_lock_players()`).
 - When the pick lands, the next round starts on the next frame: both players
   `Unit.respawn()` at their captured `spawn_position` with `Health`/`MaxHealth` restored
-  (`InitializeAttributes` re-applied), idle state, pools kept. Cooldowns are not reset.
+  (`InitializeAttributes` re-applied), idle state, pools kept. Cooldowns are not reset
+  *(superseded by D-015: the round resume clears them)*.
 - Drafts that could never complete are skipped and the round starts immediately:
   `SpellSelect.can_start_draft()` (pool full or nothing left to offer) guarded through
   `SpellDraw.has_offers()`.
@@ -647,13 +648,13 @@ draft take the screen.
   drops into slow motion, then time returns to normal and the rest of the loser's `Dead`
   clip plays out. The selection screen opens only once the clip has finished.
 - `MatchManager` owns the beat with three exports: `death_slowmo_duration` (real seconds at
-  the slowed scale, default 1.0), `death_slowmo_scale` (default 0.25), and
+  the slowed scale, default 1.0), `death_slowmo_scale` (0.5 in the current tuning), and
   `death_slowmo_on_match_point` (default on). `death_slowmo_duration = 0` disables the whole
   beat — the flow tests and fast dev iterations use this.
 - The slow-motion window uses an unscaled `SceneTreeTimer`; `Engine.time_scale` slows
   animations, spells and cooldowns globally while it runs. With the stock 0.5s `Dead` clip
-  the result is ~1s of slow motion (the 36→37 frame flip lands at the end), then the clip's
-  tail at normal speed: ~1.25s from hit to draft.
+  and a 1s window at 0.5×, the clip finishes right as the window ends: ~1s from hit to
+  draft (a shorter window leaves a clip tail that plays at normal speed).
 - `_on_player_died` still resolves the round synchronously (score and phase `ROUND_OVER` /
   `GAME_OVER`), then awaits the beat before showing the selection layer/panel or calling
   `MatchOver.show_winner()`. Players stay locked through the beat, so nobody acts during it.
@@ -662,10 +663,43 @@ draft take the screen.
 
 **Consequences.**
 
-- Every death costs ~1.25s (stock clip) before the draft; the phase flips immediately for
-  code, but the room sees the KO first.
+- Every death costs ~1s with the current tuning (stock clip) before the draft; the phase
+  flips immediately for code, but the room sees the KO first.
 - `skip_selection` deaths also get the beat in the editor; set `death_slowmo_duration = 0`
   on the manager for instant testing.
 
 **References.** `godot/src/match/match_manager.gd`, `godot/src/player/player.gd`,
 `godot/tests/m3/test_match_manager.gd`, `godot/tests/m3/test_main_scene.gd`.
+
+## D-015 — Round start clears spell cooldowns
+
+- **Status:** accepted (demo iteration)
+- **Date:** 2026-10-17
+
+**Context.** D-012 left cooldowns alone across rounds. The loser's draft pick happens to
+rebuild their abilities (`apply_loadout` removes and re-adds them), but the survivor keeps
+running cooldowns through the KO beat and the draft. Long spells make that visible: Meteor
+(9s) or Anivia Wall (13s) cast late in a round left the spell unavailable for most of the
+next one — reading as "the spell can't be cast anymore" after a round.
+
+**Decision.**
+
+- `Unit.respawn()` clears every running cooldown, so a round always starts with the whole kit
+  ready. `Unit.reset_ability_cooldowns()` walks the ability slots and, for each
+  cooldown-active ability, calls `AbilityContainer.try_revoke` then `try_grant`.
+- GGAS has no direct cooldown-reset API: revoke clears the `cooldown_time`/`duration_time`
+  timers and emits `cooldown_end` (the signal the HUD button listens to), and grant makes the
+  ability castable again. This mirrors the loadout swap's revoke/grant vocabulary.
+- Only cooldown-active abilities are touched: an in-flight cast (GGAS duration active)
+  spanning the round boundary is not cancelled by the reset.
+- The reset runs at round resume (`MatchManager._resume_after_round`), not on death: the KO
+  beat and the draft flow stay untouched.
+
+**Consequences.**
+
+- Round boundaries are self-contained: inter-round downtime (beat + draft) can no longer
+  carry a cooldown into the next round for either seat.
+- D-012's "cooldowns are not reset" bullet is superseded.
+
+**References.** `godot/src/player/player.gd`, `godot/src/match/match_manager.gd`,
+`godot/tests/m3/test_match_manager.gd`.

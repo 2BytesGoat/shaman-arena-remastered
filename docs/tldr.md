@@ -23,6 +23,8 @@ State machine: granted → active → duration_active → cooldown_active → en
 - Signals: `ability_activated`, `ability_granted`, `ability_revoked`, `ability_blocked`,
   `ability_unblocked`, `ability_ended`, `cooldown_start`, `cooldown_end`, ...
 - `_on_tick` overrides the whole default duration/cooldown/per-frame logic — use with care
+- No direct cooldown-reset API: `RuntimeAbility.revoke()` clears the cooldown/duration timers
+  (emits `cooldown_end`); `block()` also resets both via `_should_reset_cooldown`/duration
 
 ### godot_gameplay_attributes
 Attributes + buffs, fully decoupled from the ability system.

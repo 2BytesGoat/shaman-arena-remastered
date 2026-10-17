@@ -56,7 +56,7 @@ static func cast_animation_speed(clip_length: float, cast_delay: float) -> float
 func cast(unit: Unit, direction: Vector2) -> void:
 	if SPELL_SCENE == null:
 		return
-	var spell := Utils.instantiate_object_in_scene(SPELL_SCENE, unit.spell_spawn_position(direction)) as SpellScene
+	var spell := Utils.instantiate_object_in_scene(SPELL_SCENE, unit.spell_spawn_position()) as SpellScene
 	spell.cast(unit, direction)
 
 

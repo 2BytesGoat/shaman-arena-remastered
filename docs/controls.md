@@ -17,7 +17,8 @@ Deadzone handling: stick input below deadzone → keep **last nonzero direction*
 
 Cast direction is refreshed every frame while alive: a released aimed cast keeps steering
 with the stick through its cast delay (deliberate — windup jukes), and the aim indicator
-always trails the stick.
+always trails the stick. Spells spawn from the aim icon's drawn position (offset included),
+so the muzzle always matches the indicator; the stick only steers the flight direction.
 
 ## Spell buttons (max 6 spells per player)
 
@@ -56,8 +57,8 @@ always trails the stick.
   their whole pool excluded — and the next round starts as soon as it is committed. The
   pool caps at 6 spells including the basics, so once it is full later loss-drafts are
   skipped and the round just resumes.
-- Between rounds both players respawn at their starting spots with full health; spell
-  pools are kept.
+- Between rounds both players respawn at their starting spots with full health and **every
+  spell off cooldown** (D-015); spell pools are kept.
 - Gameplay is frozen while a draft is up: units ignore movement and cast input, and only
   the current drafter's panel accepts input, so nobody can act behind the card screen.
 - The strip under the cards shows the 6 pool slots: the basics already in place, then the
@@ -71,7 +72,8 @@ always trails the stick.
 2. A death ends the round: the survivor scores it, the KO plays in slow motion while the
    death clip finishes, then the loser drafts one more card (same panel flow, gameplay
    stays frozen for everyone)
-3. Committed card → both players respawn at their spawn points, full health, next round
+3. Committed card → both players respawn at their spawn points, full health, every spell
+   off cooldown, next round
 4. First to 5 round wins → the final KO plays the same slow-motion beat → match-over
    banner ("PLAYER X WINS x-y") → accept/button restarts from the draft
 

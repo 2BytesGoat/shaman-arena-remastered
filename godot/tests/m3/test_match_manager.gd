@@ -2,6 +2,10 @@ extends GdUnitTestSuite
 
 const AbilityPaths := preload("res://tests/support/ability_paths.gd")
 
+## Test fixture: a short beat keeps the suite fast, and the beat tests still run when the
+## game's beat is disabled for development (`death_slowmo_duration = 0`).
+const BEAT_DURATION := 0.15
+
 
 func _picks(names: Array) -> Array[Ability]:
 	var picks: Array[Ability] = []
@@ -27,16 +31,18 @@ func _make_manager(skip_selection := false, default_loadout: Array[Ability] = []
 	var manager := MatchManager.new()
 	manager.skip_selection = skip_selection
 	manager.default_loadout = default_loadout
-	# Flow tests skip the KO beat; the dedicated beat tests re-arm it explicitly.
+	# Flow tests skip the KO beat; the beat test re-arms it with `BEAT_DURATION`.
 	manager.death_slowmo_duration = 0.0
 	add_child(manager)
 	auto_free(manager)
 	return manager
 
 
-## Polls in real time (safe while the death beat has the world in slow motion).
-func _await_phase(manager: MatchManager, phase: int, timeout := 2.0) -> void:
-	var deadline := Time.get_ticks_msec() + int(timeout * 1000.0)
+## Polls in real time (safe while the death beat has the world in slow motion). The budget
+## grows with the configured beat, so retuning `death_slowmo_duration` can't starve a wait.
+func _await_phase(manager: MatchManager, phase: int) -> void:
+	var budget := manager.death_slowmo_duration + 2.0
+	var deadline := Time.get_ticks_msec() + int(budget * 1000.0)
 	while manager.phase != phase and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 
@@ -109,17 +115,48 @@ func test_round_death_locks_players_and_resumes_with_respawns() -> void:
 	).is_equal(10.0)
 
 
+func test_new_round_clears_spell_cooldowns() -> void:
+	var first := _make_unit(0)
+	var second := _make_unit(1)
+	var manager := _make_manager()
+	manager._on_loadout_complete(0, _picks(["fireball"]))
+	manager._on_loadout_complete(1, _picks(["blink"]))
+	var blink: Ability = second.ability_slots[0]
+	# Blink has no cast delay, so activating it starts its 5s cooldown synchronously.
+	assert_int(second.ability_container.try_activate(blink)).is_equal(
+		RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_COOLDOWN_STARTED
+	)
+	assert_bool(second.ability_container.is_ability_cooldown_active(blink)).is_true()
+	var cooled: Array[Ability] = []
+	second.ability_container.cooldown_end.connect(
+		func(ability: Ability) -> void: cooled.append(ability)
+	)
+	# The survivor is never re-drafted, so only the round resume can clear the cooldown.
+	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
+	await get_tree().process_frame
+	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.RUNNING)
+	assert_bool(second.ability_container.is_ability_cooldown_active(blink)).is_false()
+	assert_bool(second.ability_container.is_ability_granted(blink)).is_true()
+	assert_array(cooled).contains([blink])
+	# And the spell is castable again.
+	assert_int(second.ability_container.try_activate(blink)).is_equal(
+		RuntimeAbility.ABILITY_EVENT_TYPE_ACTIVATED_COOLDOWN_STARTED
+	)
+
+
 func test_death_beat_slows_time_and_waits_for_the_death_clip() -> void:
 	var first := _make_unit(0)
 	var second := _make_unit(1)
 	var manager := _make_manager()
-	manager.death_slowmo_duration = 0.15
+	# Short fixture beat (see `BEAT_DURATION`); the expected scale is the manager's own
+	# tuning, so retuning `death_slowmo_scale` never breaks this test.
+	manager.death_slowmo_duration = BEAT_DURATION
 	manager._on_loadout_complete(0, _picks(["fireball"]))
 	manager._on_loadout_complete(1, _picks(["smoke"]))
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
 	# The round is decided immediately; the beat holds the resume back.
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.ROUND_OVER)
-	assert_float(Engine.get_time_scale()).is_equal(0.25)
+	assert_float(Engine.get_time_scale()).is_equal_approx(manager.death_slowmo_scale, 0.0001)
 	assert_bool(first.player_dead).is_true()
 	# Slow motion ends with the window, but the round only resumes once the death clip has
 	# finished (its tail plays at normal speed).
@@ -140,7 +177,7 @@ func test_match_point_can_skip_the_death_beat() -> void:
 		first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
 		await _await_phase(manager, MatchManager.MatchPhase.RUNNING)
 	# Arm the beat but keep it off the match point: the final death must not slow down.
-	manager.death_slowmo_duration = 0.15
+	manager.death_slowmo_duration = BEAT_DURATION
 	manager.death_slowmo_on_match_point = false
 	first.take_hit(null, 100.0, 0.0, Vector2.ZERO)
 	assert_int(manager.phase).is_equal(MatchManager.MatchPhase.GAME_OVER)
