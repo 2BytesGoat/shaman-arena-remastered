@@ -98,7 +98,7 @@ func test_classify_matches_the_poc_cell_rules() -> void:
 	assert_int(Arena.classify(51 * 51 + 1, 50, 1)).is_equal(Arena.CellKind.LAVA)
 
 
-## The circle metric is only right if it matches how the tile set places cells (D-019): the
+## The shape metric is only right if it matches how the tile set places cells (D-019): the
 ## staggered iso grid, not a diagonal `(x - y, x + y)` one.
 func test_cell_center_matches_the_engine_iso_mapping() -> void:
 	var arena := _spawn_arena()
@@ -231,9 +231,9 @@ func test_shrink_ring_drains_from_the_frame_loop() -> void:
 	_assert_arena_matches(arena, arena.start_radius - arena.shrink_step, arena.edge_thickness)
 
 
-## A reset (or the next shrink) landing mid-drain must not leave a half-painted circle behind:
+## A reset (or the next shrink) landing mid-drain must not leave a half-painted play area behind:
 ## both apply the rest of the pending ring first, then repaint from a known state.
-func test_reset_while_draining_restores_the_exact_circle() -> void:
+func test_reset_while_draining_restores_the_exact_play_area() -> void:
 	var arena := _spawn_arena()
 	await get_tree().process_frame
 	arena.shrink_rows_per_frame = 1

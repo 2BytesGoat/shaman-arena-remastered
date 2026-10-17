@@ -912,7 +912,8 @@ three places:
   into one canvas item per *row*, so one dirty cell rebuilds that row's whole canvas item. The
   ring now runs on the distance annulus that changes (`Arena.repaint_rows`) and drains
   `shrink_rows_per_frame` (12) rows per frame, so it catches up over ~0.3 s and no frame pays
-  for the whole map. `reset()` still paints in one go: it runs between rounds (no burn waiting
+  for the whole map (mechanics and numbers: `docs/tilemap-performance.md`). `reset()` still
+  paints in one go: it runs between rounds (no burn waiting
   on it) and repaints exactly the state the old code painted at `_ready`. The layer's
   `physics_quadrant_size` is 8 — a dirty physics quadrant re-merges all of its cells' polygons,
   so 8 balances that per-tick bill against the field's shape count (4 is the next step if a
@@ -944,4 +945,6 @@ load-time side of the same problem.
 `godot/src/match/match_camera.gd`, `godot/src/match/match_manager.gd`,
 `godot/src/player/player.gd`, `godot/src/resources/arena/arena_tileset.tres`,
 `godot/tests/m5/test_arena.gd`, `godot/tests/m5/test_match_camera.gd`,
-`godot/tests/m5/test_lava_burn.gd`, POC `tilemap_arena.gd`, POC `main.gd`.
+`godot/tests/m5/test_lava_burn.gd`, `docs/tilemap-performance.md` (how the tile repaint was made
+cheap, with the engine mechanics), parked `godot/assets/shaders/arena_mask.gdshader`,
+POC `tilemap_arena.gd`, POC `main.gd`.
